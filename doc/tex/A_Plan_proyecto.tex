@@ -1,8 +1,124 @@
 \apendice{Plan de Proyecto Software}
 
+
+
+
 \section{Introducción}
 
+Este Trabajo Fin de Grado se ha gestionado con \textbf{Scrum}, un marco de trabajo ágil orientado a la entrega iterativa e incremental de valor. Scrum se basa en el \emph{control empírico de procesos} (transparencia, inspección y adaptación) y estructura el desarrollo en iteraciones cortas llamadas \emph{sprints}, con artefactos y eventos bien definidos que favorecen el enfoque, la priorización y la mejora continua.
+
+\subsection*{Scrum}
+\textbf{Roles.} En este proyecto los roles se han adaptado de forma pragmática:
+\begin{itemize}
+	\item \textbf{Product Owner (PO):} el propio estudiante, responsable de priorizar el \emph{Product Backlog} alineado con los objetivos del TFG y las indicaciones de los tutores.
+	\item \textbf{Scrum Master (SM):} rol asumido también por el estudiante, velando por la correcta aplicación del marco y la eliminación de impedimentos.
+	\item \textbf{Equipo de desarrollo:} el estudiante (desarrollo, pruebas y documentación). \emph{Stakeholders}: tutores y tribunal.
+\end{itemize}
+
+\textbf{Artefactos.}
+\begin{itemize}
+	\item \textbf{Product Backlog:} lista priorizada de épicas e historias (documentación, investigación de modelos de IA de procesado de imágenes, pruebas comparativas, etc.).
+	\item \textbf{Sprint Backlog:} subconjunto comprometido para cada sprint, desglosado en tareas técnicas.
+	\item \textbf{Incremento:} entregables verificables al final de cada sprint (p.\,ej., secciones de la memoria, scripts de prueba, comparativas).
+\end{itemize}
+
+\textbf{Eventos.}
+\begin{itemize}
+	\item \textbf{Sprint Planning:} definición del objetivo del sprint y selección de trabajo.
+	\item \textbf{Daily Scrum:} chequeo diario (\emph{qué hice/haré/impedimentos}) para mantener foco.
+	\item \textbf{Sprint Review:} revisión de avances con evidencias (código, resultados, documentación).
+	\item \textbf{Sprint Retrospective:} lecciones aprendidas y acciones de mejora para el siguiente sprint.
+\end{itemize}
+
+
+\subsection*{Medición y estimación del trabajo}
+
+Para la planificación y seguimiento del progreso se ha empleado un sistema de medición basado en puntos de historia, una unidad habitual en metodologías ágiles como Scrum.  
+Cada tarea o ítem del \emph{Sprint Backlog} se ha valorado con un número de puntos que refleja su esfuerzo y complejidad relativa.  
+
+En este proyecto, se ha establecido una equivalencia práctica de 8 puntos por jornada completa de trabajo, lo que permite estimar la carga de trabajo de cada sprint y evaluar el avance real frente al planificado.  
+Este sistema facilita mantener una visión objetiva del esfuerzo invertido y ajustar la planificación de los siguientes sprints en función de la velocidad media alcanzada.
+
+
+
 \section{Planificación temporal}
+
+La planificación se organiza en sprints cortos (1–2 semanas).
+
+\subsection*{Visión general del Sprint 1}
+\begin{itemize}
+	\item \textbf{Fechas:} 27/10 – 06/11
+	\item \textbf{Objetivo del sprint:} \emph{Investigación y pruebas iniciales de IAs de procesado de imágenes}.
+	\item \textbf{Criterio de aceptación global:} disponer de dos IAs instaladas y probadas con evidencias, y una comparativa preliminar documentada.
+\end{itemize}
+
+\begin{table}[h!]
+	\centering
+	
+	\begin{tabular}{@{}llcll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Organización inicial del proyecto & 8  \\
+		Aprendizaje básico de \LaTeX      & 8   \\
+		Estructura base del documento TFG & 8   \\
+		Investigar modelos IA de imágenes & 8  \\
+		Instalar y probar 1\textsuperscript{a} IA & 8  \\
+		Instalar y probar 2\textsuperscript{a} IA & 8  \\
+		Comparativa entre IAs seleccionadas & 8 &  \\
+		Cierre Sprint                      & 8 &  \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 1 – Resumen}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	
+	\includegraphics[width=0.95\textwidth]{img/sprint1.png}
+	\caption{Informe de trabajo completado Sprint 1}
+	\label{fig:sprint1}
+\end{figure}
+
+
+\subsubsection*{Descripción de las tareas del Sprint 1}
+
+A continuación se describen brevemente las tareas que componen el Sprint 1:
+
+\begin{itemize}
+	\item \textbf{Organización inicial del proyecto.}  
+	Se configuró el entorno de trabajo creando la estructura del repositorio, las carpetas para código, experimentos, documentación y resultados, así como los archivos necesarios para el control de versiones y la vinculación con Jira. Esta tarea permitió establecer la base técnica sobre la que se desarrollará el resto del proyecto.
+	
+	\item \textbf{Aprendizaje básico de \LaTeX.}  
+	Se dedicó tiempo a adquirir soltura con la herramienta de edición científica \LaTeX, aprendiendo a crear capítulos, incluir figuras, tablas, referencias y bibliografía. Este conocimiento asegura una correcta elaboración y mantenimiento de la memoria del TFG.
+	
+	\item \textbf{Estructura base del documento TFG.}  
+	Se definió la organización general de la memoria, creando los capítulos principales, anexos y secciones iniciales. De este modo quedó preparada la estructura en la que se irá incorporando el contenido teórico y técnico conforme avance el proyecto.
+	
+	\item \textbf{Investigar modelos IA de procesamiento de imágenes.}  
+	Se llevó a cabo una investigación de diferentes alternativas de inteligencia artificial aplicadas al procesamiento de imágenes, evaluando su documentación, facilidad de uso, licencia y compatibilidad. Tras este estudio se seleccionaron dos herramientas destacadas: \textbf{YOLO} y \textbf{MediaPipe}, por su relevancia en el ámbito de la visión por computador.
+	
+	\item \textbf{Instalar y probar la primera IA seleccionada (YOLO).}  
+	En esta tarea se instaló y configuró el modelo YOLO (You Only Look Once), mediante la librería \texttt{ultralytics} en Python. Se realizaron pruebas de detección de objetos sobre imágenes propias para verificar la correcta ejecución del modelo, su velocidad de inferencia y la claridad de sus resultados. Esta fase permitió comprobar la idoneidad de YOLO para el reconocimiento y localización de elementos dentro de una escena.
+	
+	\item \textbf{Instalar y probar la segunda IA seleccionada (MediaPipe).}  
+	Posteriormente se instaló el framework MediaPipe de Google, que ofrece soluciones preentrenadas orientadas al análisis de características humanas como el rostro, las manos o la pose corporal. Se probaron distintos módulos, especialmente los de detección de manos y pose, verificando su funcionamiento en tiempo real y su facilidad de integración en proyectos Python.  
+	
+	\item \textbf{Comparativa entre las IAs seleccionadas.}  
+	Una vez probadas ambas herramientas, se elaboró una comparativa que analiza sus principales diferencias: finalidad, precisión, velocidad, facilidad de uso, requerimientos y tipo de tareas para las que son más adecuadas.  
+	En esta comparativa se concluye que \textbf{MediaPipe} destaca en la detección y seguimiento de características humanas con bajo coste computacional, mientras que \textbf{YOLO} ofrece mayor versatilidad para la detección general de objetos y escenarios más complejos. La documentación y análisis detallados de esta comparativa se incluyen en el capítulo 4 de la memoria.
+	
+	\item \textbf{Cierre del Sprint.}  
+	Finalmente, se revisaron todas las tareas completadas y se documentaron los avances obtenidos, preparando el tablero y el backlog para el siguiente sprint. Esta revisión permitió valorar el cumplimiento de los objetivos y establecer las líneas de trabajo futuras.
+\end{itemize}
+
+
+
+
+
+
+
 
 \section{Estudio de viabilidad}
 
