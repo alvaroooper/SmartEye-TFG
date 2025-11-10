@@ -68,3 +68,42 @@ La tabla siguiente resume sus principales diferencias:
 
 En resumen, \textbf{MediaPipe} resulta más adecuado para aplicaciones centradas en la estimación de características humanas y análisis del movimiento, mientras que \textbf{YOLO} se utiliza para la detección y clasificación de objetos en escenas más amplias.  
 En conjunto, ambas herramientas pueden integrarse en sistemas híbridos donde se necesite combinar información semántica (qué objetos hay) y estructural (cómo se mueven o se relacionan las personas).
+
+
+\subsection{Framework de servidor: evaluación y elección}
+
+Para la capa de servidor del proyecto se necesita un API HTTP que reciba imágenes y parámetros, coordine los módulos de IA desarrollados en Python y asegure que podamos añadir después funciones de seguridad (autenticación, trazabilidad, CORS). Bajo estos objetivos, se han analizado tres frameworks.
+
+\paragraph{FastAPI (Python).}  
+\textbf{Ventajas:} permite programación asíncrona, genera automáticamente documentación interactiva, asegura tipos de datos con Pydantic.  
+\textbf{Inconvenientes:} añade más estructura y definición de datos de la necesaria al inicio.  
+\textbf{Motivo de descarte:} se buscaba avanzar rápido con una API sencilla y sin tanta formalidad estructural.
+
+\paragraph{Django REST Framework (Python).}  
+\textbf{Ventajas:} completo para proyectos grandes, con gestores, serializadores y autenticación ya integrada.  
+\textbf{Inconvenientes:} demasiado pesado para un backend cuyo foco principal es orquestar inferencias de IA.  
+\textbf{Motivo de descarte:} la complejidad no se ajusta al alcance de este TFG.
+
+\paragraph{Express.js (Node.js).}  
+\textbf{Ventajas:} minimalista, gran comunidad.  
+\textbf{Inconvenientes:} implicaría usar otro lenguaje además de Python, lo que complica la integración con los modelos de IA.  
+\textbf{Motivo de descarte:} se opta por mantener todo el servidor en Python para mayor coherencia.
+
+\subsubsection{Framework elegido: Flask}
+
+\paragraph{Descripción.}  
+Flask es un microframework web en Python. Se caracteriza por ofrecer lo esencial —rutas, peticiones, respuestas— sin imponer una estructura compleja. Su diseño ligero permite añadir sólo lo que el proyecto necesite.
+
+\paragraph{Ventajas para este proyecto.}  
+\begin{itemize}
+	\item Permite lanzar rápidamente un endpoint que reciba la imagen y devuelva un resultado, sin código innecesario.
+	\item Al estar en Python facilita conectar directamente con los módulos de IA.
+	\item Su simplicidad permite que, cuando lo necesitemos, añadamos seguridad, control de acceso o logging sin tener que rehacer la arquitectura.
+	\item Los desarrollos iniciales son rápidos y el despliegue sencillo.
+\end{itemize}
+
+\paragraph{Justificación de elección.}  
+Dado que el servidor funciona como una capa de orquestación —no como un sistema transaccional complejo— se requiere algo ligero, sencillo de mantener y que permita crecer cuando haga falta. Flask cumple claramente esos requisitos: arranque rápido, bajo coste inicial, buena integración con Python y evolución controlada.
+
+\paragraph{Funcionamiento en el proyecto.}  
+Se definirán rutas HTTP para subir imágenes o enviar parámetros, dichas rutas delegarán el trabajo a los módulos internos de IA y devolverán respuestas en formato JSON. La estructura del proyecto podrá separarse en rutas / servicios / módulos, lo que mantiene el código ordenado y escalable.
