@@ -107,3 +107,37 @@ Dado que el servidor funciona como una capa de orquestación —no como un siste
 
 \paragraph{Funcionamiento en el proyecto.}  
 Se definirán rutas HTTP para subir imágenes o enviar parámetros, dichas rutas delegarán el trabajo a los módulos internos de IA y devolverán respuestas en formato JSON. La estructura del proyecto podrá separarse en rutas / servicios / módulos, lo que mantiene el código ordenado y escalable.
+
+
+\subsection{Librería para simulación de detecciones: evaluación y elección}
+
+Para validar tempranamente el \emph{pipeline} del backend (subida de imagen $\rightarrow$ procesamiento simulado $\rightarrow$ respuesta con imagen anotada + JSON), se requiere una librería ligera que permita abrir imágenes, dibujar anotaciones sintéticas (cajas, texto) y devolver resultados sin integrar todavía modelos de IA reales. Bajo estos objetivos, se han analizado tres alternativas.
+
+\paragraph{OpenCV (Python).} 
+\textbf{Ventajas:} muy completa para visión por computador; dispone de utilidades avanzadas de E/S, conversión de color y primitivas de dibujo.\cite{opencv_docs} 
+\textbf{Inconvenientes:} instalación y dependencias más pesadas de lo necesario para una simulación inicial; curva de entrada mayor si sólo se requieren anotaciones simples. 
+\textbf{Motivo de descarte:} se busca minimizar fricción y tiempo de puesta en marcha en el Sprint~1.
+
+\paragraph{Matplotlib (Python).} 
+\textbf{Ventajas:} ampliamente conocida, permite renderizar y guardar imágenes con textos y formas.\cite{matplotlib_docs} 
+\textbf{Inconvenientes:} está orientada a gráficos científicos, no al procesamiento de imágenes en un servicio web; el flujo para anotar y devolver imágenes resulta menos natural. 
+\textbf{Motivo de descarte:} no optimiza el caso de uso de backend (anotar rápidamente y devolver).
+
+\subsubsection{Librería elegida: Pillow}
+
+\paragraph{Descripción.} 
+Pillow es el \emph{fork} moderno de la Python Imaging Library (PIL). Facilita abrir, manipular y guardar imágenes, e incluye utilidades sencillas para dibujar rectángulos, textos y otras formas.\cite{pillow_docs}
+
+\paragraph{Ventajas para este proyecto.} 
+\begin{itemize}
+	\item \textbf{Ligereza y rapidez de integración:} instalación simple con \texttt{pip} y API directa para anotar imágenes.
+	\item \textbf{Ajustada al caso de uso:} permite simular detecciones dibujando cajas y etiquetas sobre la imagen y devolverla junto con un JSON de ``detecciones''.
+	\item \textbf{Encaje con Flask:} fácil de integrar en endpoints que reciben ficheros y devuelven flujos binarios/imagen.
+	\item \textbf{Evolución controlada:} cuando se integren modelos reales (YOLO, MediaPipe, etc.), se puede mantener la misma salida (imagen + JSON) sin cambios en el contrato.
+\end{itemize}
+
+\paragraph{Justificación de elección.} 
+Pillow ofrece exactamente lo necesario para simular resultados visuales y datos estructurados con un coste de adopción mínimo, evitando la complejidad innecesaria de alternativas más pesadas.
+
+\paragraph{Funcionamiento en el proyecto.} 
+El endpoint del servidor (Flask) recibirá una imagen, generará detecciones sintéticas (clase, confianza, caja), anotará la imagen con Pillow y devolverá: (i) la imagen marcada y (ii) un JSON con la lista de detecciones. Este contrato será compatible con la futura sustitución de la simulación por modelos de IA reales.
