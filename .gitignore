@@ -236,6 +236,12 @@ __pycache__/
 .venv/
 env/
 
+# Tests
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
 # === EXPERIMENTOS IA ===
 *.pt
 experiments/**/outputs/
