@@ -1,1 +1,2 @@
-# (lo dejamos vacío de momento, solo para que Python trate la carpeta como paquete)
+# src/app/api/__init__.py
+from .routes import api_bp
