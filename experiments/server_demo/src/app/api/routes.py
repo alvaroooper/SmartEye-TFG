@@ -1,14 +1,15 @@
 # src/app/api/routes.py
-from flask import Blueprint, jsonify, request, current_app, send_from_directory # type: ignore
+from flask import Blueprint, jsonify, request, current_app, send_from_directory, Response # type: ignore
 from pathlib import Path
-
+from src.app.services.mock_detection_service import draw_mock_detection_box  # type: ignore
+from src.app.services.status_service import get_status # type: ignore
 from src.app.services.image_service import ( # type: ignore
     save_uploaded_image,
     list_images,
     delete_image,
     get_image_path,
 )
-from src.app.services.status_service import get_status # type: ignore
+
 
 api_bp = Blueprint("api", __name__)
 
@@ -109,3 +110,31 @@ def status():
     debug = current_app.debug
     data = get_status(upload_dir, debug)
     return jsonify(data), 200
+
+# ------------------------------
+#  ANALIZAR IMAGEN (simulado con Pillow)
+# ------------------------------
+@api_bp.post("/analyze_image")
+def analyze_image():
+    """
+    Simula una detección: recibe una imagen, dibuja una caja de detección
+    con Pillow y devuelve la nueva imagen como PNG.
+    """
+    if "image" not in request.files:
+        return jsonify({"error": "Falta el campo 'image'"}), 400
+
+    file = request.files["image"]
+
+    if file.filename == "":
+        return jsonify({"error": "El archivo no tiene nombre"}), 400
+
+    # Leemos todos los bytes de la imagen subida
+    image_bytes = file.read()
+    if not image_bytes:
+        return jsonify({"error": "El archivo está vacío"}), 400
+
+    # Usamos Pillow para dibujar la caja "fake"
+    result_bytes = draw_mock_detection_box(image_bytes)
+
+    # Devolvemos directamente la imagen procesada
+    return Response(result_bytes, mimetype="image/png")
