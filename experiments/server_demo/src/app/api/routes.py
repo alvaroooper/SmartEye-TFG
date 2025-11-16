@@ -1,15 +1,18 @@
 # src/app/api/routes.py
 from flask import Blueprint, jsonify, request, current_app, send_from_directory, Response # type: ignore
 from pathlib import Path
-from src.app.services.mock_detection_service import draw_mock_detection_box  # type: ignore
-from src.app.services.status_service import get_status # type: ignore
 from src.app.services.image_service import ( # type: ignore
     save_uploaded_image,
     list_images,
     delete_image,
     get_image_path,
 )
+from src.app.services.status_service import get_status # type: ignore
+from src.app.services.mock_detection_service import draw_mock_detection_box  # type: ignore
+import numpy as np # type: ignore
+import cv2  # type: ignore
 
+from src.app.services.detection_factory import get_detection_task # type: ignore
 
 api_bp = Blueprint("api", __name__)
 
@@ -114,8 +117,8 @@ def status():
 # ------------------------------
 #  ANALIZAR IMAGEN (simulado con Pillow)
 # ------------------------------
-@api_bp.post("/analyze_image")
-def analyze_image():
+@api_bp.post("/analyze_fake_image")
+def analyze_fake_image():
     """
     Simula una detección: recibe una imagen, dibuja una caja de detección
     con Pillow y devuelve la nueva imagen como PNG.
@@ -133,8 +136,33 @@ def analyze_image():
     if not image_bytes:
         return jsonify({"error": "El archivo está vacío"}), 400
 
-    # Usamos Pillow para dibujar la caja "fake"
+    # Usamos Pillow para dibujar la caja
     result_bytes = draw_mock_detection_box(image_bytes)
 
     # Devolvemos directamente la imagen procesada
     return Response(result_bytes, mimetype="image/png")
+
+
+# ------------------------------
+#  ANALIZAR IMAGEN 
+# ------------------------------
+@api_bp.route("/detect", methods=["POST"])
+def detect():
+    model = request.args.get("model", "yolo")
+    mode = request.args.get("mode")  # ej: hands, pose...
+
+    if "image" not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+
+    file_storage = request.files["image"]
+    image_bytes = file_storage.read()
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    try:
+        task = get_detection_task(model, mode)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    result = task.run(image)
+    return jsonify(result), 200
