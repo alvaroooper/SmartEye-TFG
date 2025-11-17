@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>TFG · IA Demo</title>
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <h2>Demo IA del TFG</h2>
+
+    <form class="card p-4" action="/analyze" method="post" enctype="multipart/form-data">
+        <label class="form-label">Subir imagen:</label>
+        <input class="form-control mb-3" type="file" name="image" required>
+
+        <label class="form-label mt-3">Modelo</label>
+        <select class="form-control mb-3" name="modelo" id="modelo-select"></select>
+
+        <label class="form-label">Modo</label>
+        <select class="form-control mb-3" name="modo" id="modo-select"></select>
+        <button class="btn btn-primary">Analizar</button>
+    </form>
+
+    {% if result_image %}
+    <div class="card mt-4 p-4">
+        <h4>Resultado</h4>
+        <img src="{{ result_image }}" class="img-fluid border mb-3">
+
+        <pre>{{ result_json | tojson(indent=2) }}</pre>
+    </div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
+
+<script>
+  const modelsConfig = JSON.parse(`{{ models_config|tojson|safe }}`);
+  const modeloInicial = "{{ modelo|default('yolo') }}";
+  const modoInicial   = "{{ modo|default('') }}";
+
+  function prettyLabel(key) {
+    if (!key) return "(por defecto)";
+    // capitalizar primera letra
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  }
+
+  function rellenarSelects() {
+    const modeloSelect = document.getElementById("modelo-select");
+    const modoSelect   = document.getElementById("modo-select");
+
+    // ----- rellenar modelos -----
+    modeloSelect.innerHTML = "";
+    Object.keys(modelsConfig).forEach(modelKey => {
+      const opt = document.createElement("option");
+      opt.value = modelKey;
+      opt.textContent = prettyLabel(modelKey);  // yolo → Yolo, mediapipe → Mediapipe
+      if (modelKey === modeloInicial) opt.selected = true;
+      modeloSelect.appendChild(opt);
+    });
+
+    function actualizarModos() {
+      const modelo = modeloSelect.value;
+      const modos = modelsConfig[modelo] || [];
+
+      modoSelect.innerHTML = "";
+
+      // opción "(por defecto)"
+      const optDef = document.createElement("option");
+      optDef.value = "";
+      optDef.textContent = "(por defecto)";
+      modoSelect.appendChild(optDef);
+
+      modos.forEach(modeKey => {
+        const opt = document.createElement("option");
+        opt.value = modeKey;
+        opt.textContent = prettyLabel(modeKey);   // pose → Pose, hands → Hands, default → Default
+        if (modelo === modeloInicial && modeKey === modoInicial) {
+          opt.selected = true;
+        }
+        modoSelect.appendChild(opt);
+      });
+    }
+
+    // actualizar al inicio y al cambiar de modelo
+    actualizarModos();
+    modeloSelect.addEventListener("change", actualizarModos);
+  }
+
+  document.addEventListener("DOMContentLoaded", rellenarSelects);
+</script>

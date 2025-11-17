@@ -20,3 +20,17 @@ def get_detection_task(model: str, mode: str | None = None) -> DetectionTask:
         return _yolo_service.get_task(mode)
 
     raise ValueError(f"Modelo '{model}' no soportado")
+
+def list_models_and_modes() -> dict[str, list[str]]:
+    """
+    Devuelve los modelos disponibles y sus modos:
+    {
+        "yolo": ["default"],
+        "mediapipe": ["hands", "pose"],
+        ...
+    }
+    """
+    return {
+        "yolo": list(_yolo_service._tasks.keys()),
+        "mediapipe": list(_mediapipe_service._tasks.keys()),
+    }
