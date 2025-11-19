@@ -113,8 +113,73 @@ A continuación se describen brevemente las tareas que componen el Sprint 1:
 	Finalmente, se revisaron todas las tareas completadas y se documentaron los avances obtenidos, preparando el tablero y el backlog para el siguiente sprint. Esta revisión permitió valorar el cumplimiento de los objetivos y establecer las líneas de trabajo futuras.
 \end{itemize}
 
+\subsection*{Visión general del Sprint 2}
+\begin{itemize}
+	\item \textbf{Fechas:} 09/11 – 20/11
+	\item \textbf{Objetivo del sprint:} \emph{Construir un servidor funcional en Flask capaz de recibir imágenes, ejecutar detecciones simuladas y ofrecer una interfaz mínima de usuario.}
+	\item \textbf{Criterio de aceptación global:} disponer de un servidor operativo, con endpoints funcionales, selección de modelos simulada y una UI básica que permita validar el flujo completo de subida y procesado.
+\end{itemize}
 
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Definir alcance del sprint y crear historias & 8 \\
+		Elegir framework servidor Flask & 8 \\
+		Elección librería para simulación de detecciones & 6 \\
+		Configurar entorno desarrollo y estructura base & 6 \\
+		Probar funcionamiento servidor & 8 \\
+		Desarrollar endpoint en servidor para subir imágenes & 10 \\
+		Desarrollar endpoint en servidor para detección simulada & 12 \\
+		Crear interfaz mínima de aplicación & 8 \\
+		Validación final y documentación del sprint & 6 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 2 – Resumen}
+\end{table}
 
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint2.png}
+	\caption{Informe de trabajo completado Sprint 2}
+	\label{fig:sprint2}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 2}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	\item \textbf{Definir alcance del sprint y crear historias.}  
+	Se concretaron los objetivos del sprint y se desglosaron en historias de usuario. 
+	
+	\item \textbf{Elegir framework servidor.}  
+	Tras evaluar distintas opciones, se seleccionó \textbf{Flask} como framework principal por su ligereza, modularidad y facilidad para integrar endpoints REST orientados al procesado de imágenes.
+	
+	\item \textbf{Elección librería para simulación de detecciones.}  
+	Para poder validar el flujo completo antes de integrar YOLO o MediaPipe reales, se creó una librería propia que genera detecciones simuladas (clases, cajas y confianza).
+	
+	\item \textbf{Configurar entorno de desarrollo y estructura base.}  
+	Se construyó una arquitectura inicial organizada en módulos y se configuró un servidor Flask estable listo para ampliaciones.
+	
+	\item \textbf{Probar funcionamiento del servidor.}  
+	Se verificó la ejecución del backend, comprobando rutas, carga de configuraciones, manejo de errores y logs. Esta fase permitió asegurar que el servidor respondía correctamente antes de construir los endpoints principales.
+	
+	\item \textbf{Desarrollar endpoint para subir imágenes.}  
+	Se creó un endpoint capaz de recibir imágenes vía POST, almacenarlas temporalmente y devolver su ruta accesible desde la interfaz.
+	
+	\item \textbf{Desarrollar endpoint para detección.}  
+	Se implementó un endpoint \texttt{/detect} que recibe la imagen subida y devuelve detecciones generadas mediante la librería simulada y posteriormente los endpoint para el procesado de imágenes con yolo y mediapipe aplicando patrón factory.
+	
+	\item \textbf{Crear interfaz mínima de aplicación.}  
+	Se desarrolló una pequeña UI con HTML y JavaScript para permitir al usuario subir imágenes, elegir un modelo disponible y visualizar el resultado generado.
+	
+	\item \textbf{Validación final y documentación del sprint.}  
+	Se revisaron todas las historias completadas, se generaron capturas de evidencia y se documentó el sprint.
+\end{itemize}
 
 
 
