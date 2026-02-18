@@ -56,6 +56,6 @@ class MediapipePoseTask(DetectionTask):
             "model": "mediapipe",
             "mode": "pose",
             "num_landmarks": len(landmarks),
-            #"landmarks": landmarks,
+            "landmarks": landmarks,
             "output_image": str(out_name),
         }
