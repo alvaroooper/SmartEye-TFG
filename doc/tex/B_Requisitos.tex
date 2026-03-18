@@ -6,9 +6,9 @@ Este apéndice recoge los requisitos y casos de uso del \textbf{Producto Mínimo
 \section{Objetivos generales}
 \begin{itemize}
 	\item Permitir el acceso de usuarios autenticados (Básico, Pro y Administrador) a una plataforma web.
-	\item Ofrecer un flujo completo: \textbf{seleccionar IA y modo} \textrightarrow\ \textbf{subir imagen} \textrightarrow\ \textbf{procesar} \textrightarrow\ \textbf{visualizar resultado} \textrightarrow\ \textbf{descargar}.
+	\item Ofrecer un flujo completo: \textbf{seleccionar Pipeline de IAs y modos} \textrightarrow\ \textbf{subir imagen} \textrightarrow\ \textbf{procesar} \textrightarrow\ \textbf{visualizar resultado} \textrightarrow\ \textbf{descargar}.
 	\item Aplicar control de acceso en servidor según el plan (Básico/Pro) y rol (Administrador).
-	\item Garantizar que las imágenes y resultados sean \textbf{temporales} y no se conserve historial.
+	\item Garantizar que las imágenes y resultados sean \textbf{temporales}.
 	\item Disponer de un despliegue reproducible para que la aplicación esté operativa (demo).
 \end{itemize}
 
@@ -22,37 +22,38 @@ La aplicación debe permitir registrar, iniciar sesión y cerrar sesión para ac
 	\item RF-MVP-1.1 Registro de usuario.
 	\item RF-MVP-1.2 Inicio de sesión.
 	\item RF-MVP-1.3 Cierre de sesión.
+	\item RF-MVP-1.4 Modificar datos de cuenta.
 \end{itemize}
 
 \textbf{RF-MVP-2 Roles y planes (Básico, Pro, Administrador)}\\
 La aplicación debe distinguir los tres tipos de usuario y aplicar permisos en servidor.
 \begin{itemize}
 	\item RF-MVP-2.1 Rol Administrador con acceso a panel de gestión.
-	\item RF-MVP-2.2 Plan Básico: acceso únicamente a IAs activas para ese usuario (simulado o preconfigurado en MVP).
+	\item RF-MVP-2.2 Plan Básico: acceso únicamente a IAs activas para ese usuario.
 	\item RF-MVP-2.3 Plan Pro: acceso a todas las IAs disponibles.
 	\item RF-MVP-2.4 Visualización del plan actual (Básico/Pro) y estado.
 \end{itemize}
 
 \textbf{RF-MVP-3 Catálogo de IAs y modos (según permisos)}\\
-La aplicación debe mostrar y permitir seleccionar únicamente IAs y modos permitidos.
+La aplicación debe mostrar y permitir seleccionar únicamente pipelines con IAs y modos permitidos.
 \begin{itemize}
-	\item RF-MVP-3.1 Catálogo general de IAs disponibles en el sistema.
+	\item RF-MVP-3.1 Catálogo general de pipelines de IAs disponibles en el sistema.
 	\item RF-MVP-3.2 Modos asociados a cada IA.
 	\item RF-MVP-3.3 Filtrado del catálogo por plan/rol en la interfaz.
 \end{itemize}
 
-\textbf{RF-MVP-4 Subida puntual de imagen (sin historial)}\\
-La aplicación debe permitir subir una imagen para procesarla sin persistencia como historial.
+\textbf{RF-MVP-4 Subida puntual de imagen}\\
+La aplicación debe permitir subir una imagen para procesarla sin persistencia.
 \begin{itemize}
 	\item RF-MVP-4.1 Subir imagen desde el panel de análisis.
 	\item RF-MVP-4.2 Validación básica (tipo y tamaño máximo).
-	\item RF-MVP-4.3 Uso temporal y eliminación automática tras el procesamiento (o por tiempo máximo).
+	\item RF-MVP-4.3 Uso temporal y eliminación automática tras el procesamiento.
 \end{itemize}
 
 \textbf{RF-MVP-5 Procesamiento con IA, visualización y descarga}\\
 La aplicación debe ejecutar el análisis con la IA seleccionada y permitir descargar el resultado.
 \begin{itemize}
-	\item RF-MVP-5.1 Selección de IA y modo.
+	\item RF-MVP-5.1 Selección de pipeline (IAs y modos).
 	\item RF-MVP-5.2 Ejecución del procesamiento.
 	\item RF-MVP-5.3 Mostrar imagen procesada como resultado principal.
 	\item RF-MVP-5.4 Mostrar JSON del análisis como resultado secundario.
@@ -62,7 +63,7 @@ La aplicación debe ejecutar el análisis con la IA seleccionada y permitir desc
 \textbf{RF-MVP-6 Restricciones y manejo de errores}\\
 La aplicación debe impedir acciones no permitidas y mostrar mensajes claros.
 \begin{itemize}
-	\item RF-MVP-6.1 Impedir ejecutar IAs no permitidas (Básico sin acceso).
+	\item RF-MVP-6.1 Impedir ejecutar IAs no permitidas.
 	\item RF-MVP-6.2 Impedir procesar si no hay sesión iniciada.
 	\item RF-MVP-6.3 Error de imagen inválida: informar y no procesar.
 	\item RF-MVP-6.4 Error interno: informar sin detalles técnicos.
@@ -71,7 +72,7 @@ La aplicación debe impedir acciones no permitidas y mostrar mensajes claros.
 \textbf{RF-MVP-7 Interfaz web del flujo principal}\\
 La aplicación debe disponer de una interfaz web centrada en el flujo del MVP.
 \begin{itemize}
-	\item RF-MVP-7.1 Pantallas: registro, login, panel de análisis, resultado y descarga.
+	\item RF-MVP-7.1 Pantallas: registro, login, ajustes, panel de análisis, resultado y descarga.
 	\item RF-MVP-7.2 Selectores dinámicos: modos cambian según IA.
 \end{itemize}
 
@@ -117,7 +118,7 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{CU-MVP-1} & \textbf{Registrarse}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
 		\textbf{Requisitos asociados} & RF-MVP-1.1 \\
 		\textbf{Descripción} & Creación de una cuenta para acceder a la aplicación. \\
 		\textbf{Precondición} & El usuario no dispone de cuenta. \\
@@ -146,7 +147,7 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{CU-MVP-2} & \textbf{Iniciar sesión}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
 		\textbf{Requisitos asociados} & RF-MVP-1.2, RF-MVP-6.2 \\
 		\textbf{Descripción} & Acceso del usuario a la aplicación con sus credenciales. \\
 		\textbf{Precondición} & Cuenta creada. \\
@@ -174,7 +175,7 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{CU-MVP-3} & \textbf{Cerrar sesión}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
 		\textbf{Requisitos asociados} & RF-MVP-1.3 \\
 		\textbf{Descripción} & Salida del usuario del sistema. \\
 		\textbf{Precondición} & Sesión iniciada. \\
@@ -198,12 +199,42 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 	\centering
 	\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
 		\toprule
-		\textbf{CU-MVP-4} & \textbf{Ver catálogo permitido de IAs}\\
+		\textbf{CU-MVP-4} & \textbf{Modificar datos usuario.}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
+		\textbf{Requisitos asociados} & RF-MVP-1.4 \\
+		\textbf{Descripción} & El usuario debe poder visualizar y cambiar sus datos. \\
+		\textbf{Precondición} & Sesión iniciada. \\
+		\textbf{Acciones} &
+		\begin{enumerate}
+			\def\labelenumi{\arabic{enumi}.}
+			\tightlist
+			\item El usuario pulsa ajustes.
+			\item El sistema redirige a la página de ajustes de dicho usuario.
+			\item El usuario ve sus datos.
+			\item El usuario selecciona campo a cambiar.
+			\item El sistema realiza el cambio.
+			\item El usuario ve el cambio realizado.
+		\end{enumerate}\\
+		\textbf{Postcondición} & Datos modificados. \\
+		\textbf{Excepciones} & Cambiar contraseña pide la actual. \\
+		\textbf{Importancia} & Baja \\
+		\bottomrule
+	\end{tabularx}
+	\caption{CU-MVP-4 Modificar datos usuario.}
+\end{table}
+
+\begin{table}[p]
+	\centering
+	\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
+		\toprule
+		\textbf{CU-MVP-5} & \textbf{Ver catálogo permitido de IAs}\\
+		\toprule
+		\textbf{Versión} & 1.0 \\
+		\textbf{Actor} &  Sistema\\
 		\textbf{Requisitos asociados} & RF-MVP-2.2, RF-MVP-2.3, RF-MVP-3.1, RF-MVP-3.2, RF-MVP-3.3 \\
-		\textbf{Descripción} & Muestra al usuario solo las IAs y modos a los que tiene acceso según su plan. \\
+		\textbf{Descripción} & Muestra al usuario sólo los pipelines de las IAs y modos a los que tiene acceso según su plan. \\
 		\textbf{Precondición} & Sesión iniciada. \\
 		\textbf{Acciones} &
 		\begin{enumerate}
@@ -218,17 +249,17 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{Importancia} & Muy alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-MVP-4 Ver catálogo permitido de IAs.}
+	\caption{CU-MVP-5 Ver catálogo permitido de IAs.}
 \end{table}
 
 \begin{table}[p]
 	\centering
 	\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
 		\toprule
-		\textbf{CU-MVP-5} & \textbf{Subir imagen y procesar con IA}\\
+		\textbf{CU-MVP-6} & \textbf{Subir imagen y procesar con IA}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
 		\textbf{Requisitos asociados} & RF-MVP-4.1, RF-MVP-4.2, RF-MVP-4.3, RF-MVP-5.1, RF-MVP-5.2, RF-MVP-5.3, RF-MVP-5.4, RF-MVP-6.1, RF-MVP-6.3, RF-MVP-6.4 \\
 		\textbf{Descripción} & Flujo principal: subir imagen, elegir IA y modo, procesar y ver resultado sin historial. \\
 		\textbf{Precondición} & Sesión iniciada y acceso vigente a la IA seleccionada. \\
@@ -237,8 +268,8 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 			\def\labelenumi{\arabic{enumi}.}
 			\tightlist
 			\item El usuario accede al panel de análisis.
-			\item Selecciona una imagen del dispositivo.
-			\item Selecciona IA y modo disponibles.
+			\item Adjunta una imagen del dispositivo.
+			\item Selecciona pipeline con IAs y modos disponibles.
 			\item Pulsa \textit{Analizar}.
 			\item El sistema valida tipo y tamaño de la imagen.
 			\item El sistema valida permisos (plan/rol) para la IA seleccionada.
@@ -251,17 +282,17 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{Importancia} & Muy alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-MVP-5 Subir imagen y procesar con IA.}
+	\caption{CU-MVP-6 Subir imagen y procesar con IA.}
 \end{table}
 
 \begin{table}[p]
 	\centering
 	\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
 		\toprule
-		\textbf{CU-MVP-6} & \textbf{Descargar resultado procesado}\\
+		\textbf{CU-MVP-7} & \textbf{Descargar resultado procesado}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
 		\textbf{Requisitos asociados} & RF-MVP-5.5 \\
 		\textbf{Descripción} & Permite descargar la imagen procesada obtenida en la ejecución actual. \\
 		\textbf{Precondición} & Haber completado un procesamiento con resultado disponible. \\
@@ -277,17 +308,17 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{Importancia} & Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-MVP-6 Descargar resultado procesado.}
+	\caption{CU-MVP-7 Descargar resultado procesado.}
 \end{table}
 
 \begin{table}[p]
 	\centering
 	\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
 		\toprule
-		\textbf{CU-MVP-7} & \textbf{Eliminar temporales automáticamente}\\
+		\textbf{CU-MVP-8} & \textbf{Eliminar temporales automáticamente}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Sistema\\
 		\textbf{Requisitos asociados} & RF-MVP-4.3 \\
 		\textbf{Descripción} & El sistema elimina automáticamente ficheros temporales de subida y resultado para no crear historial. \\
 		\textbf{Precondición} & Haber existido una ejecución o haber pasado el tiempo máximo configurado. \\
@@ -304,17 +335,17 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{Importancia} & Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-MVP-7 Eliminar temporales automáticamente.}
+	\caption{CU-MVP-8 Eliminar temporales automáticamente.}
 \end{table}
 
 \begin{table}[p]
 	\centering
 	\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
 		\toprule
-		\textbf{CU-MVP-8} & \textbf{Acceder al panel de administración}\\
+		\textbf{CU-MVP-9} & \textbf{Acceder al panel de administración}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
 		\textbf{Requisitos asociados} & RF-MVP-2.1, RF-MVP-9.1, RF-MVP-9.2 \\
 		\textbf{Descripción} & Acceso del administrador a funciones mínimas de soporte. \\
 		\textbf{Precondición} & Sesión iniciada como Administrador. \\
@@ -331,17 +362,17 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{Importancia} & Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-MVP-8 Acceder al panel de administración.}
+	\caption{CU-MVP-9 Acceder al panel de administración.}
 \end{table}
 
 \begin{table}[p]
 	\centering
 	\begin{tabularx}{\linewidth}{ p{0.21\columnwidth} p{0.71\columnwidth} }
 		\toprule
-		\textbf{CU-MVP-9} & \textbf{Comprobar salud del sistema}\\
+		\textbf{CU-MVP-10} & \textbf{Comprobar salud del sistema}\\
 		\toprule
 		\textbf{Versión} & 1.0 \\
-		\textbf{Autor} & Alumno \\
+		\textbf{Actor} &  Usuario\\
 		\textbf{Requisitos asociados} & RF-MVP-8.1 \\
 		\textbf{Descripción} & Permite comprobar que el servidor está operativo mediante un endpoint de salud. \\
 		\textbf{Precondición} & Servidor en ejecución. \\
@@ -357,5 +388,5 @@ Ejecución reproducible (local o servidor) con configuración centralizada y dep
 		\textbf{Importancia} & Media Alta \\
 		\bottomrule
 	\end{tabularx}
-	\caption{CU-MVP-9 Comprobar salud del sistema.}
+	\caption{CU-MVP-10 Comprobar salud del sistema.}
 \end{table}
