@@ -269,6 +269,7 @@ CREATE TABLE `SUSCRIPCION_PLAN` (
   `id_suscripcion` int(11) NOT NULL AUTO_INCREMENT,
   `id_usuario` int(11) NOT NULL,
   `id_plan` int(11) NOT NULL,
+  `fecha_compra` datetime NOT NULL DEFAULT current_timestamp(),
   `fecha_inicio` datetime NOT NULL DEFAULT current_timestamp(),
   `fecha_fin` datetime DEFAULT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT 1,
@@ -437,4 +438,4 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-03-28 17:54:54
+-- Dump completed on 2026-03-28 20:45:01
