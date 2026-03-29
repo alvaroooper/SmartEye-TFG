@@ -5,3 +5,354 @@ Debe incluir desde la exposición del ciclo de vida utilizado, hasta los detalle
 Se busca que no sea una mera operación de copiar y pegar diagramas y extractos del código fuente, sino que realmente se justifiquen los caminos de solución que se han tomado, especialmente aquellos que no sean triviales.
 Puede ser el lugar más adecuado para documentar los aspectos más interesantes del diseño y de la implementación, con un mayor hincapié en aspectos tales como el tipo de arquitectura elegido, los índices de las tablas de la base de datos, normalización y desnormalización, distribución en ficheros3, reglas de negocio dentro de las bases de datos (EDVHV GH GDWRV DFWLYDV), aspectos de desarrollo relacionados con el WWW...
 Este apartado, debe convertirse en el resumen de la experiencia práctica del proyecto, y por sí mismo justifica que la memoria se convierta en un documento útil, fuente de referencia para los autores, los tutores y futuros alumnos.
+
+
+
+Este capítulo recoge los aspectos más relevantes del desarrollo del TFG, no sólo desde el punto de vista técnico, sino también desde la lógica que ha guiado las decisiones adoptadas a lo largo del proyecto. No se persigue realizar una mera descripción de tecnologías ni una cronología de tareas, sino exponer cómo ha evolucionado el trabajo, por qué se eligieron determinados caminos de solución y de qué forma cada fase ha condicionado la siguiente.
+
+El desarrollo ha pasado por dos grandes etapas. La primera estuvo orientada a la construcción de una demo funcional con la que validar la viabilidad técnica del procesamiento de imágenes mediante modelos de inteligencia artificial. La segunda, ya centrada en la aplicación real, ha consistido en formalizar los requisitos del sistema, delimitar un producto mínimo viable, diseñar el modelo de datos, adaptar el entorno de desarrollo a Linux e iniciar la implementación de la base de datos sobre MariaDB.
+
+Esta evolución resulta especialmente significativa porque muestra un proceso de trabajo razonado. Primero se verificó que la idea podía materializarse técnicamente; después, se abordó su transformación en una aplicación completa, con estructura, persistencia, reglas de negocio y una base sólida para futuras ampliaciones.
+
+\section{Enfoque general y ciclo de vida}
+
+El proyecto se ha desarrollado siguiendo un enfoque \textbf{iterativo e incremental}, priorizando la validación temprana de riesgos técnicos y la construcción progresiva de una base estable para la aplicación final. En lugar de comenzar directamente con una implementación completa, se optó por construir primero una demo que permitiera:
+
+\begin{itemize}
+	\item Confirmar que la ejecución de modelos de visión por computador era viable en el entorno previsto.
+	\item Verificar el flujo completo de trabajo, desde la subida de la imagen hasta la obtención del resultado.
+	\item Detectar de forma temprana problemas habituales relacionados con rutas, dependencias, formatos de entrada y salida o gestión de ficheros generados.
+	\item Establecer una estructura inicial del proyecto que pudiera crecer sin requerir reescrituras profundas desde las primeras iteraciones.
+\end{itemize}
+
+Este planteamiento permitió reducir incertidumbre en las fases iniciales y tomar decisiones posteriores con una base empírica. La demo no se concibió como una versión reducida del producto final, sino como un entorno de validación técnica. Una vez comprobado el funcionamiento del flujo principal, el proyecto pasó a una fase distinta, más centrada en el análisis, el diseño y la preparación de la aplicación real.
+
+En consecuencia, el ciclo de vida no ha sido lineal, sino progresivo. Cada etapa ha cumplido una función concreta: primero, aprender y validar; después, formalizar y estructurar; finalmente, preparar una implementación alineada con el alcance real del sistema.
+
+\section{Planteamiento inicial del problema}
+
+El objetivo general del TFG es desarrollar una aplicación web capaz de actuar como servidor para ejecutar algoritmos o modelos de inteligencia artificial sobre imágenes, devolviendo tanto resultados estructurados como evidencias visuales del procesamiento realizado. Desde el inicio se definieron varios principios que han guiado el desarrollo del proyecto y que siguen presentes en la evolución hacia la aplicación final.
+
+\begin{itemize}
+	\item \textbf{Resultado visual como salida principal}. Además de la información estructurada en formato JSON, la salida más relevante para la validación del sistema es la imagen procesada y anotada.
+	\item \textbf{Extensibilidad}. El sistema debe permitir incorporar nuevos modelos y nuevos modos de ejecución sin obligar a replantear su núcleo.
+	\item \textbf{Separación de responsabilidades}. Debe diferenciarse claramente la API orientada a integración y pruebas de la interfaz web destinada a demostración y uso interactivo.
+	\item \textbf{Evolución hacia pipelines}. La arquitectura debe dejar abierta la posibilidad de encadenar distintas etapas de procesamiento, de modo que la salida de una pueda alimentar a la siguiente.
+\end{itemize}
+
+Desde una perspectiva más amplia, el problema no se reducía a ejecutar un modelo de IA sobre una imagen. También era necesario plantear una solución capaz de evolucionar hacia un producto con control de acceso, diferenciación por planes, gestión de catálogo de IAs, trazabilidad de ejecuciones y una base de datos que reflejase correctamente las reglas de negocio del sistema.
+
+\section{Elección tecnológica: Flask y ecosistema Python}
+
+Para el backend se optó por \textbf{Python} y \textbf{Flask}. La elección de Python resultaba especialmente adecuada por su amplia implantación en ámbitos de visión por computador e inteligencia artificial, así como por la madurez de su ecosistema para manipulación de imágenes, inferencia y tratamiento de datos.
+
+Por su parte, Flask se eligió por su ligereza y flexibilidad. En una primera fase del proyecto resultaba importante trabajar con una herramienta que permitiera construir una API funcional con rapidez, sin imponer una estructura excesivamente rígida. Esta característica lo hacía especialmente apropiado para una etapa de experimentación y validación, en la que convenía comprobar flujos reales antes de consolidar la organización interna del sistema. Al mismo tiempo, Flask permite evolucionar hacia una estructura más modular mediante rutas organizadas, servicios diferenciados y separación entre la lógica HTTP y la lógica de negocio.
+
+Además, el ecosistema de Python permitió integrar de forma directa varias herramientas esenciales para el proyecto:
+
+\begin{itemize}
+	\item \textbf{OpenCV (cv2)} y \textbf{NumPy} para la carga, decodificación, manipulación y almacenamiento de imágenes.
+	\item Librerías y modelos de visión por computador con documentación abundante y uso extendido.
+	\item Un entorno suficientemente flexible para evolucionar hacia una aplicación web real con persistencia, autenticación y control de acceso.
+\end{itemize}
+
+La combinación de Flask con estas bibliotecas ofrecía, por tanto, un equilibrio adecuado entre rapidez de desarrollo, claridad arquitectónica y compatibilidad con las necesidades técnicas del proyecto.
+
+\section{Selección de IAs para la demo: por qué YOLO y MediaPipe}
+
+Para la demo inicial se eligieron dos familias de modelos complementarias: \textbf{YOLO} y \textbf{MediaPipe}. La selección respondió a la necesidad de validar distintos tipos de procesamiento sobre imágenes y de obtener salidas visuales lo suficientemente expresivas como para comprobar de manera inmediata el correcto funcionamiento del sistema.
+
+\subsection{YOLO: detección general de objetos}
+
+YOLO se seleccionó por ser uno de los modelos de detección de objetos más extendidos en la práctica. Su principal ventaja en el contexto de una demo es que produce una salida muy fácil de interpretar: cajas delimitadoras sobre los objetos detectados, acompañadas de una etiqueta y un nivel de confianza. Esto permitía verificar rápidamente tanto la correcta ejecución del modelo como la capacidad del sistema para generar una imagen anotada con valor demostrativo.
+
+Además, YOLO aportaba una validación útil desde el punto de vista funcional, ya que representa un tipo de análisis generalista aplicable a escenarios muy diversos. Su inclusión en la demo permitía mostrar que la aplicación no estaba restringida a un único caso de uso especialmente específico.
+
+\subsection{MediaPipe: detección de landmarks (pose y manos)}
+
+MediaPipe se incorporó porque aportaba una funcionalidad distinta y complementaria a la detección por cajas. Mientras que YOLO trabaja a nivel de objeto, MediaPipe permite operar con \textbf{landmarks}, es decir, con puntos clave anatómicos y sus conexiones sobre la imagen. Esta salida posee un alto valor visual y resulta muy útil para demostrar que el sistema puede manejar no sólo detecciones discretas, sino también estructuras geométricas más ricas.
+
+En la demo se trabajó concretamente con dos modos:
+
+\begin{itemize}
+	\item \textbf{Pose}. Detección de landmarks corporales y sus conexiones.
+	\item \textbf{Hands}. Detección de landmarks de manos y relaciones anatómicas.
+\end{itemize}
+
+La combinación de YOLO y MediaPipe permitió representar dos paradigmas frecuentes dentro de la visión por computador:
+
+\begin{itemize}
+	\item Detección a nivel de objeto.
+	\item Análisis a nivel de estructura o puntos clave.
+\end{itemize}
+
+De este modo, la demo no sólo validó que el sistema podía ejecutar modelos de IA, sino también que era capaz de integrar salidas de naturaleza distinta dentro de un mismo flujo de uso.
+
+\section{Construcción de la demo: objetivos y aprendizajes clave}
+
+\subsection{Motivación de la demo}
+
+Antes de iniciar la aplicación final, se desarrolló una demo con dos objetivos principales:
+
+\begin{enumerate}
+	\item \textbf{Entender el flujo técnico real}. Cómo recibe el servidor una imagen, cómo se transforma a una estructura adecuada para el modelo, cómo se procesan los resultados y cómo se generan evidencias visuales.
+	\item \textbf{Validar decisiones de arquitectura}. Comprobar que una organización basada en tareas por modelo y modo, junto con una factoría para seleccionarlas, constituía una base razonable para el crecimiento posterior.
+\end{enumerate}
+
+La demo no se concibió, por tanto, como una versión reducida de la aplicación definitiva, sino como un entorno de aprendizaje controlado. Su valor principal residía en reducir incertidumbre y permitir que las siguientes decisiones se apoyaran en problemas ya observados en la práctica.
+
+\subsection{Resultado de la demo (visión general)}
+
+En esta fase se consiguió implementar un flujo completo de extremo a extremo:
+
+\begin{itemize}
+	\item Subida de una imagen desde el cliente.
+	\item Ejecución del modelo seleccionado con el modo correspondiente.
+	\item Devolución de una salida estructurada con información básica del procesamiento.
+	\item Generación y almacenamiento de una imagen anotada en disco.
+\end{itemize}
+
+Este resultado permitió verificar varios aspectos esenciales: la viabilidad del procesamiento, el correcto funcionamiento de la comunicación cliente-servidor, la recuperación de la imagen generada desde la interfaz web y la posibilidad de integrar distintos modelos bajo una misma lógica de uso.
+
+Para documentar el funcionamiento de la demo, se incorporan a continuación varias capturas representativas de la interfaz y de los resultados obtenidos con los distintos modelos y modos implementados.
+
+En primer lugar, la Figura~\ref{fig:AppDemoMediapipe1.png} muestra el funcionamiento de MediaPipe en el modo \texttt{hands}. En este caso, la salida visual representa landmarks y conexiones anatómicas sobre las manos detectadas, lo que permite ilustrar de forma clara un análisis basado en puntos clave y no únicamente en detecciones por caja.
+
+\imagen{AppDemoMediapipe1.png}{Resultado de la ejecución de MediaPipe en modo \texttt{hands}, con representación de landmarks y conexiones sobre ambas manos detectadas.}{0.72}
+
+A continuación, la Figura~\ref{fig:AppDemoMediapipe2.png} presenta una ejecución de MediaPipe en el modo \texttt{pose}. Esta captura permite comprobar cómo la misma interfaz puede reutilizarse para distintos modelos y modos, manteniendo un flujo de uso homogéneo desde el punto de vista del usuario.
+
+\imagen{AppDemoMediapipe2.png}{Interfaz de la demo durante una ejecución de MediaPipe en modo \texttt{pose}, mostrando la imagen de entrada y los landmarks corporales detectados.}{0.72}
+
+La Figura~\ref{fig:AppDemoMediapipe3.png} recoge parte de la salida estructurada correspondiente al modo \texttt{pose}. En este caso, el sistema devuelve la información asociada a los landmarks detectados, incluyendo visibilidad, coordenadas y referencia a la imagen de salida anotada.
+
+\imagen{AppDemoMediapipe3.png}{Salida JSON generada por MediaPipe en modo \texttt{pose}, con información de landmarks, visibilidad y ruta de la imagen procesada.}{0.55}
+
+Una vez validado el comportamiento de MediaPipe, se incorporó también YOLO como modelo de detección general de objetos. La Figura~\ref{fig:AppDemoYolo1.png} muestra la interfaz de la demo tras seleccionar una imagen y ejecutar el modelo YOLO en su modo por defecto. Puede observarse tanto el formulario de entrada como la imagen anotada devuelta al usuario.
+
+\imagen{AppDemoYolo1.png}{Interfaz de la demo con ejecución del modelo YOLO en modo \texttt{default}, mostrando la imagen procesada con cajas delimitadoras sobre los objetos detectados.}{0.72}
+
+Por su parte, la Figura~\ref{fig:AppDemoYolo2.png} presenta el detalle de la salida estructurada generada para esa misma ejecución. En ella se aprecia la lista de detecciones, incluyendo etiquetas, niveles de confianza y coordenadas de las cajas asociadas a cada objeto identificado.
+
+\imagen{AppDemoYolo2.png}{Salida JSON asociada a la ejecución de YOLO, incluyendo detecciones, confianza, coordenadas y ruta de la imagen generada.}{0.55}
+
+\section{Decisiones de diseño relevantes en la demo}
+
+\subsection{Arquitectura basada en tareas y patrón factory}
+
+Uno de los aspectos más relevantes de la fase inicial fue estructurar la lógica de IA como un conjunto de tareas especializadas y una factoría central encargada de seleccionar cuál debía ejecutarse en cada caso.
+
+\begin{itemize}
+	\item Cada modelo dispone de un bloque de lógica propio que gestiona sus modos de funcionamiento.
+	\item La factoría global decide qué tarea devolver a partir de los parámetros recibidos, como el modelo y el modo seleccionados.
+\end{itemize}
+
+Esta decisión permitió evitar condicionales dispersos en las rutas del servidor y favoreció una organización más limpia y extensible. En lugar de mezclar la lógica de selección del modelo con la capa HTTP o con el tratamiento de imágenes, cada responsabilidad quedó separada. Esta estructura resultó especialmente útil porque anticipaba el crecimiento del proyecto: añadir un nuevo modo, o incluso un nuevo modelo, pasaba a ser una operación localizada y no una modificación repartida por todo el sistema.
+
+\subsection{Separación entre API REST e interfaz web}
+
+Durante el desarrollo se identificó muy pronto la conveniencia de separar claramente la parte orientada a integración de la parte orientada a interacción humana.
+
+\begin{itemize}
+	\item La \textbf{API REST}, bajo un prefijo específico, se reservó para pruebas, integración y consumo programático.
+	\item La \textbf{Interfaz web}, situada en la raíz de la aplicación, se mantuvo como punto de acceso visual y demostrativo.
+\end{itemize}
+
+Esta separación evitó mezclar respuestas JSON con renderizado HTML y facilitó mantener una lógica de servidor más ordenada. Además, resultó coherente con la evolución posterior del sistema, ya que la aplicación real deberá sostener tanto una capa de presentación como servicios internos claramente diferenciados.
+
+\subsection{Gestión de rutas y entrega de ficheros generados}
+
+Uno de los aprendizajes más significativos de la demo estuvo relacionado con la gestión de rutas y la entrega de imágenes generadas al navegador. Las tareas guardaban los resultados en un directorio de salida y, para hacerlos accesibles desde la interfaz, fue necesario resolver correctamente varios aspectos:
+
+\begin{itemize}
+	\item Creación de una ruta específica para servir los ficheros generados.
+	\item Gestión adecuada del directorio de trabajo y de la raíz real de la aplicación.
+	\item Tratamiento correcto de rutas relativas y absolutas.
+	\item Control de los separadores de ruta en distintos sistemas operativos.
+\end{itemize}
+
+Aunque pudiera parecer un detalle secundario, este punto fue decisivo para convertir una prueba local en una demo realmente utilizable. Además, permitió anticipar uno de los problemas que la aplicación final tendría que resolver con mayor formalidad: la gestión coherente de entradas, salidas y ficheros temporales en un entorno web.
+
+\subsection{Interfaz dinámica según modelos y modos disponibles}
+
+A medida que la demo incorporó distintos modelos y modos, se hizo evidente que una interfaz estática no escalaba adecuadamente. Por ello, se diseñó una interacción más dinámica entre frontend y backend:
+
+\begin{itemize}
+	\item El selector de modelos se rellena en función de la configuración disponible en el servidor.
+	\item El selector de modos depende del modelo elegido, evitando mostrar opciones no aplicables.
+\end{itemize}
+
+Esta decisión mejora la experiencia de uso y reduce el acoplamiento entre la interfaz y la lógica del servidor. Además, anticipa una necesidad propia de la aplicación real: que la interfaz refleje únicamente las opciones efectivamente disponibles y autorizadas en cada contexto.
+
+\section{Aspectos relevantes de implementación en la demo}
+
+\subsection{Representación de imágenes y compatibilidad con los modelos}
+
+Durante la demo se consolidó un flujo interno consistente para el tratamiento de imágenes:
+
+\begin{itemize}
+	\item Recepción de la imagen como parte de un formulario multipart.
+	\item Decodificación de los bytes a una matriz de \texttt{NumPy}.
+	\item Procesamiento mediante el modelo correspondiente.
+	\item Anotación directa sobre la propia imagen en memoria.
+	\item Almacenamiento del resultado procesado en disco.
+\end{itemize}
+
+La utilización de OpenCV y NumPy permitió homogeneizar la representación interna de la imagen, algo especialmente útil para conectar modelos distintos bajo una lógica común. Esta homogeneidad también resulta clave de cara a una futura evolución hacia pipelines, donde la salida de una etapa podrá transformarse en entrada de la siguiente.
+
+\subsection{Salida dual: JSON y evidencia visual}
+
+Se estableció una convención de salida que combina dos tipos de resultado:
+
+\begin{itemize}
+	\item Una respuesta JSON con información estructurada de alto nivel.
+	\item Una referencia a la imagen procesada generada.
+\end{itemize}
+
+Esta decisión posee un valor especial en un contexto académico y demostrativo. El JSON aporta trazabilidad, estructuración y posibilidades de integración, mientras que la imagen anotada proporciona una evidencia visual inmediata del resultado obtenido. La combinación de ambos elementos refuerza la capacidad de validación del sistema y facilita el análisis de su comportamiento.
+
+\section{Limitaciones conocidas de la demo y necesidad de evolución}
+
+La demo cumplió su objetivo principal: validar la viabilidad técnica del flujo de procesamiento y establecer una arquitectura inicial extensible. Sin embargo, seguía siendo un prototipo con limitaciones deliberadas.
+
+\begin{itemize}
+	\item \textbf{Persistencia reducida}. Los resultados se gestionaban como ficheros y rutas, sin un modelo de datos completo detrás.
+	\item \textbf{Ausencia de gestión de usuarios y permisos}. La demo no incorporaba roles, planes ni control de acceso.
+	\item \textbf{Trazabilidad limitada}. No existía aún un registro persistente y estructurado de ejecuciones, configuraciones y resultados.
+	\item \textbf{Ejecución aislada}. Cada tarea se ejecutaba de forma independiente, sin cadenas configurables de procesamiento.
+	\item \textbf{Robustez mejorable}. El tratamiento de errores, la validación de entradas y la organización general todavía debían evolucionar para acercarse a una aplicación real.
+\end{itemize}
+
+En definitiva, la demo actuó como un \textbf{escalón de aprendizaje y validación}. Su principal aportación no fue únicamente producir un prototipo funcional, sino permitir identificar qué decisiones podían mantenerse en la aplicación final y cuáles debían replantearse desde una perspectiva más amplia. A partir de este punto, el proyecto dejó de centrarse exclusivamente en demostrar la viabilidad técnica del procesamiento y pasó a abordarse como una aplicación completa.
+
+\section{De la demo a la aplicación real: cambio de enfoque}
+
+Una vez validada la viabilidad técnica mediante la demo, el proyecto entró en una nueva fase con un objetivo diferente. Hasta ese momento, el trabajo había estado orientado sobre todo a comprobar que era posible recibir una imagen, procesarla con distintos modelos y devolver una salida útil. Sin embargo, demostrar que algo funciona no equivale todavía a disponer de una aplicación completa, coherente y preparada para evolucionar.
+
+Por ello, se decidió no seguir ampliando la demo de forma improvisada, sino iniciar la construcción de la aplicación real a partir de un proceso más formal de análisis y diseño. Esta transición constituye uno de los hitos principales del proyecto, ya que supone pasar de un prototipo técnico a un sistema software definido desde las necesidades del producto, las restricciones del dominio y los criterios de crecimiento futuro.
+
+La demo había permitido responder a una primera cuestión: si el procesamiento de imágenes mediante IA era viable dentro del proyecto. La nueva fase debía responder a otra diferente: cómo convertir esa viabilidad en una aplicación mantenible, ampliable y alineada con los objetivos reales del TFG.
+
+\section{Análisis de requisitos de la aplicación completa}
+
+El primer paso de esta nueva etapa consistió en definir los \textbf{requisitos funcionales}, los \textbf{requisitos no funcionales} y los \textbf{casos de uso} de la aplicación completa. Esta decisión resultó especialmente importante, ya que permitió comenzar la aplicación real desde una visión global del sistema y no desde un conjunto disperso de funcionalidades aisladas.
+
+Se optó por describir primero el sistema completo porque diseñar directamente a partir del MVP habría implicado un riesgo considerable: construir una solución válida a corto plazo, pero débil desde el punto de vista estructural. En cambio, partir de una visión global permitió identificar desde el principio los elementos esenciales del dominio, aunque algunos de ellos no fueran a implementarse por completo en la primera iteración.
+
+Entre los aspectos definidos en esta fase destacan:
+
+\begin{itemize}
+	\item La existencia de distintos tipos de usuario y roles dentro del sistema.
+	\item La diferenciación entre planes de acceso y permisos efectivos sobre los recursos.
+	\item La gestión del catálogo de modelos de IA y de sus distintos modos de ejecución.
+	\item La necesidad de registrar ejecuciones y resultados de forma estructurada.
+	\item La previsión de pipelines como evolución natural del sistema.
+	\item La necesidad de incorporar funciones de administración y mantenimiento.
+\end{itemize}
+
+Desde el punto de vista funcional, esta fase permitió concretar capacidades como la autenticación, el control de acceso, la selección de modelos y modos disponibles, la ejecución de inferencias, la gestión de resultados y la administración del catálogo. Desde el punto de vista no funcional, ayudó a fijar criterios de modularidad, extensibilidad, mantenibilidad, seguridad, robustez y cercanía a un futuro despliegue real.
+
+Por tanto, esta fase de análisis no constituyó un mero trámite documental, sino una base necesaria para que el resto del desarrollo tuviera coherencia interna.
+
+\section{Del sistema completo al producto mínimo viable}
+
+Una vez establecida la visión global, el siguiente paso fue derivar de ella el \textbf{producto mínimo viable (MVP)}. Esta forma de proceder resultó especialmente útil porque el MVP no se definió como un conjunto arbitrario de funcionalidades mínimas, sino como un subconjunto coherente del sistema final.
+
+El valor del MVP, en este contexto, no residía simplemente en hacer una versión más pequeña, sino en seleccionar aquellas capacidades imprescindibles para demostrar el funcionamiento del núcleo del producto. En este proyecto, ello implicaba poder recorrer el flujo principal de valor de la aplicación: acceso al sistema, selección de una IA autorizada, envío de una imagen, ejecución del procesamiento y obtención del resultado.
+
+De este modo, el MVP se concibió como la primera versión útil de la aplicación real y no como una demo independiente. Esta decisión aportó varias ventajas:
+
+\begin{itemize}
+	\item Evitó sobredimensionar la primera implementación de la aplicación.
+	\item Permitió conservar coherencia con la arquitectura prevista a medio plazo.
+	\item Redujo retrabajos posteriores.
+	\item Facilitó que el diseño de datos y la organización de la lógica no tuvieran que rehacerse al crecer el sistema.
+\end{itemize}
+
+La definición del MVP a partir del sistema completo fue, por tanto, una decisión de diseño relevante. Gracias a ella, la primera iteración de la aplicación real pudo centrarse en lo esencial sin perder coherencia con el alcance general del proyecto.
+
+\section{De los casos de uso al diseño de datos}
+
+Una vez definidos los requisitos y los casos de uso, el trabajo avanzó hacia el diseño de la persistencia. Esta transición fue natural, ya que los casos de uso permitían identificar qué información debía existir en el sistema, qué relaciones unían a las distintas entidades y qué restricciones debían preservarse para mantener la coherencia del dominio.
+
+A partir de este análisis se elaboraron, en primer lugar, el \textbf{diagrama Entidad-Relación} y, posteriormente, el \textbf{modelo relacional}. Su construcción no se abordó como un ejercicio meramente académico, sino como un paso necesario para traducir el comportamiento esperado de la aplicación a una estructura de datos robusta.
+
+En esta fase el proyecto dejó de apoyarse exclusivamente en el procesamiento puntual de imágenes para incorporar una dimensión claramente orientada a producto. El sistema pasó a necesitar representar entidades como usuarios, roles, planes, suscripciones, modelos IA, modos, pipelines y ejecuciones. Es decir, ya no bastaba con que el procesamiento funcionara; era necesario que la lógica de acceso, configuración y trazabilidad quedara recogida en un modelo persistente coherente.
+
+\subsection{Criterios seguidos en el modelado}
+
+Durante la elaboración de los diagramas se siguieron varios criterios de diseño especialmente relevantes:
+
+\begin{itemize}
+	\item \textbf{Separación clara de conceptos}. Cada tabla debía representar una entidad o relación con significado propio, evitando mezclar información heterogénea.
+	\item \textbf{Reducción de redundancia}. Se procuró minimizar duplicidades que pudieran generar inconsistencias, especialmente en todo lo relativo a permisos, tipos de plan y catálogo de IAs.
+	\item \textbf{Preparación para el crecimiento}. Aunque el MVP no incorpora toda la funcionalidad futura, el modelo se diseñó teniendo en cuenta la incorporación de nuevas IAs, nuevos modos y futuras cadenas de procesamiento.
+	\item \textbf{Trazabilidad}. Se concedió importancia a conservar información histórica relevante, especialmente en las ejecuciones y en su relación con configuraciones activas en cada momento.
+	\item \textbf{Integridad de negocio}. El diseño se apoyó en claves primarias, claves foráneas, restricciones de unicidad y otras limitaciones que trasladan parte de las reglas del dominio al propio esquema de datos.
+\end{itemize}
+
+Este proceso permitió además aclarar varios conceptos que, aunque próximos entre sí, debían mantenerse separados para conservar la flexibilidad del sistema. Por ejemplo, un usuario no es equivalente a su plan, una IA no es lo mismo que uno de sus modos, y una ejecución concreta debe poder conservarse incluso aunque determinados elementos configurables del sistema cambien con el tiempo.
+
+\subsection{Valor del diagrama E-R y del modelo relacional}
+
+La utilidad de estos diagramas fue doble. Por un lado, actuaron como documentación de diseño. Por otro, sirvieron como herramienta de depuración conceptual, ya que obligaron a concretar relaciones, cardinalidades y dependencias antes de llegar al nivel de SQL o de implementación.
+
+Disponer del modelo relacional previamente definido facilitó notablemente la fase posterior de implementación en MariaDB. En lugar de crear tablas de forma improvisada conforme surgían necesidades puntuales, se partió de un esquema global ya razonado, lo que mejoró la consistencia entre análisis, diseño e implementación.
+
+\section{Migración del entorno de desarrollo a Debian}
+
+Una vez estabilizado el diseño lógico del sistema, se tomó otra decisión relevante en el desarrollo del proyecto: la migración del entorno de trabajo a \textbf{Linux, concretamente Debian}. Esta elección no respondió a una preferencia casual, sino a razones técnicas relacionadas con la propia naturaleza del proyecto y con su posible despliegue posterior.
+
+Durante la fase de demo se detectaron varios aspectos del entorno que condicionaban el trabajo diario: diferencias en el tratamiento de rutas, dependencia del sistema operativo, gestión desigual de permisos y cierta distancia entre el entorno local de desarrollo y el tipo de plataforma sobre la que previsiblemente se ejecutará la aplicación en un escenario real. Ante esta situación, resultaba coherente trasladar el desarrollo a un sistema más cercano al destino natural de una aplicación web de estas características.
+
+\subsection{Justificación técnica del cambio}
+
+La elección de Debian se apoyó en varios motivos principales.
+
+En primer lugar, \textbf{la cercanía al entorno de despliegue}. La mayor parte de los servidores donde se alojan aplicaciones web y bases de datos trabajan sobre distribuciones Linux o entornos equivalentes. Desarrollar directamente sobre Debian reduce la distancia entre desarrollo y producción y disminuye la probabilidad de encontrar problemas tardíos derivados del sistema operativo.
+
+En segundo lugar, \textbf{la naturalidad con la que encajan en Linux las tecnologías utilizadas}. Python, Flask, MariaDB y la mayor parte de utilidades de backend, administración y automatización se integran de forma especialmente cómoda en este entorno. Esto simplifica la instalación de herramientas, la configuración de servicios y la organización del proyecto.
+
+En tercer lugar, \textbf{la consistencia en el tratamiento de rutas, permisos y procesos}. Una aplicación que debe gestionar ficheros temporales, imágenes generadas y servicios de backend se beneficia de un entorno donde estos aspectos se comportan de forma predecible y cercana a la realidad del servidor final. El modelo de permisos y la organización del sistema de ficheros de Linux resultan especialmente apropiados en este contexto.
+
+En cuarto lugar, \textbf{la facilidad de automatización y administración}. Debian permite trabajar con comodidad mediante scripts, variables de entorno, herramientas de consola y servicios del sistema. Esta capacidad resulta útil no sólo durante el desarrollo, sino también de cara a futuras fases de despliegue, monitorización o integración continua.
+
+Por último, también se valoró la \textbf{estabilidad del sistema}. Debian es una distribución ampliamente utilizada en entornos de servidor por su robustez, su madurez y su equilibrio entre estabilidad y compatibilidad. En un proyecto académico en el que se busca justificar técnicamente las decisiones adoptadas, esta elección resulta especialmente sólida.
+
+\subsection{Ventajas concretas para el proyecto}
+
+En el contexto de este TFG, el paso a Debian aportó beneficios claros:
+
+\begin{itemize}
+	\item Un entorno más adecuado para desarrollar servicios web y bases de datos.
+	\item Una gestión más natural de dependencias, permisos y rutas.
+	\item Mayor cercanía a escenarios reales de despliegue.
+	\item Mejor preparación para herramientas habituales de backend y administración.
+	\item Menor fricción al integrar tecnologías que, por su naturaleza, suelen ejecutarse sobre Linux.
+\end{itemize}
+
+Por tanto, la migración a Debian debe entenderse como una decisión de ingeniería orientada a mejorar la coherencia del proyecto y no como un cambio accesorio dentro del proceso.
+
+\section{Implementación de la base de datos en MariaDB}
+
+Con el modelo conceptual y relacional ya definidos, y una vez consolidado el nuevo entorno de desarrollo en Debian, se procedió a la implementación de la base de datos en \textbf{MariaDB}. Esta fase supuso el paso desde el diseño abstracto a una persistencia real y operativa sobre la que podrá apoyarse la lógica de la aplicación.
+
+La elección de MariaDB resultó adecuada por varios motivos. En primer lugar, se trata de un sistema gestor maduro, ampliamente utilizado y plenamente válido para una aplicación web de estas características. En segundo lugar, su integración en entornos Linux es muy natural, lo que reforzaba la coherencia del cambio de sistema operativo realizado previamente. Además, proporciona soporte suficiente para modelar correctamente las relaciones del sistema mediante claves foráneas, restricciones, índices y comportamiento transaccional.
+
+La implementación del esquema no consistió únicamente en traducir entidades a tablas. Fue también el momento de trasladar al nivel físico varias decisiones adoptadas durante el diseño:
+
+\begin{itemize}
+	\item Definición de claves primarias para garantizar una identificación inequívoca.
+	\item Creación de restricciones \texttt{UNIQUE} para impedir duplicidades indebidas.
+	\item Establecimiento de claves foráneas que reflejan las relaciones del dominio.
+	\item Incorporación de valores por defecto y restricciones que ayudan a preservar la coherencia de estados y fechas.
+	\item Selección de un motor transaccional adecuado para mantener la integridad de las operaciones.
+\end{itemize}
+
+Desde el punto de vista del proyecto, esta fase fue especialmente significativa porque permitió materializar por primera vez la estructura persistente de la aplicación real. A partir de aquí, el sistema deja de depender únicamente de la lógica de procesamiento heredada de la demo y comienza a disponer de una base sólida para gestionar usuarios, permisos, configuraciones y ejecuciones de forma consistente.
+
+Además, la base de datos no se planteó únicamente como un repositorio de información, sino como un elemento capaz de reflejar correctamente el comportamiento del sistema. Esto llevó a prestar especial atención a decisiones como la separación entre catálogo y uso real, la preservación de la trazabilidad y el tratamiento cuidadoso de determinadas relaciones para no comprometer información histórica relevante.
+
+\section{Transición hacia las siguientes fases del desarrollo}
+
+Con la definición de requisitos, la delimitación del MVP, el diseño del modelo de datos, la migración del entorno a Debian y la implementación inicial de la base de datos en MariaDB, el proyecto deja atrás la etapa centrada exclusivamente en la validación técnica de la demo y pasa a apoyarse en una base más sólida para el desarrollo de la aplicación real. A partir de este punto, las siguientes iteraciones se orientarán a incorporar de forma progresiva los distintos componentes funcionales del sistema, manteniendo la coherencia con las decisiones de análisis y diseño adoptadas en esta fase.
