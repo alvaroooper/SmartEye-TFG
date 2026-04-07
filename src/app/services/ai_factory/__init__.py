@@ -1,5 +1,5 @@
 from .yolo.launcher import YoloLauncher
-from .mediapipe.launcher import MediaPipeLauncher
+from .mediapipe_modelo.launcher import MediaPipeLauncher
 
 class AIFactory:
     @staticmethod
