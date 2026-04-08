@@ -1,5 +1,6 @@
 from . import db
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Tabla intermedia para la relación N:M entre USUARIO y ROL
 usuario_rol = db.Table('USUARIO_ROL',
@@ -19,8 +20,19 @@ class Usuario(db.Model):
     actualizado_en = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     borrado_en = db.Column(db.DateTime, nullable=True)
 
+    # Relaciones
     roles = db.relationship('Rol', secondary=usuario_rol, backref=db.backref('usuarios', lazy='dynamic'))
     pipelines = db.relationship('Pipeline', backref='propietario', lazy=True)
+    suscripciones = db.relationship('SuscripcionPlan', backref='usuario_obj', lazy=True)
+
+    # --- MÉTODOS DE SEGURIDAD ---
+    def set_password(self, password_plana):
+        """Convierte la contraseña en texto plano a un hash indescifrable y lo guarda"""
+        self.password_hash = generate_password_hash(password_plana)
+
+    def check_password(self, password_plana):
+        """Compara la contraseña plana introducida en el login con el hash de la BD"""
+        return check_password_hash(self.password_hash, password_plana)
 
 class Rol(db.Model):
     __tablename__ = 'ROL'
@@ -47,6 +59,9 @@ class SuscripcionPlan(db.Model):
     renovacion_auto = db.Column(db.Boolean, nullable=False, default=False)
     importe = db.Column(db.Numeric(10, 2), nullable=True)
     referencia_pago = db.Column(db.String(100), nullable=True)
+
+    # Relaciones
+    plan = db.relationship('TipoPlan', backref='suscripciones_asociadas', lazy=True)
 
 class IAModelo(db.Model):
     __tablename__ = 'IA_MODELO'
