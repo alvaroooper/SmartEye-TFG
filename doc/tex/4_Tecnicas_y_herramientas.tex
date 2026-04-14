@@ -1,143 +1,90 @@
 \capitulo{4}{Técnicas y herramientas}
 
-En este capítulo se describen las herramientas principales empleadas o consideradas durante la fase de pruebas del proyecto, centradas en el ámbito del procesamiento de imágenes y la visión por computador.  
-Se presentan de forma general sus características, finalidad y fuentes oficiales de documentación.
+En este capítulo se describen las tecnologías y herramientas seleccionadas para el desarrollo del proyecto. La elección de este \textit{stack} tecnológico responde a un análisis de eficiencia, seguridad y compatibilidad técnica, priorizando soluciones de código abierto y ampliamente respaldadas por la comunidad profesional.
 
-\section{Herramientas fase de pruebas}
+\section{Visión por Computador e Inteligencia Artificial}
 
-Durante la fase de pruebas del proyecto se han evaluado diversas herramientas para el procesamiento y análisis de imágenes.  
-A continuación se describen las dos más relevantes: \textbf{MediaPipe} y \textbf{YOLO}, ambas ampliamente utilizadas en el campo de la visión artificial.
-
-\subsection{MediaPipe}
-
-MediaPipe es un marco de trabajo de código abierto desarrollado por Google para la creación de \textit{pipelines} o flujos de procesamiento multimedia en tiempo real \cite{lugaresi2019mediapipe, google_mediapipe_docs, google_mediapipe_github}.  
-
-Permite construir sistemas modulares basados en grafos donde cada componente (denominado \textit{calculator}) realiza una tarea específica, como la captura de imágenes, el preprocesamiento, la inferencia de modelos de aprendizaje automático o el postprocesado de resultados.  
-Su diseño facilita la reutilización de módulos y la integración de modelos de visión por computador en distintas plataformas (Android, iOS, escritorio o web).
-
-Entre las soluciones más utilizadas que ofrece se incluyen:
-\begin{itemize}
-	\item Detección de rostro (\textit{Face Detection}) y malla facial 3D (\textit{Face Mesh}).
-	\item Detección y seguimiento de manos (\textit{Hand Tracking}).
-	\item Estimación de pose corporal completa (\textit{Pose}).
-	\item Solución integral \textit{Holistic}, que combina rostro, manos y cuerpo.
-\end{itemize}
-
-Estas funcionalidades permiten aplicar MediaPipe a proyectos de reconocimiento facial, análisis de movimiento, interacción gestual, realidad aumentada y aplicaciones educativas o deportivas.
-
-Toda la documentación oficial se encuentra disponible en la guía técnica de Google AI Edge \cite{google_mediapipe_docs}, y el código fuente está publicado en su repositorio oficial de GitHub \cite{google_mediapipe_github}.
-
-
-\subsection{YOLO (You Only Look Once)}
-
-YOLO es una familia de modelos de detección de objetos en tiempo real creada por la empresa Ultralytics.  
-Su principio básico consiste en dividir una imagen en una cuadrícula y predecir simultáneamente las coordenadas y la clase de los objetos presentes en cada región \cite{ultralytics_yolov8, ultralytics_github}.
-
-La versión más reciente, YOLOv8, incorpora arquitecturas modernas optimizadas para precisión y velocidad, con soporte para varias tareas de visión artificial:
+La capacidad de procesamiento visual es el núcleo de este proyecto. Se han seleccionado herramientas que permiten un equilibrio entre precisión y rendimiento en tiempo real:
 
 \begin{itemize}
-	\item Detección de objetos (\textit{object detection}).
-	\item Segmentación de instancias (\textit{instance segmentation}).
-	\item Clasificación de imágenes.
-	\item Estimación de pose humana.
+	\item \textbf{MediaPipe:} Framework de Google especializado en la detección de puntos clave corporales. 
+	\textit{Justificación:} A diferencia de modelos basados puramente en aprendizaje profundo que requieren GPUs de alto rendimiento, MediaPipe está optimizado para ejecutarse de forma eficiente en CPU mediante el uso de grafos de procesamiento. Esto garantiza que la aplicación sea accesible en una mayor variedad de dispositivos sin sacrificar la latencia \cite{lugaresi2019mediapipe, google_mediapipe_docs}.
+	
+	\item \textbf{YOLO (You Only Look Once) v8:} Modelo de detección de objetos por regresión. 
+	\textit{Justificación:} Se ha optado por la versión v8 de Ultralytics por ser el estándar actual en velocidad. Mientras que otros modelos como Faster R-CNN requieren dos etapas de procesamiento, YOLO realiza la detección en una sola pasada, lo que resulta crítico para sistemas que requieren una respuesta inmediata ante la cámara \cite{ultralytics_yolov8}.
+	
+	\item \textbf{OpenCV (cv2):} Librería de visión artificial por excelencia.
+	\textit{Justificación:} Se utiliza como "pegamento" técnico para la manipulación de imágenes. Su ventaja competitiva reside en su madurez y en la capacidad de manejar flujos de vídeo de forma nativa, permitiendo tareas de preprocesamiento (como el redimensionado o filtrado de ruido) que son costosas de implementar desde cero en Python \cite{opencv_docs}.
 \end{itemize}
 
-Se distribuye como paquete Python mediante la librería \ruta{ultralytics}, permitiendo la carga de modelos pre entrenados o el entrenamiento personalizado sobre conjuntos de datos propios.
+\section{Desarrollo Backend y Lógica de Negocio}
 
-La documentación y ejemplos de uso están disponibles en el sitio oficial de Ultralytics \cite{ultralytics_yolov8}, mientras que el código fuente se mantiene en su repositorio público de GitHub \cite{ultralytics_github}.
+Para la construcción de la API y la orquestación de datos, se ha utilizado el ecosistema de Python, seleccionado por su sintaxis clara y su liderazgo en el sector de la IA:
 
-
-
-\subsection{Comparativa entre MediaPipe y YOLO}
-
-Aunque ambos frameworks se utilizan en el ámbito de la visión por computador, su enfoque y finalidad son distintos y, en muchos casos, complementarios.  
-La tabla siguiente resume sus principales diferencias:
-\FloatBarrier
-\tablaSmall{Comparación general entre MediaPipe y YOLO}{p{3cm}p{6cm}p{6cm}}{comparativaMPYOLO}{
-	\textbf{Aspecto} & \textbf{MediaPipe} & \textbf{YOLO} \\
-}{
-	Enfoque principal & Procesamiento de características humanas (rostro, manos, pose). & Detección y localización de objetos genéricos en imágenes o vídeo. \\
-	Tipo de modelo & Framework modular con soluciones preentrenadas de Google. & Red neuronal convolucional profunda (CNN) optimizada para detección. \\
-	Ejecución & En tiempo real, incluso en dispositivos móviles o CPU. & En tiempo real, preferentemente con GPU para rendimiento óptimo. \\
-	Configuración & Bajo nivel de configuración: soluciones listas para usar. & Permite entrenamiento y ajuste fino sobre datasets personalizados. \\
-	Precisión en personas & Alta precisión en puntos clave del cuerpo humano. & Alta precisión en la localización de personas y objetos. \\
-	Lenguaje y soporte & Implementación principal en Python y C++. & Implementación en Python con soporte mediante la librería Ultralytics. \\
-	Licencia & Apache License 2.0 (Google). & AGPL-3.0 License (Ultralytics). \\
-	\textbf{Uso ideal} & Análisis de movimiento, reconocimiento facial, interfaces gestuales. & Detección general de objetos, vigilancia, control de tráfico o inventario. \\
-}
-
-En resumen, \textbf{MediaPipe} resulta más adecuado para aplicaciones centradas en la estimación de características humanas y análisis del movimiento, mientras que \textbf{YOLO} se utiliza para la detección y clasificación de objetos en escenas más amplias.  
-En conjunto, ambas herramientas pueden integrarse en sistemas híbridos donde se necesite combinar información semántica (qué objetos hay) y estructural (cómo se mueven o se relacionan las personas).
-
-
-\subsection{Framework de servidor: evaluación y elección}
-
-Para la capa de servidor del proyecto se necesita un API HTTP que reciba imágenes y parámetros, coordine los módulos de IA desarrollados en Python y asegure que podamos añadir después funciones de seguridad (autenticación, trazabilidad, CORS). Bajo estos objetivos, se han analizado tres frameworks.
-
-\paragraph{FastAPI (Python).}  
-\textbf{Ventajas:} permite programación asíncrona, genera automáticamente documentación interactiva, asegura tipos de datos con Pydantic.  
-\textbf{Inconvenientes:} añade más estructura y definición de datos de la necesaria al inicio.  
-\textbf{Motivo de descarte:} se buscaba avanzar rápido con una API sencilla y sin tanta formalidad estructural.
-
-\paragraph{Django REST Framework (Python).}  
-\textbf{Ventajas:} completo para proyectos grandes, con gestores, serializadores y autenticación ya integrada.  
-\textbf{Inconvenientes:} demasiado pesado para un backend cuyo foco principal es orquestar inferencias de IA.  
-\textbf{Motivo de descarte:} la complejidad no se ajusta al alcance de este TFG.
-
-\paragraph{Express.js (Node.js).}  
-\textbf{Ventajas:} minimalista, gran comunidad.  
-\textbf{Inconvenientes:} implicaría usar otro lenguaje además de Python, lo que complica la integración con los modelos de IA.  
-\textbf{Motivo de descarte:} se opta por mantener todo el servidor en Python para mayor coherencia.
-
-\subsubsection{Framework elegido: Flask}
-
-\paragraph{Descripción.}  
-Flask es un microframework web en Python. Se caracteriza por ofrecer lo esencial —rutas, peticiones, respuestas— sin imponer una estructura compleja. Su diseño ligero permite añadir sólo lo que el proyecto necesite.
-
-\paragraph{Ventajas para este proyecto.}  
 \begin{itemize}
-	\item Permite lanzar rápidamente un endpoint que reciba la imagen y devuelva un resultado, sin código innecesario.
-	\item Al estar en Python facilita conectar directamente con los módulos de IA.
-	\item Su simplicidad permite que, cuando lo necesitemos, añadamos seguridad, control de acceso o logging sin tener que rehacer la arquitectura.
-	\item Los desarrollos iniciales son rápidos y el despliegue sencillo.
+	\item \textbf{Flask:} Microframework web.
+	\textit{Justificación:} Frente a frameworks "todo incluido" como Django, Flask ofrece una arquitectura minimalista. Esto evita la sobrecarga de componentes innecesarios y permite un control total sobre las rutas y la integración de los modelos de IA, facilitando un despliegue más ágil y ligero \cite{flask_docs}.
+	
+	\item \textbf{Flask-SQLAlchemy:} Capa de abstracción de base de datos (ORM).
+	\textit{Justificación:} Su uso es fundamental para la seguridad y el mantenimiento. Al utilizar un ORM, se evita la escritura de consultas SQL manuales, lo que mitiga el riesgo de ataques de inyección SQL y permite interactuar con los datos mediante objetos de Python, facilitando la legibilidad del código \cite{sqlalchemy_docs}.
+	
+	\item \textbf{Flask-JWT-Extended:} Gestión de autenticación mediante JSON Web Tokens.
+	\textit{Justificación:} Se ha elegido para implementar una arquitectura \textit{stateless} (sin estado). Esto permite que el servidor no tenga que almacenar sesiones en memoria, mejorando la escalabilidad y proporcionando un mecanismo robusto para proteger los \textit{endpoints} privados del sistema \cite{jwt_docs}.
+	
+	\item \textbf{Werkzeug y Python-dotenv:} Herramientas de utilidad y configuración.
+	\textit{Justificación:} Werkzeug garantiza la seguridad de las credenciales mediante el \textit{hashing} de contraseñas, asegurando que no se almacenen en texto plano. Por otro lado, \texttt{python-dotenv} permite gestionar variables de entorno, manteniendo las claves privadas y credenciales de acceso fuera del código fuente \cite{dotenv_docs}.
 \end{itemize}
 
-\paragraph{Justificación de elección.}  
-Dado que el servidor funciona como una capa de orquestación —no como un sistema transaccional complejo— se requiere algo ligero, sencillo de mantener y que permita crecer cuando haga falta. Flask cumple claramente esos requisitos: arranque rápido, bajo coste inicial, buena integración con Python y evolución controlada.
+\section{Gestión de Datos}
 
-\paragraph{Funcionamiento en el proyecto.}  
-Se definirán rutas HTTP para subir imágenes o enviar parámetros, dichas rutas delegarán el trabajo a los módulos internos de IA y devolverán respuestas en formato JSON. La estructura del proyecto podrá separarse en rutas / servicios / módulos, lo que mantiene el código ordenado y escalable.
-
-
-\subsection{Librería para simulación de detecciones: evaluación y elección}
-
-Para validar tempranamente el \emph{pipeline} del backend (subida de imagen $\rightarrow$ procesamiento simulado $\rightarrow$ respuesta con imagen anotada + JSON), se requiere una librería ligera que permita abrir imágenes, dibujar anotaciones sintéticas (cajas, texto) y devolver resultados sin integrar todavía modelos de IA reales. Bajo estos objetivos, se han analizado tres alternativas.
-
-\paragraph{OpenCV (Python).} 
-\textbf{Ventajas:} muy completa para visión por computador; dispone de utilidades avanzadas de E/S, conversión de color y primitivas de dibujo.\cite{opencv_docs} 
-\textbf{Inconvenientes:} instalación y dependencias más pesadas de lo necesario para una simulación inicial; curva de entrada mayor si sólo se requieren anotaciones simples. 
-\textbf{Motivo de descarte:} se busca minimizar fricción y tiempo de puesta en marcha en el Sprint~1.
-
-\paragraph{Matplotlib (Python).} 
-\textbf{Ventajas:} ampliamente conocida, permite renderizar y guardar imágenes con textos y formas.\cite{matplotlib_docs} 
-\textbf{Inconvenientes:} está orientada a gráficos científicos, no al procesamiento de imágenes en un servicio web; el flujo para anotar y devolver imágenes resulta menos natural. 
-\textbf{Motivo de descarte:} no optimiza el caso de uso de backend (anotar rápidamente y devolver).
-
-\subsubsection{Librería elegida: Pillow}
-
-\paragraph{Descripción.} 
-Pillow es el \emph{fork} moderno de la Python Imaging Library (PIL). Facilita abrir, manipular y guardar imágenes, e incluye utilidades sencillas para dibujar rectángulos, textos y otras formas.\cite{pillow_docs}
-
-\paragraph{Ventajas para este proyecto.} 
 \begin{itemize}
-	\item \textbf{Ligereza y rapidez de integración:} instalación simple con \texttt{pip} y API directa para anotar imágenes.
-	\item \textbf{Ajustada al caso de uso:} permite simular detecciones dibujando cajas y etiquetas sobre la imagen y devolverla junto con un JSON de ``detecciones''.
-	\item \textbf{Encaje con Flask:} fácil de integrar en endpoints que reciben ficheros y devuelven flujos binarios/imagen.
-	\item \textbf{Evolución controlada:} cuando se integren modelos reales (YOLO, MediaPipe, etc.), se puede mantener la misma salida (imagen + JSON) sin cambios en el contrato.
+	\item \textbf{MariaDB:} Sistema de gestión de bases de datos relacionales.
+	\textit{Justificación:} Se ha seleccionado MariaDB sobre MySQL por su excelente rendimiento en la gestión de hilos y su naturaleza totalmente \textit{open-source}. Es la solución ideal para garantizar la integridad referencial de los datos de usuarios y registros históricos con una alta disponibilidad \cite{mariadb_docs}.
 \end{itemize}
 
-\paragraph{Justificación de elección.} 
-Pillow ofrece exactamente lo necesario para simular resultados visuales y datos estructurados con un coste de adopción mínimo, evitando la complejidad innecesaria de alternativas más pesadas.
+\section{Diseño y Diagramación}
 
-\paragraph{Funcionamiento en el proyecto.} 
-El endpoint del servidor (Flask) recibirá una imagen, generará detecciones sintéticas (clase, confianza, caja), anotará la imagen con Pillow y devolverá: (i) la imagen marcada y (ii) un JSON con la lista de detecciones. Este contrato será compatible con la futura sustitución de la simulación por modelos de IA reales.
+Para la fase de planificación visual y modelado arquitectónico, se han empleado las siguientes herramientas:
+
+\begin{itemize}
+	\item \textbf{dbdiagram.io:} Herramienta de diseño de bases de datos basada en código.
+	\textit{Justificación:} Permite definir el esquema Entidad-Relación de forma rápida mediante lenguaje descriptivo (DSL). Su uso ha sido clave para iterar el modelo de datos de MariaDB antes de su implementación física, asegurando que todas las relaciones fuesen correctas.
+	
+	\item \textbf{Draw.io:} Aplicación de diagramación profesional.
+	\textit{Justificación:} Se ha utilizado para crear los diagramas de arquitectura del sistema, flujos de datos y lógica de los algoritmos de visión. Su versatilidad permite documentar visualmente el proyecto de forma estandarizada.
+\end{itemize}
+
+\section{Entorno de Desarrollo e Infraestructura}
+
+Esta sección comprende el sistema operativo y las aplicaciones que han permitido la escritura, depuración y control del software:
+
+\begin{itemize}
+	\item \textbf{Linux (Debian):} Sistema operativo base.
+	\textit{Justificación:} Elegido por su estabilidad crítica y su gestión avanzada de permisos. Debian proporciona un entorno de servidor estandarizado donde las dependencias de Python y las librerías de IA se ejecutan de forma previsible y segura \cite{debian_docs}.
+	
+	\item \textbf{Visual Studio Code:} Entorno de desarrollo integrado (IDE).
+	\textit{Justificación:} Su potencia reside en su ecosistema de extensiones y su terminal integrada. Facilita la depuración de código en tiempo real y la integración directa con el control de versiones, optimizando el tiempo de desarrollo \cite{vscode_docs}.
+	
+	\item \textbf{DBeaver:} Cliente de base de datos universal.
+	\textit{Justificación:} A diferencia de herramientas básicas, DBeaver permite administrar MariaDB de forma visual, ejecutar consultas de prueba y monitorizar el estado de las tablas sin necesidad de usar la línea de comandos, lo que reduce errores humanos en la manipulación de datos.
+	
+	\item \textbf{GitHub:} Plataforma de control de versiones distribuido.
+	\textit{Justificación:} Es fundamental para garantizar la trazabilidad del código. Permite mantener un histórico de cambios, trabajar en diferentes ramas de desarrollo y asegurar que el trabajo esté respaldado en la nube \cite{github_docs}.
+\end{itemize}
+
+\section{Gestión y Comunicación del Proyecto}
+
+\begin{itemize}
+	\item \textbf{Jira:} Gestión del ciclo de vida del software.
+	\textit{Justificación:} Se ha empleado para implementar una metodología ágil. Permite la planificación de \textit{Sprints}, la priorización de tareas en el \textit{Backlog} y el seguimiento detallado del progreso, asegurando que se cumplen los hitos del TFG en el tiempo previsto \cite{jira_docs}.
+	
+	\item \textbf{Microsoft Teams:} Centro de colaboración.
+	\textit{Justificación:} Ha servido como canal de comunicación persistente para reuniones de seguimiento y compartición de documentos técnicos, manteniendo un histórico de las decisiones tomadas durante el desarrollo \cite{teams_docs}.
+\end{itemize}
+
+\section{Asistencia mediante IA Generativa}
+
+\begin{itemize}
+	\item \textbf{ChatGPT y Gemini:} Modelos de lenguaje de gran tamaño (LLM).
+	\textit{Justificación:} Se han utilizado como asistentes técnicos para la optimización de funciones complejas en Python, la depuración de errores de configuración en Debian y la generación de casos de prueba. Su uso ha permitido acelerar la resolución de problemas técnicos específicos \cite{openai_chatgpt, google_gemini}.
+\end{itemize}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Análisis IA - TFG</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; }
+        .contenedor { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 600px; margin-bottom: 20px; }
+        input, button { margin-top: 10px; padding: 10px; width: 100%; box-sizing: border-box; }
+        button { background-color: #0056b3; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #004494; }
+        pre { background: #333; color: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .oculto { display: none; }
+        .cabecera-usuario { display: flex; justify-content: space-between; align-items: center; background: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .btn-salir { background-color: #dc3545; width: auto; padding: 5px 15px; margin-top: 0; }
+        .btn-salir:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor" id="panelLogin">
+    <h2>Iniciar Sesión</h2>
+    <form id="loginForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" required value="test@tfg.es">
+        
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" required value="123456">
+
+        <button type="submit">Entrar</button>
+    </form>
+    <p id="errorLogin" style="color: red; display: none;">Credenciales incorrectas</p>
+</div>
+
+<div class="contenedor oculto" id="panelAnalisis">
+    
+    <div class="cabecera-usuario">
+        <span>Usuario conectado: <strong id="nombreUsuarioDisplay"></strong></span>
+        <button class="btn-salir" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+
+    <h2>Subir Imagen al Pipeline</h2>
+    <form id="uploadForm">
+        <label for="id_pipeline">ID del Pipeline a ejecutar (1=Completo, 2=Solo Manos):</label>
+        <input type="number" id="id_pipeline" name="id_pipeline" value="1" required>
+
+        <label for="imagen">Selecciona una imagen:</label>
+        <input type="file" id="imagen" name="imagen" accept="image/*" required>
+
+        <button type="submit" id="btnAnalizar">Analizar con IA</button>
+    </form>
+
+    <div id="areaResultado" class="oculto" style="margin-top: 20px;">
+        <h3>Resultado:</h3>
+        <p><strong>Imagen generada en:</strong> <span id="rutaImagen"></span></p>
+        <h4>JSON del Análisis:</h4>
+        <pre id="jsonAnalisis"></pre>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICA DE LOGIN ---
+    document.getElementById('loginForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const response = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Guardamos el token JWT y el nombre del usuario en el navegador
+            localStorage.setItem('jwt_token', data.token);
+            localStorage.setItem('nombre_usuario', data.usuario);
+            
+            mostrarPanelAnalisis();
+        } else {
+            document.getElementById('errorLogin').style.display = 'block';
+        }
+    };
+
+    function mostrarPanelAnalisis() {
+        // Ocultamos login y mostramos el panel principal
+        document.getElementById('panelLogin').classList.add('oculto');
+        document.getElementById('panelAnalisis').classList.remove('oculto');
+        document.getElementById('errorLogin').style.display = 'none';
+        
+        // Mostramos el nombre del usuario
+        document.getElementById('nombreUsuarioDisplay').innerText = localStorage.getItem('nombre_usuario') || 'Usuario';
+    }
+
+    function cerrarSesion() {
+        // Borramos los datos de autenticación
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('nombre_usuario');
+        
+        // Volvemos a la pantalla inicial
+        document.getElementById('panelLogin').classList.remove('oculto');
+        document.getElementById('panelAnalisis').classList.add('oculto');
+        document.getElementById('areaResultado').classList.add('oculto');
+    }
+
+    // --- LÓGICA DE ANÁLISIS IA ---
+    document.getElementById('uploadForm').onsubmit = async function(e) {
+        e.preventDefault();
+        
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            alert("Tu sesión ha caducado. Vuelve a iniciar sesión.");
+            cerrarSesion();
+            return;
+        }
+
+        const boton = document.getElementById('btnAnalizar');
+        boton.innerText = "Procesando... (Puede tardar)";
+        boton.disabled = true;
+
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch('/api/v1/analizar', {
+                method: 'POST',
+                // Adjuntamos el Token JWT en la cabecera de Autorización
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData
+            });
+
+            if (response.status === 401) {
+                alert("Token inválido o caducado.");
+                cerrarSesion();
+                return;
+            }
+
+            const data = await response.json();
+            document.getElementById('areaResultado').classList.remove('oculto');
+            
+            if(data.status === "success") {
+                document.getElementById('rutaImagen').innerText = data.imagen_resultado;
+                document.getElementById('jsonAnalisis').innerText = JSON.stringify(data.analisis_completo, null, 4);
+            } else {
+                document.getElementById('jsonAnalisis').innerText = "ERROR: " + (data.mensaje || "Error desconocido");
+            }
+        } catch (error) {
+            alert("Error de conexión con el servidor");
+        } finally {
+            boton.innerText = "Analizar con IA";
+            boton.disabled = false;
+        }
+    };
+
+    // Comprobar si ya existe un token guardado al recargar la página
+    if (localStorage.getItem('jwt_token')) {
+        mostrarPanelAnalisis();
+    }
+</script>
+
+</body>
+</html>
