@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Usuario - IA Explorer</title>
+    <style>
+        :root { --primary: #0056b3; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .user-info { display: flex; gap: 15px; align-items: center; }
+        .btn-logout { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        main { max-width: 800px; margin: 30px auto; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-analizar { width: 100%; background: #28a745; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #areaResultado { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .oculto { display: none; }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        img { max-width: 100%; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>IA Explorer</h2>
+    <div class="user-info">
+        <span id="userName">Cargando...</span>
+        <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+</header>
+
+<main>
+    <div class="card">
+        <h3>Procesar Imagen</h3>
+        <form id="uploadForm">
+            <div class="form-group">
+                <label>Selecciona Pipeline:</label>
+                <select id="id_pipeline" name="id_pipeline" required>
+                    <option value="">Cargando pipelines...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Imagen:</label>
+                <input type="file" name="imagen" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn-analizar" id="btnAnalizar">Ejecutar Análisis</button>
+        </form>
+
+        <div id="areaResultado" class="oculto">
+            <h3>Resultado:</h3>
+            <img id="imgRes" src="">
+            <pre id="jsonRes"></pre>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = sessionStorage.getItem('jwt_token');
+        const roles = JSON.parse(sessionStorage.getItem('roles') || "[]");
+
+        if (!token) { window.location.replace('/login'); return; }
+        
+        // SEGURIDAD: Si es admin, mandarlo a su panel
+        if (roles.includes('admin')) {
+            window.location.replace('/admin');
+            return;
+        }
+
+        document.getElementById('userName').innerText = `Hola, ${sessionStorage.getItem('nombre_usuario')}`;
+        cargarPipelines();
+    });
+
+    async function cargarPipelines() {
+        const select = document.getElementById('id_pipeline');
+        try {
+            const response = await fetch('/api/v1/listado', {
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+            });
+            const data = await response.json();
+            select.innerHTML = '';
+            data.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.nombre;
+                select.appendChild(opt);
+            });
+        } catch (e) { select.innerHTML = '<option>Error al cargar</option>'; }
+    }
+
+    document.getElementById('uploadForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnAnalizar');
+        btn.disabled = true; btn.innerText = "Procesando...";
+
+        const formData = new FormData(this);
+        try {
+            const response = await fetch('/api/v1/analizar', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') },
+                body: formData
+            });
+            const res = await response.json();
+            if (response.ok) {
+                document.getElementById('areaResultado').classList.remove('oculto');
+                document.getElementById('imgRes').src = `/api/v1/outputs/${res.imagen_resultado}`;
+                document.getElementById('jsonRes').innerText = JSON.stringify(res.analisis_completo, null, 4);
+            } else { alert(res.mensaje); }
+        } catch (e) { alert("Error de conexión"); }
+        finally { btn.disabled = false; btn.innerText = "Ejecutar Análisis"; }
+    };
+
+    function cerrarSesion() {
+        sessionStorage.clear();
+        localStorage.clear();
+        window.location.replace('/');
+    }
+</script>
+</body>
+</html>

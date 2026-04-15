@@ -1,10 +1,12 @@
 from app.services.ai_factory.interface import IALauncherBase
 from .manos import procesar_manos
+from .pose import procesar_pose
 
 class MediaPipeLauncher(IALauncherBase):
     def __init__(self):
         self.modos_soportados = {
-            "manos": procesar_manos
+            "manos": procesar_manos,
+            "pose": procesar_pose   # 2. Registrar el modo
         }
 
     def ejecutar_modo(self, modo_nombre: str, imagen_path: str):

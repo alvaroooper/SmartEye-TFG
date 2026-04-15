@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA-Pipeline Explorer - TFG</title>
+    <style>
+        :root { --primary: #0056b3; --secondary: #28a745; --dark: #1c1e21; --light: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background-color: var(--light); color: var(--dark); line-height: 1.6; }
+        
+        /* Hero Section */
+        .hero { background: linear-gradient(135deg, #004494 0%, #007bff 100%); color: white; padding: 100px 20px; text-align: center; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.2rem; max-width: 800px; margin: 0 auto 2rem; opacity: 0.9; }
+        
+        /* Botones */
+        .cta-container { display: flex; justify-content: center; gap: 20px; }
+        .btn { padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; transition: transform 0.2s; }
+        .btn:hover { transform: translateY(-3px); }
+        .btn-login { background-color: white; color: var(--primary); }
+        .btn-register { background-color: var(--secondary); color: white; }
+        
+        /* Features */
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
+        .feature-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
+        .feature-card h3 { color: var(--primary); margin-top: 0; }
+        
+        footer { text-align: center; padding: 40px; color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <h1>Análisis de Imágenes con IA Multi-Etapa</h1>
+        <p>Potencia tus flujos de trabajo utilizando detección de objetos, seguimiento de manos y estimación de pose en una única ejecución secuencial.</p>
+        <div class="cta-container">
+            <a href="/login" class="btn btn-login">Iniciar Sesión</a>
+            <a href="/registro" class="btn btn-register">Comenzar Gratis</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="feature-card">
+            <h3>MediaPipe Pose</h3>
+            <p>Detección precisa de puntos clave de la pose humana en tiempo real.</p>
+        </div>
+        <div class="feature-card">
+            <h3>MediaPipe Hands</h3>
+            <p>Detección precisa de puntos clave por mano.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Detección YOLOv8</h3>
+            <p>Identifica clases de objetos en tiempo real con la precisión de los últimos modelos de Ultralytics.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Pipelines Personalizados</h3>
+            <p>Configura secuencias de modelos donde el resultado de una etapa alimenta a la siguiente de forma automática.</p>
+        </div>
+    </section>
+
+    <footer>
+        &copy; 2026 Trabajo de Fin de Grado - Plataforma de IA Orquestada.
+    </footer>
+
+    <script>
+        // Si el usuario ya está logueado, le ofrecemos ir directo a su panel
+        if (localStorage.getItem('jwt_token')) {
+            const heroP = document.querySelector('.hero p');
+            heroP.innerHTML += `<br><br><strong>Ya tienes una sesión activa.</strong>`;
+            document.querySelector('.btn-login').innerText = "Ir a mi Panel";
+            document.querySelector('.btn-login').href = "/dashboard";
+        }
+    </script>
+
+</body>
+</html>

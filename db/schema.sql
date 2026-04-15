@@ -30,7 +30,7 @@ CREATE TABLE `ALQUILA` (
   `fecha_compra` datetime NOT NULL DEFAULT current_timestamp(),
   `periodo_inicio` datetime DEFAULT NULL,
   `periodo_fin` datetime DEFAULT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  `activo` tinyint(1) NOT NULL DEFAULT 0,
   `renovacion_auto` tinyint(1) NOT NULL DEFAULT 0,
   `importe` decimal(10,2) DEFAULT NULL,
   `referencia_pago` varchar(100) DEFAULT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE `IA_MODELO` (
   PRIMARY KEY (`id_ia`),
   UNIQUE KEY `uk_ia_modelo_nombre` (`nombre`),
   CONSTRAINT `chk_ia_modelo_precio_no_negativo` CHECK (`precio` is null or `precio` >= 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -121,6 +121,9 @@ CREATE TABLE `IA_MODELO` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `IA_MODELO` WRITE;
 /*!40000 ALTER TABLE `IA_MODELO` DISABLE KEYS */;
+INSERT INTO `IA_MODELO` VALUES
+(1,'MediaPipe','Detección de puntos clave corporales',1,NULL,'models/mediapipe/'),
+(2,'yolo','Detección de objetos en tiempo real',1,NULL,'models/yolo/');
 /*!40000 ALTER TABLE `IA_MODELO` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -145,7 +148,7 @@ CREATE TABLE `IA_MODO` (
   UNIQUE KEY `uk_ia_modo_nombre` (`id_ia`,`nombre_modo`),
   KEY `idx_ia_modo_ia` (`id_ia`),
   CONSTRAINT `fk_ia_modo_ia_modelo` FOREIGN KEY (`id_ia`) REFERENCES `IA_MODELO` (`id_ia`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,6 +158,10 @@ CREATE TABLE `IA_MODO` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `IA_MODO` WRITE;
 /*!40000 ALTER TABLE `IA_MODO` DISABLE KEYS */;
+INSERT INTO `IA_MODO` VALUES
+(1,1,'manos','Seguimiento de manos',1,NULL),
+(2,1,'pose','Seguimiento de cuerpo completo',1,NULL),
+(3,2,'deteccion','Detección de 80 clases de objetos',1,NULL);
 /*!40000 ALTER TABLE `IA_MODO` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -178,7 +185,7 @@ CREATE TABLE `PIPELINE` (
   UNIQUE KEY `uk_pipeline_usuario_nombre` (`id_usuario`,`nombre`),
   KEY `idx_pipeline_usuario` (`id_usuario`),
   CONSTRAINT `fk_pipeline_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `USUARIO` (`id_usuario`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -188,6 +195,9 @@ CREATE TABLE `PIPELINE` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `PIPELINE` WRITE;
 /*!40000 ALTER TABLE `PIPELINE` DISABLE KEYS */;
+INSERT INTO `PIPELINE` VALUES
+(1,1,'Analisis Completo','Pipeline que usa Pose y Objetos',1,'2026-04-08 20:15:13'),
+(2,1,'Solo Manos','Pipeline rápido de MediaPipe Hands',1,'2026-04-08 20:15:13');
 /*!40000 ALTER TABLE `PIPELINE` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -215,7 +225,7 @@ CREATE TABLE `PIPELINE_ETAPA` (
   CONSTRAINT `fk_pipeline_etapa_ia_modo` FOREIGN KEY (`id_modo`, `id_ia`) REFERENCES `IA_MODO` (`id_modo`, `id_ia`),
   CONSTRAINT `fk_pipeline_etapa_pipeline` FOREIGN KEY (`id_pipeline`) REFERENCES `PIPELINE` (`id_pipeline`) ON DELETE CASCADE,
   CONSTRAINT `chk_pipeline_etapa_orden_positivo` CHECK (`orden` >= 1)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -225,6 +235,10 @@ CREATE TABLE `PIPELINE_ETAPA` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `PIPELINE_ETAPA` WRITE;
 /*!40000 ALTER TABLE `PIPELINE_ETAPA` DISABLE KEYS */;
+INSERT INTO `PIPELINE_ETAPA` VALUES
+(1,1,2,1,1,'Extraccion Pose',NULL),
+(2,1,3,2,2,'Deteccion Objetos',NULL),
+(3,2,1,1,1,'Tracking Manos',NULL);
 /*!40000 ALTER TABLE `PIPELINE_ETAPA` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -243,7 +257,7 @@ CREATE TABLE `ROL` (
   `descripcion` text DEFAULT NULL,
   PRIMARY KEY (`id_rol`),
   UNIQUE KEY `uk_rol_nombre` (`nombre`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -253,6 +267,9 @@ CREATE TABLE `ROL` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `ROL` WRITE;
 /*!40000 ALTER TABLE `ROL` DISABLE KEYS */;
+INSERT INTO `ROL` VALUES
+(1,'admin','Administrador total del sistema'),
+(2,'usuario','Usuario estándar con acceso a funciones básicas');
 /*!40000 ALTER TABLE `ROL` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -283,7 +300,7 @@ CREATE TABLE `SUSCRIPCION_PLAN` (
   CONSTRAINT `fk_suscripcion_plan_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `USUARIO` (`id_usuario`),
   CONSTRAINT `chk_suscripcion_plan_fechas_validas` CHECK (`fecha_fin` is null or `fecha_inicio` is null or `fecha_fin` >= `fecha_inicio`),
   CONSTRAINT `chk_suscripcion_plan_importe_no_negativo` CHECK (`importe` is null or `importe` >= 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -293,6 +310,9 @@ CREATE TABLE `SUSCRIPCION_PLAN` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `SUSCRIPCION_PLAN` WRITE;
 /*!40000 ALTER TABLE `SUSCRIPCION_PLAN` DISABLE KEYS */;
+INSERT INTO `SUSCRIPCION_PLAN` VALUES
+(1,1,2,'2026-04-08 20:15:13','2026-04-08 20:15:13',NULL,1,0,19.99,NULL),
+(2,2,1,'2026-04-08 20:15:13','2026-04-08 20:15:13',NULL,1,0,0.00,NULL);
 /*!40000 ALTER TABLE `SUSCRIPCION_PLAN` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -346,7 +366,7 @@ CREATE TABLE `TIPO_PLAN` (
   PRIMARY KEY (`id_plan`),
   UNIQUE KEY `uk_tipo_plan_nombre` (`nombre`),
   CONSTRAINT `chk_tipo_plan_precio_mensual_no_negativo` CHECK (`precio_mensual` is null or `precio_mensual` >= 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -356,6 +376,9 @@ CREATE TABLE `TIPO_PLAN` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `TIPO_PLAN` WRITE;
 /*!40000 ALTER TABLE `TIPO_PLAN` DISABLE KEYS */;
+INSERT INTO `TIPO_PLAN` VALUES
+(1,'Basico',0.00,1),
+(2,'Pro',19.99,1);
 /*!40000 ALTER TABLE `TIPO_PLAN` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -381,7 +404,7 @@ CREATE TABLE `USUARIO` (
   PRIMARY KEY (`id_usuario`),
   UNIQUE KEY `uk_usuario_email` (`email`),
   UNIQUE KEY `uk_usuario_username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -391,6 +414,10 @@ CREATE TABLE `USUARIO` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `USUARIO` WRITE;
 /*!40000 ALTER TABLE `USUARIO` DISABLE KEYS */;
+INSERT INTO `USUARIO` VALUES
+(1,'admin@tfg.es','admin','scrypt:32768:8:1$mkyXNH40U5qgEduf$8ee2d7fda7766aa028ea86c60b524d77f43436497a00ebac7fca607076cf65bb60e9cbbb2f88eec8fd2f8ae687ca1a09cab0daebee5cde5d386911da8e3f7ea9','Administrador TFG','activa','2026-04-08 20:15:12','2026-04-08 16:37:50',NULL),
+(2,'test@tfg.es','alvaro','scrypt:32768:8:1$unA6wsWB7niQrMsA$27c87036b98390da7cdfb29af7e89e06c050f7cbbe8f1cc2f5764c0c8d3e87460f68dd4fb2d322b4b92e3a15e1c6577b9c019fb02543def3a75f61fac11a7b1c','Alvaro Perez','activa','2026-04-08 20:15:12','2026-04-08 16:37:50',NULL),
+(3,'pepito@gmail.com','pepito','scrypt:32768:8:1$d80aJDMLBNbspTeW$1f7d6b463d55b1c65036d61fc24c40078a59c66a528dea53e7bcebfd51322ff07056f93768a8b31a7ab81cd9e5a7fdecaae96805451fe3140d1e321929755b28','Pepe Pérez','activa','2026-04-15 18:22:21','2026-04-15 16:22:21',NULL);
 /*!40000 ALTER TABLE `USUARIO` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -420,6 +447,10 @@ CREATE TABLE `USUARIO_ROL` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `USUARIO_ROL` WRITE;
 /*!40000 ALTER TABLE `USUARIO_ROL` DISABLE KEYS */;
+INSERT INTO `USUARIO_ROL` VALUES
+(1,1),
+(2,2),
+(3,2);
 /*!40000 ALTER TABLE `USUARIO_ROL` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -438,4 +469,4 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-03-28 20:45:01
+-- Dump completed on 2026-04-15 21:42:00
