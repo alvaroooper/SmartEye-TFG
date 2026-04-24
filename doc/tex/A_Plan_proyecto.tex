@@ -396,6 +396,232 @@ A continuación se describen brevemente las tareas realizadas durante este sprin
 \end{itemize}
 
 
+\subsection*{Visión general del Sprint 7}
+\begin{itemize}
+	\item \textbf{Fechas:} 16/03 – 19/03
+	\item \textbf{Objetivo del sprint:} \emph{Preparar el entorno de desarrollo definitivo en Debian e iniciar la implementación real de la base de datos del sistema.}
+	\item \textbf{Criterio de aceptación global:} Disponer de un entorno funcional en Debian con MariaDB operativo y haber comenzado la implementación física de la base de datos a partir de los diagramas diseñados.
+\end{itemize}
+
+Tal y como se muestra en la Tabla~\ref{tabla:sprint7} y la Figura~\ref{fig:sprint7}, este sprint se centra en la transición desde un entorno de desarrollo inicial hacia un entorno más realista y alineado con el despliegue final, así como en el inicio de la materialización del modelo de datos definido en fases anteriores.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Crear Debian en dual boot con Windows & 8 \\
+		Preparar Debian con configuración mínima & 4 \\
+		Instalar MariaDB & 4 \\
+		Pruebas MariaDB & 8 \\
+		Empezar base de datos TFG & 8 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 7 – Resumen}
+	\label{tabla:sprint7}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint7.png}
+	\caption{Informe de trabajo completado Sprint 7}
+	\label{fig:sprint7}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 7}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	
+	\item \textbf{Crear Debian en dual boot con Windows}  
+	Se realizó la instalación de Debian en configuración de arranque dual con Windows con el objetivo de disponer de un entorno de desarrollo más estable, controlado y alineado con el entorno de despliegue final en servidores Linux.
+	
+	\item \textbf{Preparar Debian con configuración mínima}  
+	Configuración inicial del sistema con las herramientas básicas necesarias para el desarrollo.
+	
+	\item \textbf{Instalar MariaDB}  
+	Instalación del sistema gestor de bases de datos que será utilizado en el proyecto.
+	
+	\item \textbf{Pruebas MariaDB}  
+	Verificación del correcto funcionamiento de MariaDB mediante pruebas básicas de conexión y ejecución de consultas.
+	
+	\item \textbf{Empezar base de datos TFG}  
+	Inicio de la implementación física de la base de datos, trasladando los diagramas entidad-relación y el modelo relacional definidos previamente a tablas reales en MariaDB.
+	
+\end{itemize}
+
+
+\subsection*{Visión general del Sprint 8}
+\begin{itemize}
+	\item \textbf{Fechas:} 20/03 – 26/03
+	\item \textbf{Objetivo del sprint:} \emph{Ajustar el diseño del modelo de datos e implementar completamente la base de datos del sistema.}
+	\item \textbf{Criterio de aceptación global:} Disponer de una base de datos completamente implementada en MariaDB y coherente con el modelo relacional actualizado.
+	\item \textbf{Explicación sprint retrasado:} Sufrí una baja médica.
+\end{itemize}
+
+Tal y como se muestra en la Tabla~\ref{tabla:sprint8} y la Figura~\ref{fig:sprint8}, este sprint se centra en consolidar el diseño de datos mediante su ajuste durante la implementación real, así como en completar la construcción de la base de datos del sistema.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Actualizar modelo relacional & 4 \\
+		Implementar base de datos & 12 \\
+		Documentar base de datos & 10 \\
+		Documentar aspectos relevantes memoria & 10 \\
+		Añadir referencias a imágenes y tablas en anexos & 4 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 8 – Resumen}
+	\label{tabla:sprint8}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint8.png}
+	\caption{Informe de trabajo completado Sprint 8}
+	\label{fig:sprint8}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 8}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	
+	\item \textbf{Actualizar modelo relacional}  
+	Se realizaron ajustes en el modelo relacional a partir de los cambios detectados durante la implementación de la base de datos.
+	
+	\item \textbf{Implementar base de datos}  
+	Construcción completa de la base de datos en MariaDB a partir del modelo relacional definido.
+	
+	\item \textbf{Documentar base de datos}  
+	Elaboración de la documentación asociada al diseño e implementación de la base de datos.
+	
+	\item \textbf{Documentar aspectos relevantes memoria}  
+	Redacción de los aspectos clave del desarrollo para su inclusión en la memoria del TFG.
+	
+	\item \textbf{Añadir referencias a imágenes y tablas en anexos}  
+	Incorporación de referencias cruzadas a figuras y tablas dentro de los anexos.
+	
+\end{itemize}
+
+\subsection*{Visión general del Sprint 9}
+\begin{itemize}
+	\item \textbf{Fechas:} 06/04 – 09/04
+	\item \textbf{Objetivo del sprint:} \emph{Definir la estructura base del sistema bajo el patrón MVC e integrar los primeros componentes funcionales del backend y la interfaz.}
+	\item \textbf{Criterio de aceptación global:} Disponer de una arquitectura MVC funcional con modelos de IA operativos, autenticación básica de usuarios y una interfaz mínima de interacción.
+\end{itemize}
+
+Tal y como se muestra en la Tabla~\ref{tabla:sprint9} y la Figura~\ref{fig:sprint9}, este sprint marca el inicio de la construcción de la aplicación como sistema estructurado, pasando de componentes aislados a una arquitectura organizada basada en el patrón Modelo-Vista-Controlador.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Crear primera estructura modelo vista controlador & 12 \\
+		Poner en funcionamiento los modelos en el modelo & 8 \\
+		Poner en funcionamiento usuarios en el modelo & 6 \\
+		Crear interfaz mínima & 6 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 9 – Resumen}
+	\label{tabla:sprint9}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint9.png}
+	\caption{Informe de trabajo completado Sprint 9}
+	\label{fig:sprint9}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 9}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	
+	\item \textbf{Crear primera estructura modelo vista controlador}  
+	Definición de la estructura base del sistema siguiendo el patrón MVC, estableciendo la organización inicial de carpetas, módulos y responsabilidades.
+	
+	\item \textbf{Poner en funcionamiento los modelos en el modelo}  
+	Integración de los modelos de IA dentro de la arquitectura MVC para su ejecución desde la lógica de negocio.
+	
+	\item \textbf{Poner en funcionamiento usuarios en el modelo}  
+	Implementación de un sistema básico de autenticación que permite el inicio de sesión de usuarios.
+	
+	\item \textbf{Crear interfaz mínima}  
+	Desarrollo de una interfaz sencilla que permite visualizar y probar el funcionamiento básico de la aplicación de forma gráfica.
+	
+\end{itemize}
+
+
+\subsection*{Visión general del Sprint 10}
+\begin{itemize}
+	\item \textbf{Fechas:} 13/04 – 16/04
+	\item \textbf{Objetivo del sprint:} \emph{Mejorar la calidad de la documentación y avanzar en la implementación del sistema de autenticación en la interfaz.}
+	\item \textbf{Criterio de aceptación global:} Disponer de una documentación más refinada y de un sistema de inicio de sesión funcional desde la interfaz gráfica con diferenciación básica de roles.
+\end{itemize}
+
+Tal y como se muestra en la Tabla~\ref{tabla:sprint10} y la Figura~\ref{fig:sprint10}, este sprint se centra en mejorar la calidad de la documentación del proyecto y en avanzar hacia una interacción más completa del usuario con la aplicación mediante autenticación desde la interfaz.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Corregir problemas con documentación & 3 \\
+		Mejorar documentación técnicas y herramientas & 5 \\
+		Reducir aspectos relevantes de tamaño & 8 \\
+		Empezar con inicio sesión de usuarios & 16 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 10 – Resumen}
+	\label{tabla:sprint10}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint10.png}
+	\caption{Informe de trabajo completado Sprint 10}
+	\label{fig:sprint10}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 10}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	
+	\item \textbf{Corregir problemas con documentación}  
+	Corrección de errores de formato y estructura detectados en la documentación del proyecto.
+	
+	\item \textbf{Mejorar documentación técnicas y herramientas}  
+	Refinamiento de la sección de técnicas y herramientas utilizadas en el TFG.
+	
+	\item \textbf{Reducir aspectos relevantes de tamaño}  
+	Ajuste del contenido de la memoria para mejorar su claridad y adecuación al formato requerido.
+	
+	\item \textbf{Empezar con inicio sesión de usuarios}  
+	Implementación del inicio de sesión desde la interfaz gráfica, incluyendo la separación de vistas entre usuarios normales y administradores.
+	
+\end{itemize}
+
+
+
+
 \section{Estudio de viabilidad}
 
 \subsection{Viabilidad económica}
