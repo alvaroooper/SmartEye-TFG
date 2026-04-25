@@ -77,10 +77,11 @@
             const data = await response.json();
 
             if (response.ok) {
-                // GUARDAMOS EL TOKEN AUTOMÁTICAMENTE
-                localStorage.setItem('jwt_token', data.token);
-                localStorage.setItem('nombre_usuario', data.usuario);
-
+                // GUARDAR EL TOKEN AUTOMÁTICAMENTE
+                sessionStorage.setItem('jwt_token', data.token);
+                sessionStorage.setItem('nombre_usuario', data.usuario);
+                sessionStorage.setItem('roles', JSON.stringify(data.roles));
+                
                 successBox.innerText = "¡Cuenta creada con éxito! Entrando...";
                 successBox.style.display = 'block';
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_jwt_identity
-from app.models import Usuario, Rol # Clases en CamelCase según models.py 
+from app.models import Usuario, Rol 
 from app import db
 
 auth_bp = Blueprint('auth', __name__)
@@ -36,6 +36,9 @@ def register():
         nuevo_usuario.roles.append(rol_estandar)
 
     try:
+        # Añadir a la sesión y persistir en la base de datos
+        db.session.add(nuevo_usuario)
+        db.session.commit()
         lista_roles = [rol.nombre for rol in nuevo_usuario.roles]
         token = create_access_token(
             identity=str(nuevo_usuario.id_usuario),
@@ -45,13 +48,13 @@ def register():
         return jsonify({
             "status": "success",
             "mensaje": "Usuario creado correctamente",
-            "token": token,           # Enviamos el token
+            "token": token,
             "usuario": nuevo_usuario.nombre_visible,
-            "roles": lista_roles      # Enviamos roles para la redirección
+            "roles": lista_roles
         }), 201
 
     except Exception as e:
-        db.session.rollback()
+        db.session.rollback() # Limpiar la transacción en caso de error
         return jsonify({"status": "error", "mensaje": str(e)}), 500
 
 @auth_bp.route('/login', methods=['POST'])
