@@ -120,7 +120,7 @@ La tabla \texttt{SUSCRIPCION\_PLAN} registra cada suscripción efectiva de un us
 	\texttt{id\_plan} & Plan contratado. También es \texttt{NOT NULL} porque toda suscripción debe asociarse a un plan del catálogo.\\
 	\texttt{fecha\_inicio} & Fecha de inicio de la suscripción. Se declara obligatoria con valor por defecto para registrar automáticamente el momento de alta.\\
 	\texttt{fecha\_fin} & Fecha de finalización, cuando exista. Se permite \texttt{NULL} porque una suscripción puede estar activa o no tener todavía cierre registrado.\\
-	\texttt{activo} & Indica si la suscripción está vigente. Es obligatorio y tiene valor por defecto \texttt{TRUE}.\\
+	\texttt{activo} & Indica si la suscripción está vigente. Es obligatorio y tiene valor por defecto \texttt{TRUE}, este dato se ha creado por velocidad en las consultas ya que se podría ver mirando por fecha si está vencido pero supondría mas procesamiento.\\
 	\texttt{renovacion\_auto} & Indica si la renovación es automática. Es obligatorio y se inicia en \texttt{FALSE} por defecto.\\
 	\texttt{importe} & Importe cobrado en esa contratación concreta. Se permite \texttt{NULL} porque puede haber promociones o ajustes que no siempre se registren inicialmente.\\
 	\texttt{referencia\_pago} & Referencia externa del pago asociado. Se deja opcional porque no tiene por qué existir siempre o puede no haberse informado todavía.\\
@@ -172,7 +172,7 @@ La tabla \texttt{ALQUILA} registra la adquisición individual de acceso a un mod
 	\texttt{fecha\_compra} & Fecha de la operación. Se declara obligatoria con valor por defecto para registrar automáticamente el momento del alta.\\
 	\texttt{periodo\_inicio} & Fecha de inicio de la vigencia del acceso. Se permite \texttt{NULL} porque no todas las operaciones tienen por qué estar acotadas temporalmente del mismo modo.\\
 	\texttt{periodo\_fin} & Fecha de finalización de la vigencia. También se permite \texttt{NULL} para mantener flexibilidad.\\
-	\texttt{activo} & Indica si el acceso está actualmente operativo. Es obligatorio y tiene valor por defecto \texttt{TRUE}.\\
+	\texttt{activo} & Indica si el acceso está actualmente operativo. Es obligatorio y tiene valor por defecto \texttt{TRUE}, este dato se ha creado por velocidad en las consultas ya que se podría ver mirando por fecha si está vencido pero supondría mas procesamiento.\\
 	\texttt{renovacion\_auto} & Indica si la renovación del acceso es automática. Es obligatorio y se inicia por defecto en \texttt{FALSE} para no asumir renovaciones sin indicación expresa.\\
 	\texttt{importe} & Importe cobrado en la operación concreta. Es necesario para si cambia el precio de alquiler de modelo quede registrado cuando se pagó en el momento de la compra. Se permite \texttt{NULL} porque puede haber casos gratuitos, promocionales o pendientes de registrar.\\
 	\texttt{referencia\_pago} & Referencia externa del pago. Se deja opcional porque no siempre existirá una referencia única o puede no haberse informado todavía.\\
@@ -192,6 +192,7 @@ La tabla \texttt{PIPELINE} representa un flujo de procesamiento configurable. Su
 	\texttt{nombre} & Nombre del pipeline. Es \texttt{NOT NULL} porque resulta necesario para identificarlo funcionalmente.\\
 	\texttt{descripcion} & Descripción del flujo. Se permite \texttt{NULL} porque no siempre es imprescindible documentarlo.\\
 	\texttt{habilitado} & Indica si el pipeline puede utilizarse. Es obligatorio y tiene valor por defecto \texttt{TRUE}.\\
+	\texttt{publico} & Indica si el pipeline puede usarse para todo el mundo (creados por administradores) o sólo para el creador, esto tiene sentido ya que en un futuro si se contempla que los usuarios puedan crear sus propios pipelines de forma que gracias a este campo se agilice la consulta a la bd viendo cuales son los públicos a mostrar en lugar de tener que consultar si el usuario que lo creó era o no administrador. \texttt{TRUE}.\\
 	\texttt{creado\_en} & Fecha de creación del pipeline. Se registra automáticamente para mantener trazabilidad temporal.\\
 }
 
@@ -212,7 +213,7 @@ La tabla \texttt{EJECUCION} registra cada ejecución concreta realizada en el si
 	\texttt{duracion\_ms} & Duración de la ejecución en milisegundos. Se permite \texttt{NULL} porque puede no conocerse todavía al inicio del proceso.\\
 	\texttt{mensaje\_error\_user} & Mensaje de error orientado al usuario. Es opcional porque solo se utiliza cuando la ejecución falla.\\
 	\texttt{creado\_en} & Fecha de creación de la ejecución. Se registra automáticamente para mantener trazabilidad temporal.\\
-	\texttt{config\_aplicada} & Configuración real utilizada en la ejecución. Se permite \texttt{NULL} porque no siempre será necesario persistirla.\\
+	\texttt{config\_aplicada} & Configuración real utilizada en la ejecución ya sea con los valores predeterminados o con los modificados por el usuario. Se permite \texttt{NULL} porque no siempre será necesario persistirla.\\
 }
 
 La clave foránea hacia \texttt{USUARIO} utiliza \texttt{RESTRICT} para no perder histórico operativo al eliminar usuarios. La clave foránea hacia \texttt{PIPELINE} también usa \texttt{RESTRICT}, lo que implica que no se puede eliminar un pipeline si existen ejecuciones asociadas a él. Esta decisión se justifica porque una ejecución debe seguir apuntando al pipeline concreto con el que fue lanzada y no conviene dejar esa referencia incompleta. El \texttt{CHECK} sobre \texttt{duracion\_ms} evita registrar tiempos negativos.
