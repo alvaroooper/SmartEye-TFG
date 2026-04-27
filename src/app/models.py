@@ -109,6 +109,7 @@ class Pipeline(db.Model):
     descripcion = db.Column(db.Text, nullable=True)
     habilitado = db.Column(db.Boolean, nullable=False, default=True)
     creado_en = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    publico = db.Column(db.Integer, default=1)
     
     etapas = db.relationship('PipelineEtapa', backref='pipeline', lazy=True, cascade="all, delete-orphan")
 

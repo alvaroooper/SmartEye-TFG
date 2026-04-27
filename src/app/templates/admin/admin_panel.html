@@ -55,6 +55,11 @@
                 <tbody id="tbodyUsuarios"></tbody>
             </table>
         </div>
+        <div class="card" style="margin-top: 30px;">
+            <h3>Inventario de Pipelines y Etapas</h3>
+            <div id="listaPipelinesAdmin">
+        </div>
+</div>
     </div>
 
     <script>
@@ -74,6 +79,7 @@
 
             document.getElementById('adminName').innerText = `Admin: ${sessionStorage.getItem('nombre_usuario')}`;
             cargarUsuarios();
+            cargarInventarioPipelines();
         });
 
         async function cargarUsuarios() {
@@ -93,6 +99,44 @@
                     tbody.innerHTML += `<tr><td>${u.id}</td><td>${u.nombre}</td><td>${u.email}</td><td>${rolesHtml}</td></tr>`;
                 });
             } catch (err) { console.error("Error:", err); }
+        }
+
+        // funcion para cargar el inventario de pipelines y sus etapas
+        async function cargarInventarioPipelines() {
+            const token = sessionStorage.getItem('jwt_token');
+            const contenedor = document.getElementById('listaPipelinesAdmin');
+
+            try {
+                const response = await fetch('/api/v1/detalles_completos', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const pipelines = await response.json();
+
+                contenedor.innerHTML = '';
+
+                pipelines.forEach(p => {
+                    const badgePublico = p.publico === 1 
+                        ? '<span style="color: green;">[Público]</span>' 
+                        : '<span style="color: orange;">[Privado]</span>';
+
+                    let htmlEtapas = '<ul>';
+                    p.etapas.forEach(e => {
+                        htmlEtapas += `<li>Etapa ${e.orden}: <b>${e.nombre_etapa}</b> (IA: ${e.ia} - Modo: ${e.modo})</li>`;
+                    });
+                    htmlEtapas += '</ul>';
+
+                    contenedor.innerHTML += `
+                        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+                            <h4>${p.nombre} ${badgePublico}</h4>
+                            <p>${p.descripcion || 'Sin descripción'}</p>
+                            <h5>Configuración técnica:</h5>
+                            ${htmlEtapas}
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                contenedor.innerHTML = '<p>Error al cargar el inventario.</p>';
+            }
         }
 
         function cerrarSesion() {

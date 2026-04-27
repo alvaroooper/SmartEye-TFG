@@ -181,6 +181,7 @@ CREATE TABLE `PIPELINE` (
   `descripcion` text DEFAULT NULL,
   `habilitado` tinyint(1) NOT NULL DEFAULT 1,
   `creado_en` datetime NOT NULL DEFAULT current_timestamp(),
+  `publico` tinyint(1) DEFAULT 1,
   PRIMARY KEY (`id_pipeline`),
   UNIQUE KEY `uk_pipeline_usuario_nombre` (`id_usuario`,`nombre`),
   KEY `idx_pipeline_usuario` (`id_usuario`),
@@ -196,8 +197,8 @@ SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `PIPELINE` WRITE;
 /*!40000 ALTER TABLE `PIPELINE` DISABLE KEYS */;
 INSERT INTO `PIPELINE` VALUES
-(1,1,'Analisis Completo','Pipeline que usa Pose y Objetos',1,'2026-04-08 20:15:13'),
-(2,1,'Solo Manos','Pipeline rápido de MediaPipe Hands',1,'2026-04-08 20:15:13');
+(1,1,'Objetos y pose','Pipeline que usa Pose y Objetos',1,'2026-04-08 20:15:13',1),
+(2,1,'Solo Manos','Pipeline rápido de MediaPipe Hands',1,'2026-04-08 20:15:13',1);
 /*!40000 ALTER TABLE `PIPELINE` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -404,7 +405,7 @@ CREATE TABLE `USUARIO` (
   PRIMARY KEY (`id_usuario`),
   UNIQUE KEY `uk_usuario_email` (`email`),
   UNIQUE KEY `uk_usuario_username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -417,7 +418,8 @@ LOCK TABLES `USUARIO` WRITE;
 INSERT INTO `USUARIO` VALUES
 (1,'admin@tfg.es','admin','scrypt:32768:8:1$mkyXNH40U5qgEduf$8ee2d7fda7766aa028ea86c60b524d77f43436497a00ebac7fca607076cf65bb60e9cbbb2f88eec8fd2f8ae687ca1a09cab0daebee5cde5d386911da8e3f7ea9','Administrador TFG','activa','2026-04-08 20:15:12','2026-04-08 16:37:50',NULL),
 (2,'test@tfg.es','alvaro','scrypt:32768:8:1$unA6wsWB7niQrMsA$27c87036b98390da7cdfb29af7e89e06c050f7cbbe8f1cc2f5764c0c8d3e87460f68dd4fb2d322b4b92e3a15e1c6577b9c019fb02543def3a75f61fac11a7b1c','Alvaro Perez','activa','2026-04-08 20:15:12','2026-04-08 16:37:50',NULL),
-(3,'pepito@gmail.com','pepito','scrypt:32768:8:1$d80aJDMLBNbspTeW$1f7d6b463d55b1c65036d61fc24c40078a59c66a528dea53e7bcebfd51322ff07056f93768a8b31a7ab81cd9e5a7fdecaae96805451fe3140d1e321929755b28','Pepe Pérez','activa','2026-04-15 18:22:21','2026-04-15 16:22:21',NULL);
+(3,'pepito@gmail.com','pepito','scrypt:32768:8:1$d80aJDMLBNbspTeW$1f7d6b463d55b1c65036d61fc24c40078a59c66a528dea53e7bcebfd51322ff07056f93768a8b31a7ab81cd9e5a7fdecaae96805451fe3140d1e321929755b28','Pepe Pérez','activa','2026-04-15 18:22:21','2026-04-15 16:22:21',NULL),
+(4,'ramon@tfg.es','ramon','scrypt:32768:8:1$MqJof9PEWL9LaWWv$60226cf311734adb762a3906d075e33abfc8d9d32647ae6251dfed094771235fb3c231921af65ddf4da435e5fd35b3d5806c69643a545304af92e8c4a2b628c6','Ramón Mella','activa','2026-04-23 17:42:25','2026-04-23 15:42:25',NULL);
 /*!40000 ALTER TABLE `USUARIO` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -450,7 +452,8 @@ LOCK TABLES `USUARIO_ROL` WRITE;
 INSERT INTO `USUARIO_ROL` VALUES
 (1,1),
 (2,2),
-(3,2);
+(3,2),
+(4,2);
 /*!40000 ALTER TABLE `USUARIO_ROL` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
@@ -469,4 +472,4 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2026-04-15 21:42:00
+-- Dump completed on 2026-04-26 19:58:16
