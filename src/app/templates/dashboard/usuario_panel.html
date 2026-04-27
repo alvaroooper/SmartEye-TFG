@@ -17,8 +17,16 @@
         .btn-analizar { width: 100%; background: #28a745; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         #areaResultado { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
         .oculto { display: none; }
-        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; }
-        img { max-width: 100%; border-radius: 8px; }
+        
+        /* ESTILOS PARA LA EVOLUCIÓN */
+        .etapa-card { border: 2px solid #0056b3; border-radius: 8px; padding: 15px; margin-bottom: 25px; background: #fafafa; }
+        .etapa-card h4 { color: #0056b3; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .etapa-card img { max-width: 100%; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 0; }
+        
+        /* ESTILO DEL BOTÓN DE JSON */
+        .btn-toggle-json { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+        .btn-toggle-json:hover { background-color: #5a6268; }
     </style>
 </head>
 <body>
@@ -49,9 +57,8 @@
         </form>
 
         <div id="areaResultado" class="oculto">
-            <h3>Resultado:</h3>
-            <img id="imgRes" src="">
-            <pre id="jsonRes"></pre>
+            <h3>Evolución del Pipeline:</h3>
+            <div id="contenedorEtapas"></div>
         </div>
     </div>
 </main>
@@ -62,12 +69,7 @@
         const roles = JSON.parse(sessionStorage.getItem('roles') || "[]");
 
         if (!token) { window.location.replace('/login'); return; }
-        
-        // SEGURIDAD: Si es admin, mandarlo a su panel
-        if (roles.includes('admin')) {
-            window.location.replace('/admin');
-            return;
-        }
+        if (roles.includes('admin')) { window.location.replace('/admin'); return; }
 
         document.getElementById('userName').innerText = `Hola, ${sessionStorage.getItem('nombre_usuario')}`;
         cargarPipelines();
@@ -93,7 +95,7 @@
     document.getElementById('uploadForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btnAnalizar');
-        btn.disabled = true; btn.innerText = "Procesando...";
+        btn.disabled = true; btn.innerText = "Procesando secuencias...";
 
         const formData = new FormData(this);
         try {
@@ -103,14 +105,63 @@
                 body: formData
             });
             const res = await response.json();
+            
             if (response.ok) {
                 document.getElementById('areaResultado').classList.remove('oculto');
-                document.getElementById('imgRes').src = `/api/v1/outputs/${res.imagen_resultado}`;
-                document.getElementById('jsonRes').innerText = JSON.stringify(res.analisis_completo, null, 4);
-            } else { alert(res.mensaje); }
-        } catch (e) { alert("Error de conexión"); }
-        finally { btn.disabled = false; btn.innerText = "Ejecutar Análisis"; }
+                const contenedor = document.getElementById('contenedorEtapas');
+                contenedor.innerHTML = ''; 
+                
+                res.resultados_etapas.forEach(etapa => {
+                    const div = document.createElement('div');
+                    div.className = 'etapa-card';
+                    
+                    let htmlImagenes = '';
+                    etapa.imagenes.forEach(img => {
+                        htmlImagenes += `<img src="/api/v1/outputs/${img}" style="max-height: 250px; margin: 10px; border-radius: 8px; border: 1px solid #ddd; display: inline-block;">`;
+                    });
+
+                    div.innerHTML = `
+                        <h4>Etapa ${etapa.etapa}: ${etapa.nombre_etapa} <span style="font-size: 0.9rem; color: #666;">(IA: ${etapa.ia} - Modo: ${etapa.modo})</span></h4>
+                        
+                        <div style="text-align: center; overflow-x: auto; white-space: nowrap;">
+                            ${htmlImagenes}
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 10px;">
+                            <button type="button" class="btn-toggle-json" onclick="toggleJson(this)">Mostrar JSON</button>
+                        </div>
+                        
+                        <div class="json-container" style="display: none; margin-top: 15px;">
+                            <h5>Datos extraídos:</h5>
+                            <pre>${JSON.stringify(etapa.datos, null, 4)}</pre>
+                        </div>
+                    `;
+                    contenedor.appendChild(div);
+                });
+
+            } else { 
+                alert("Error: " + res.mensaje); 
+            }
+        } catch (e) { 
+            alert("Error de conexión"); 
+        } finally { 
+            btn.disabled = false; btn.innerText = "Ejecutar Análisis"; 
+        }
     };
+
+    // MOSTRAR/OCULTAR EL JSON DE CADA ETAPA
+    function toggleJson(btnElement) {
+        
+        const jsonContainer = btnElement.parentElement.nextElementSibling;
+        
+        if (jsonContainer.style.display === "none") {
+            jsonContainer.style.display = "block";
+            btnElement.innerText = "Ocultar JSON";
+        } else {
+            jsonContainer.style.display = "none";
+            btnElement.innerText = "Mostrar JSON";
+        }
+    }
 
     function cerrarSesion() {
         sessionStorage.clear();

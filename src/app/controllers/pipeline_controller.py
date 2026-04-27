@@ -150,17 +150,14 @@ def analizar_imagen():
         imagen_file.save(ruta_temporal)
         
         # 3. Llamar al servicio Orquestador (PipelineRunner)
-        img_final_full_path, analisis = PipelineRunner.ejecutar_pipeline(int(id_pipeline), ruta_temporal)
+        _, analisis = PipelineRunner.ejecutar_pipeline(int(id_pipeline), ruta_temporal)
         
-        # 4. Extraer solo el nombre del archivo para que el frontend lo solicite vía URL
-        nombre_archivo_final = os.path.basename(img_final_full_path)
         
         # 5. Retornar el JSON con los resultados
         return jsonify({
             "status": "success",
-            "mensaje": "Pipeline ejecutado correctamente",
-            "imagen_resultado": nombre_archivo_final,
-            "analisis_completo": analisis
+            "mensaje": "Pipeline ejecutado con éxito",
+            "resultados_etapas": analisis  # Esta lista consta de (orden, nombre, ia, modo, imagen, datos)
         }), 200
         
     except ValueError as ve:

@@ -5,9 +5,9 @@ import mediapipe as mp
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
-def procesar_manos(imagen_path):
-    print(f"[MediaPipe] Ejecutando detección de manos en: {imagen_path}")
-    
+def procesar_manos(imagen_path, config=None):
+    if config is None: config = {}
+    print(f"[MediaPipe] Ejecutando manos en: {imagen_path} con config: {config}")    
     # 1. Leer imagen con OpenCV
     imagen = cv2.imread(imagen_path)
     if imagen is None:
@@ -17,11 +17,15 @@ def procesar_manos(imagen_path):
     
     datos_json = {"manos_detectadas": 0, "detalles": []}
 
+    #Obtener valores de configuración por json, con valores por defecto si no se proporcionan
+    max_hands = config.get("max_num_hands", 2)
+    min_conf = config.get("min_detection_confidence", 0.5)
+
     # 2. Configurar y ejecutar el modelo
     with mp_hands.Hands(
         static_image_mode=True, 
-        max_num_hands=2, 
-        min_detection_confidence=0.5
+        max_num_hands=max_hands, 
+        min_detection_confidence=min_conf
     ) as hands:
         
         resultados = hands.process(imagen_rgb)
@@ -31,7 +35,7 @@ def procesar_manos(imagen_path):
             datos_json["manos_detectadas"] = len(resultados.multi_hand_landmarks)
             
             for idx, hand_landmarks in enumerate(resultados.multi_hand_landmarks):
-                # Extraer si es mano izquierda o derecha (si está disponible)
+                # Extraer si es mano izquierda o derecha 
                 if resultados.multi_handedness:
                     mano_info = resultados.multi_handedness[idx].classification[0]
                     etiqueta = mano_info.label
