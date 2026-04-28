@@ -13,20 +13,18 @@
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-analizar { width: 100%; background: #28a745; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        input[type="file"], select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-analizar { width: 100%; background: #28a745; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         #areaResultado { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
         .oculto { display: none; }
         
-        /* ESTILOS PARA LA EVOLUCIÓN */
         .etapa-card { border: 2px solid #0056b3; border-radius: 8px; padding: 15px; margin-bottom: 25px; background: #fafafa; }
         .etapa-card h4 { color: #0056b3; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
         .etapa-card img { max-width: 100%; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; }
         pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 0; }
         
-        /* ESTILO DEL BOTÓN DE JSON */
-        .btn-toggle-json { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-        .btn-toggle-json:hover { background-color: #5a6268; }
+        .btn-toggle-json, .btn-secundario { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+        .btn-toggle-json:hover, .btn-secundario:hover { background-color: #5a6268; }
     </style>
 </head>
 <body>
@@ -49,6 +47,13 @@
                     <option value="">Cargando pipelines...</option>
                 </select>
             </div>
+            
+            <div class="form-group">
+                <label>Configuración del Pipeline (Opcional):</label>
+                <button type="button" id="btnCargarConfig" class="btn-secundario" style="margin-bottom:10px;">Cargar Configuración</button>
+                <textarea id="configEditor" name="config_personalizada" style="height: 150px; font-family: monospace; display: none;" placeholder="La configuración en formato JSON aparecerá aquí..."></textarea>
+            </div>
+
             <div class="form-group">
                 <label>Imagen:</label>
                 <input type="file" name="imagen" accept="image/*" required>
@@ -89,15 +94,43 @@
                 opt.textContent = p.nombre;
                 select.appendChild(opt);
             });
-        } catch (e) { select.innerHTML = '<option>Error al cargar</option>'; }
+        } catch (e) { 
+            select.innerHTML = '<option>Error al cargar</option>'; 
+        }
     }
+
+    document.getElementById('id_pipeline').addEventListener('change', function() {
+        document.getElementById('configEditor').style.display = 'none';
+        document.getElementById('configEditor').value = '';
+        document.getElementById('btnCargarConfig').innerText = "Cargar Configuración";
+    });
+
+    document.getElementById('btnCargarConfig').addEventListener('click', async function() {
+        const id = document.getElementById('id_pipeline').value;
+        if(!id) return alert("Selecciona un pipeline primero");
+        
+        try {
+            const response = await fetch(`/api/v1/configuracion_pipeline/${id}`, {
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+            });
+            const config = await response.json();
+            const editor = document.getElementById('configEditor');
+            editor.value = JSON.stringify(config, null, 4);
+            editor.style.display = 'block';
+            this.innerText = "Configuración Cargada (Editable)";
+        } catch (e) {
+            alert("Error al cargar la configuración");
+        }
+    });
 
     document.getElementById('uploadForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btnAnalizar');
-        btn.disabled = true; btn.innerText = "Procesando secuencias...";
+        btn.disabled = true; 
+        btn.innerText = "Procesando secuencias...";
 
         const formData = new FormData(this);
+        
         try {
             const response = await fetch('/api/v1/analizar', {
                 method: 'POST',
@@ -145,15 +178,13 @@
         } catch (e) { 
             alert("Error de conexión"); 
         } finally { 
-            btn.disabled = false; btn.innerText = "Ejecutar Análisis"; 
+            btn.disabled = false; 
+            btn.innerText = "Ejecutar Análisis"; 
         }
     };
 
-    // MOSTRAR/OCULTAR EL JSON DE CADA ETAPA
     function toggleJson(btnElement) {
-        
         const jsonContainer = btnElement.parentElement.nextElementSibling;
-        
         if (jsonContainer.style.display === "none") {
             jsonContainer.style.display = "block";
             btnElement.innerText = "Ocultar JSON";

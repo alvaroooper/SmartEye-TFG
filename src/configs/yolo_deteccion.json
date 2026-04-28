@@ -1,0 +1,7 @@
+{
+    "conf": 0.25,
+    "iou": 0.45,
+    "imgsz": 640,
+    "half": false,
+    "device": ""
+}

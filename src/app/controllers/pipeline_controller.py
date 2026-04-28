@@ -1,11 +1,13 @@
 import os
+import json
 from datetime import datetime
 from flask import Blueprint, request, jsonify, send_from_directory
 from flask_jwt_extended import get_jwt, jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 # Importaciones de lógica de negocio y modelos
+from app import db
 from app.services.pipeline_runner import PipelineRunner
-from app.models import Pipeline, SuscripcionPlan, TipoPlan, Alquila, PipelineEtapa, IAModelo, IAModo
+from app.models import Pipeline, SuscripcionPlan, TipoPlan, Alquila, PipelineEtapa, IAModelo, IAModo, Ejecucion
 
 # Creamos el Blueprint para modularizar las rutas 
 pipeline_bp = Blueprint('pipeline', __name__)
@@ -123,50 +125,80 @@ def listar_detalles_admin():
         return jsonify({"error": str(e)}), 500
         
 @pipeline_bp.route('/analizar', methods=['POST'])
-@jwt_required()  # Requiere que el usuario esté autenticado con JWT 
+@jwt_required()
 def analizar_imagen():
-    """
-    Recibe imagen e ID de pipeline, ejecuta la secuencia de IA y retorna resultados.
-    """
     usuario_id = get_jwt_identity()
-    print(f"El usuario con ID {usuario_id} está ejecutando la IA.")
-    
-    # 1. Validaciones de entrada
-    if 'imagen' not in request.files:
-        return jsonify({"status": "error", "mensaje": "No se ha enviado ninguna imagen"}), 400
-        
     id_pipeline = request.form.get('id_pipeline')
-    if not id_pipeline:
-        return jsonify({"status": "error", "mensaje": "No se ha especificado el id_pipeline"}), 400
+    # Recibimos la configuración editada desde el frontend como un string JSON
+    config_usuario_str = request.form.get('config_personalizada') 
 
-    imagen_file = request.files['imagen']
-    if imagen_file.filename == '':
-        return jsonify({"status": "error", "mensaje": "El nombre del archivo está vacío"}), 400
+    if 'imagen' not in request.files or not id_pipeline:
+        return jsonify({"status": "error", "mensaje": "Faltan datos"}), 400
+
+    # 1. Crear el registro de ejecución en la BD
+    nueva_ejecucion = Ejecucion(
+        id_usuario=usuario_id,
+        id_pipeline=id_pipeline,
+        estado='procesando',
+        config_aplicada=config_usuario_str # Guardamos el JSON que se usó
+    )
+    db.session.add(nueva_ejecucion)
+    db.session.commit()
+
+    start_time = datetime.now()
 
     try:
-        # 2. Guardar la imagen temporalmente de forma segura
+        imagen_file = request.files['imagen']
         filename = secure_filename(imagen_file.filename)
-        ruta_temporal = os.path.join(TEMP_FOLDER, filename)
-        imagen_file.save(ruta_temporal)
+        # Creamos una carpeta única para esta ejecución
+        folder_ejecucion = os.path.join(TEMP_FOLDER, f"exec_{nueva_ejecucion.id_ejecucion}")
+        os.makedirs(folder_ejecucion, exist_ok=True)
         
-        # 3. Llamar al servicio Orquestador (PipelineRunner)
-        _, analisis = PipelineRunner.ejecutar_pipeline(int(id_pipeline), ruta_temporal)
-        
-        
-        # 5. Retornar el JSON con los resultados
-        return jsonify({
-            "status": "success",
-            "mensaje": "Pipeline ejecutado con éxito",
-            "resultados_etapas": analisis  # Esta lista consta de (orden, nombre, ia, modo, imagen, datos)
-        }), 200
-        
-    except ValueError as ve:
-        # Errores controlados de lógica de negocio (ej. pipeline inexistente)
-        return jsonify({"status": "error", "mensaje": str(ve)}), 400
-    except Exception as e:
-        # Errores inesperados del servidor
-        return jsonify({"status": "error", "mensaje": f"Error interno: {str(e)}"}), 500
+        ruta_input = os.path.join(folder_ejecucion, filename)
+        imagen_file.save(ruta_input)
 
+        # 2. Convertir el string de config en diccionario para el Runner
+        config_dict = json.loads(config_usuario_str) if config_usuario_str else {}
+
+        # 3. Ejecutar pasándole la configuración completa
+        _, analisis = PipelineRunner.ejecutar_pipeline(int(id_pipeline), ruta_input, config_dict)
+        
+        # 4. Finalizar registro en BD
+        end_time = datetime.now()
+        nueva_ejecucion.duracion_ms = int((end_time - start_time).total_seconds() * 1000)
+        nueva_ejecucion.estado = 'completado'
+        db.session.commit()
+
+        return jsonify({"status": "success", "resultados_etapas": analisis}), 200
+
+    except Exception as e:
+        nueva_ejecucion.estado = 'error'
+        nueva_ejecucion.mensaje_error_user = str(e)
+        db.session.commit()
+        return jsonify({"status": "error", "mensaje": str(e)}), 500
+
+# Obtener la configuración completa de un pipeline (todas sus etapas)
+@pipeline_bp.route('/configuracion_pipeline/<int:id_pipeline>', methods=['GET'])
+@jwt_required()
+def obtener_configuracion_completa(id_pipeline):
+    try:
+        etapas = PipelineEtapa.query.filter_by(id_pipeline=id_pipeline).order_by(PipelineEtapa.orden).all()
+        config_completa = {}
+
+        for e in etapas:
+            modo = IAModo.query.get(e.id_modo)
+            config_etapa = {}
+            if modo.config_predeterminada and os.path.exists(modo.config_predeterminada):
+                with open(modo.config_predeterminada, 'r') as f:
+                    config_etapa = json.load(f)
+            
+            # Guardamos la config de cada etapa usando su orden como clave
+            config_completa[f"etapa_{e.orden}"] = config_etapa
+            
+        return jsonify(config_completa), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 @pipeline_bp.route('/outputs/<filename>')
 def serve_output(filename):
     """
