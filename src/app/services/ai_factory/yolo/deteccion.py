@@ -6,7 +6,7 @@ from ultralytics import YOLO
 # automáticamente la primera vez que se ejecute.
 modelo_yolo = YOLO('yolov8n.pt')
 
-def procesar_deteccion(imagen_path, config=None):
+def procesar_deteccion(imagen_path, config=None, prefijo=""):
     # Si no llega ninguna configuración, usamos un diccionario vacío
     if config is None:
         config = {}
@@ -34,10 +34,11 @@ def procesar_deteccion(imagen_path, config=None):
     # Como le pasamos una sola, cogemos la primera.
     resultado = resultados[0]
     
-    # 2. Generar ruta de salida [cite: 80]
+    # 2. Generar ruta de salida
     directorio = os.path.dirname(imagen_path)
     nombre_archivo = os.path.basename(imagen_path)
-    ruta_salida = os.path.join(directorio, f"yolo_{nombre_archivo}")
+    str_prefijo = f"{prefijo}_" if prefijo else ""
+    ruta_salida = os.path.join(directorio, f"{str_prefijo}deteccion_{nombre_archivo}")
     
     # 3. Guardar la imagen con las predicciones dibujadas sobre ella. El método save de Ultralytics se encarga de dibujar las cajas y etiquetas automáticamente.
     resultado.save(filename=ruta_salida)

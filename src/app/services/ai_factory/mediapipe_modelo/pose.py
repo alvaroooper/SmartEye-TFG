@@ -5,7 +5,7 @@ import os
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
-def procesar_pose(imagen_path, config=None):
+def procesar_pose(imagen_path, config=None, prefijo=""):
     # Si no llega ninguna configuración, usamos un diccionario vacío
     if config is None:
         config = {}
@@ -70,7 +70,8 @@ def procesar_pose(imagen_path, config=None):
     # Guardar la imagen
     directorio = os.path.dirname(imagen_path)
     nombre_archivo = os.path.basename(imagen_path)
-    ruta_salida = os.path.join(directorio, f"pose_{nombre_archivo}")
+    str_prefijo = f"{prefijo}_" if prefijo else ""
+    ruta_salida = os.path.join(directorio, f"{str_prefijo}pose_{nombre_archivo}")
     
     cv2.imwrite(ruta_salida, imagen)
     

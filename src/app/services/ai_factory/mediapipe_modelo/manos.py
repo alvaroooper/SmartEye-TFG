@@ -5,7 +5,7 @@ import mediapipe as mp
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
-def procesar_manos(imagen_path, config=None):
+def procesar_manos(imagen_path, config=None, prefijo=""):
     if config is None: config = {}
     print(f"[MediaPipe] Ejecutando manos en: {imagen_path} con config: {config}")    
     # 1. Leer imagen con OpenCV
@@ -59,7 +59,8 @@ def procesar_manos(imagen_path, config=None):
     # 5. Guardar la nueva imagen procesada
     directorio = os.path.dirname(imagen_path)
     nombre_archivo = os.path.basename(imagen_path)
-    ruta_salida = os.path.join(directorio, f"mp_{nombre_archivo}")
+    str_prefijo = f"{prefijo}_" if prefijo else ""
+    ruta_salida = os.path.join(directorio, f"{str_prefijo}mp_{nombre_archivo}")
     
     cv2.imwrite(ruta_salida, imagen)
     

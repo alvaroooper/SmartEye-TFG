@@ -11,9 +11,9 @@ class YoloLauncher(IALauncherBase):
         }
 
     # Recibir el nombre del modo, la imagen y la configuración, y ejecutar la función correspondiente
-    def ejecutar_modo(self, modo_nombre: str, imagen_path: str, config: dict = None):
+    def ejecutar_modo(self, modo_nombre: str, imagen_path: str, config: dict = None, prefijo: str = ""):
         modo_func = self.modos_soportados.get(modo_nombre.lower())
         if not modo_func:
             raise ValueError(f"El modo '{modo_nombre}' no está implementado en YOLO.")
         
-        return modo_func(imagen_path, config or {})
+        return modo_func(imagen_path, config or {}, prefijo)

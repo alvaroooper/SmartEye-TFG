@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 modelo_yolo = YOLO('yolov8n.pt')
 
-def procesar_recortes_personas(imagen_path, config=None):
+def procesar_recortes_personas(imagen_path, config=None, prefijo=""):
     if config is None: config = {}
     
     imagen = cv2.imread(imagen_path)
@@ -21,6 +21,7 @@ def procesar_recortes_personas(imagen_path, config=None):
     
     directorio = os.path.dirname(imagen_path)
     base_name = os.path.basename(imagen_path)
+    str_prefijo = f"{prefijo}_" if prefijo else ""
     
     rutas_recortes = []
     objetos_detectados = []
@@ -49,7 +50,7 @@ def procesar_recortes_personas(imagen_path, config=None):
         recorte_ampliado = cv2.resize(recorte, (nuevo_ancho, nuevo_alto), interpolation=cv2.INTER_CUBIC)
         # -----------------------------
         
-        ruta_recorte = os.path.join(directorio, f"recorte_{i}_{base_name}")
+        ruta_recorte = os.path.join(directorio, f"{str_prefijo}recorte_{i}_{base_name}")
         
         # Guardamos la imagen AMPLIADA en lugar de la pequeña
         cv2.imwrite(ruta_recorte, recorte_ampliado)

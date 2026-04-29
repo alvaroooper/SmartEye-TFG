@@ -20,7 +20,7 @@
         
         .etapa-card { border: 2px solid #0056b3; border-radius: 8px; padding: 15px; margin-bottom: 25px; background: #fafafa; }
         .etapa-card h4 { color: #0056b3; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .etapa-card img { max-width: 100%; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 15px; }
+        .etapa-card img { max-width: 100%; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 8px; }
         pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 0; }
         
         .btn-toggle-json, .btn-secundario { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
@@ -149,19 +149,30 @@
                     div.className = 'etapa-card';
                     
                     let htmlImagenes = '';
-                    etapa.imagenes.forEach(img => {
-                        htmlImagenes += `<img src="/api/v1/outputs/${img}" style="max-height: 250px; margin: 10px; border-radius: 8px; border: 1px solid #ddd; display: inline-block;">`;
+                    // RECORREMOS CADA IMAGEN Y GENERAMOS SU BOTÓN DE DESCARGA
+                    etapa.imagenes.forEach((img, index) => {
+                        htmlImagenes += `
+                            <div style="display: inline-block; vertical-align: top; margin: 10px; text-align: center;">
+                                <img src="/api/v1/outputs/${img}" style="max-height: 250px; border-radius: 8px; border: 1px solid #ddd; display: block; margin-bottom: 8px;">
+                                <a href="/api/v1/outputs/${img}" download="etapa_${etapa.etapa}_resultado_${index + 1}.jpg" class="btn-secundario" style="text-decoration: none; font-size: 0.85rem; padding: 5px 10px; display: inline-block;">
+                                    Descargar Imagen
+                                </a>
+                            </div>
+                        `;
                     });
 
                     div.innerHTML = `
                         <h4>Etapa ${etapa.etapa}: ${etapa.nombre_etapa} <span style="font-size: 0.9rem; color: #666;">(IA: ${etapa.ia} - Modo: ${etapa.modo})</span></h4>
                         
-                        <div style="text-align: center; overflow-x: auto; white-space: nowrap;">
+                        <div style="text-align: center; overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
                             ${htmlImagenes}
                         </div>
                         
-                        <div style="text-align: center; margin-top: 10px;">
+                        <div style="text-align: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
                             <button type="button" class="btn-toggle-json" onclick="toggleJson(this)">Mostrar JSON</button>
+                            <a href="/api/v1/outputs/${etapa.token_json_descarga}" download="datos_etapa_${etapa.etapa}.json" class="btn-secundario" style="text-decoration: none; margin-left: 10px; display: inline-block;">
+                                Descargar JSON
+                            </a>
                         </div>
                         
                         <div class="json-container" style="display: none; margin-top: 15px;">
