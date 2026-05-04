@@ -33,6 +33,7 @@
     <h2>IA Explorer</h2>
     <div class="user-info">
         <span id="userName">Cargando...</span>
+        <a href="/perfil" class="btn-secundario" style="text-decoration: none;">Ajustes de Perfil</a>
         <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
     </div>
 </header>
@@ -80,22 +81,53 @@
         cargarPipelines();
     });
 
-    async function cargarPipelines() {
+async function cargarPipelines() {
         const select = document.getElementById('id_pipeline');
+        const btnAnalizar = document.getElementById('btnAnalizar'); 
+        
+        select.innerHTML = '<option value="">Cargando pipelines...</option>';
+        select.disabled = false;
+        btnAnalizar.disabled = true; // Deshabilitado hasta comprobar que tiene acceso
+
         try {
             const response = await fetch('/api/v1/listado', {
                 headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
             });
+            
+            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+            
             const data = await response.json();
-            select.innerHTML = '';
-            data.forEach(p => {
+            if (!Array.isArray(data)) throw new Error(data.mensaje || "Respuesta inválida del servidor");
+
+            select.innerHTML = ''; 
+            
+            // Aviso si no tiene pipelines disponibles
+            if (data.length === 0) {
                 const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.nombre;
+                opt.value = "";
+                opt.textContent = "⚠️ No hay pipelines disponibles (Alquila un modelo o cambia de plan)";
                 select.appendChild(opt);
-            });
+                
+                select.disabled = true; 
+                btnAnalizar.disabled = true; 
+            } else {
+                // Si tiene, los carga normal
+                data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nombre;
+                    select.appendChild(opt);
+                });
+                
+                select.disabled = false;
+                btnAnalizar.disabled = false; 
+            }
+
         } catch (e) { 
-            select.innerHTML = '<option>Error al cargar</option>'; 
+            console.error("Fallo al cargar pipelines:", e);
+            select.innerHTML = `<option value="">Error al cargar: ${e.message}</option>`; 
+            select.disabled = true;
+            btnAnalizar.disabled = true;
         }
     }
 

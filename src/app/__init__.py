@@ -28,7 +28,7 @@ def create_app(config_class=Config):
     # --- RUTAS DE LA INTERFAZ WEB ---
     @app.route('/')
     def index():
-        return render_template('public/index.html') # Presentación
+        return render_template('public/index.html')
 
     @app.route('/login')
     def login_page():
@@ -40,13 +40,17 @@ def create_app(config_class=Config):
 
     @app.route('/dashboard')
     def dashboard():
-        return render_template('dashboard/usuario_panel.html') # Tu index actual
+        return render_template('dashboard/usuario_panel.html') 
+    
+    @app.route('/perfil')
+    def vista_perfil():
+        return render_template('dashboard/perfil.html')
 
     @app.route('/admin')
     def admin_panel():
         return render_template('admin/admin_panel.html')
 
-    # Importamos los modelos para que SQLAlchemy los reconozca al iniciar
+    # Importar los modelos para que SQLAlchemy los reconozca al iniciar
     with app.app_context():
         from app import models
 

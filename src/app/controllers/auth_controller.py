@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_jwt_identity
-from app.models import Usuario, Rol 
+from app.models import Usuario, Rol, Ejecucion, TemporalArchivo, SuscripcionPlan, Alquila # Asegúrate de importar todos
 from app import db
+import os
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -108,3 +110,89 @@ def listar_usuarios():
         })
     
     return jsonify(resultado), 200
+
+@auth_bp.route('/perfil', methods=['PUT'])
+@jwt_required()
+def actualizar_perfil():
+    usuario_id = get_jwt_identity()
+    usuario = Usuario.query.get(usuario_id)
+    
+    if not usuario:
+        return jsonify({"status": "error", "mensaje": "Usuario no encontrado"}), 404
+        
+    data = request.json
+    nuevo_nombre = data.get('username')
+    nueva_password = data.get('password')
+    old_password = data.get('old_password') # <-- Recogemos la contraseña antigua
+    
+    # 1. Actualizamos el nombre si nos lo han enviado
+    if nuevo_nombre:
+        usuario.username = nuevo_nombre
+        
+    # 2. Lógica para cambiar la contraseña
+    if nueva_password:
+        # Validar que han enviado la antigua
+        if not old_password:
+            return jsonify({"status": "error", "mensaje": "Debes introducir tu contraseña actual para poder cambiarla"}), 400
+            
+        # Comprobar que la antigua es correcta
+        if not check_password_hash(usuario.password_hash, old_password):
+            return jsonify({"status": "error", "mensaje": "La contraseña actual es incorrecta"}), 401
+            
+        # Comprobar la longitud de la nueva
+        if len(nueva_password) < 6:
+             return jsonify({"status": "error", "mensaje": "La nueva contraseña debe tener al menos 6 caracteres"}), 400
+             
+        # Si todo es correcto, la encriptamos y la guardamos
+        usuario.password_hash = generate_password_hash(nueva_password)
+        
+    try:
+        db.session.commit()
+        return jsonify({"status": "success", "mensaje": "Perfil actualizado", "nuevo_nombre": usuario.username}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "mensaje": f"Error al actualizar: {str(e)}"}), 500
+        
+@auth_bp.route('/cuenta', methods=['DELETE'])
+@jwt_required()
+def eliminar_cuenta():
+    usuario_id = get_jwt_identity()
+    usuario = Usuario.query.get(usuario_id)
+    
+    if not usuario:
+        return jsonify({"status": "error", "mensaje": "Usuario no encontrado"}), 404
+        
+    try:
+        # 1. Borrar todas las ejecuciones (y sus archivos temporales) por el Restrict
+        ejecuciones = Ejecucion.query.filter_by(id_usuario=usuario_id).all()
+        for ejecucion in ejecuciones:
+            # Borrar los archivos temporales asociados a esta ejecución
+            archivos = TemporalArchivo.query.filter_by(id_ejecucion=ejecucion.id_ejecucion).all()
+            for archivo in archivos:
+                # Borrar el archivo físico si aún existe
+                if archivo.ruta_servidor and os.path.exists(archivo.ruta_servidor):
+                    try:
+                        os.remove(archivo.ruta_servidor)
+                    except:
+                        pass
+                # Borrar el registro del archivo
+                db.session.delete(archivo)
+            
+            # Borrar la ejecución
+            db.session.delete(ejecucion)
+
+        # 2. Borrar alquileres y suscripciones por el Restrict
+        Alquila.query.filter_by(id_usuario=usuario_id).delete()
+        SuscripcionPlan.query.filter_by(id_usuario=usuario_id).delete()
+        
+        # 3. Finalmente, borramos el usuario. 
+        # (USUARIO_ROL se borrará solo por el Cascade, y los PIPELINE se pondrán a NULL automáticamente)
+        db.session.delete(usuario)
+        
+        db.session.commit()
+        
+        return jsonify({"status": "success", "mensaje": "Cuenta y datos asociados eliminados correctamente"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "mensaje": f"Error al eliminar la cuenta: {str(e)}"}), 500

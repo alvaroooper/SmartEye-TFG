@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Perfil - IA Explorer</title>
+    <style>
+        :root { --primary: #0056b3; --bg: #f4f7f6; --danger: #dc3545; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .btn-header { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+        .btn-header:hover { background: rgba(255,255,255,0.3); }
+        main { max-width: 600px; margin: 40px auto; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-guardar { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-eliminar { width: 100%; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .zona-peligrosa { border: 2px dashed var(--danger); padding: 20px; border-radius: 8px; background: #fff8f8; text-align: center; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>Mi Perfil</h2>
+    <div>
+        <a href="javascript:history.back()" class="btn-header">Volver al Panel</a>
+    </div>
+</header>
+
+<main>
+    <div id="mensajeAlerta" class="alert"></div>
+
+    <div class="card">
+        <h3>Actualizar Datos</h3>
+        <form id="formPerfil">
+            <div class="form-group">
+                <label>Nombre Visible:</label>
+                <input type="text" id="username" name="username" placeholder="Tu nuevo nombre">
+            </div>
+            
+            <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: #555;">Cambio de Contraseña</h4>
+                <div class="form-group">
+                    <label>Contraseña Actual (Requerida si deseas cambiarla):</label>
+                    <input type="password" id="old_password" name="old_password" placeholder="Tu contraseña actual">
+                </div>
+                <div class="form-group">
+                    <label>Nueva Contraseña:</label>
+                    <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" minlength="6">
+                </div>
+                <!-- NUEVO CAMPO: Confirmación de contraseña -->
+                <div class="form-group">
+                    <label>Confirmar Nueva Contraseña:</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Repite la nueva contraseña" minlength="6">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-guardar">Guardar Cambios</button>
+        </form>
+    </div>
+
+    <div class="zona-peligrosa">
+        <h3 style="color: var(--danger); margin-top: 0;">Zona Peligrosa</h3>
+        <p style="font-size: 0.9rem; color: #666;">Al eliminar tu cuenta, se borrará todo tu historial de ejecuciones y suscripciones. Esta acción no se puede deshacer.</p>
+        <button id="btnEliminarCuenta" class="btn-eliminar">Eliminar mi cuenta definitivamente</button>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = sessionStorage.getItem('jwt_token');
+        if (!token) { window.location.replace('/login'); return; }
+        
+        // Rellenar el nombre actual
+        document.getElementById('username').value = sessionStorage.getItem('nombre_usuario') || '';
+    });
+
+    function mostrarAlerta(mensaje, tipo) {
+        const alerta = document.getElementById('mensajeAlerta');
+        alerta.textContent = mensaje;
+        alerta.className = `alert alert-${tipo}`;
+        alerta.style.display = 'block';
+        setTimeout(() => alerta.style.display = 'none', 4000);
+    }
+
+    // ACTUALIZAR DATOS
+    document.getElementById('formPerfil').onsubmit = async function(e) {
+        e.preventDefault();
+        
+        const payload = {};
+        const username = document.getElementById('username').value;
+        const oldPassword = document.getElementById('old_password').value;
+        const newPassword = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value; // Recogemos el nuevo campo
+        
+        if (username) payload.username = username;
+        
+        // Validar en el cliente antes de enviar al servidor
+        if (newPassword || confirmPassword) {
+            if (!oldPassword) {
+                mostrarAlerta("Debes introducir tu contraseña actual para establecer una nueva", "danger");
+                return;
+            }
+            
+            // Verificar que las contraseñas coincidan
+            if (newPassword !== confirmPassword) {
+                mostrarAlerta("Las contraseñas nuevas no coinciden. Por favor, revísalas.", "danger");
+                return;
+            }
+            
+            payload.password = newPassword;
+            payload.old_password = oldPassword;
+        }
+
+        try {
+            const response = await fetch('/api/v1/auth/perfil', {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') 
+                },
+                body: JSON.stringify(payload)
+            });
+            const res = await response.json();
+            
+            if (response.ok) {
+                mostrarAlerta(res.mensaje, 'success');
+                // Actualizar el session storage si el nombre cambió
+                if (res.nuevo_nombre) {
+                    sessionStorage.setItem('nombre_usuario', res.nuevo_nombre);
+                }
+                // Limpiar todos los campos de contraseñas por seguridad
+                document.getElementById('old_password').value = ''; 
+                document.getElementById('password').value = ''; 
+                document.getElementById('confirm_password').value = ''; 
+            } else {
+                mostrarAlerta(res.mensaje, 'danger');
+            }
+        } catch (e) {
+            mostrarAlerta("Error de conexión", 'danger');
+        }
+    };
+
+    // ELIMINAR CUENTA
+    document.getElementById('btnEliminarCuenta').onclick = async function() {
+        if (!confirm("¿Estás completamente seguro de que deseas eliminar tu cuenta? Perderás todos tus datos.")) return;
+        
+        try {
+            const response = await fetch('/api/v1/auth/cuenta', {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+            });
+            
+            if (response.ok) {
+                alert("Cuenta eliminada correctamente.");
+                sessionStorage.clear();
+                window.location.replace('/');
+            } else {
+                const res = await response.json();
+                mostrarAlerta(res.mensaje, 'danger');
+            }
+        } catch (e) {
+            mostrarAlerta("Error de conexión al intentar eliminar la cuenta", 'danger');
+        }
+    };
+</script>
+</body>
+</html>

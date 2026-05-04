@@ -14,6 +14,8 @@
         button:hover { background-color: #004494; }
         .error-msg { color: #dc3545; background: #f8d7da; padding: 10px; border-radius: 4px; display: none; margin-bottom: 1rem; text-align: center; }
         .footer-link { text-align: center; margin-top: 1rem; font-size: 0.9rem; }
+        .back-link a { color: #888; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .back-link a:hover { color: #0056b3; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -37,17 +39,19 @@
     <div class="footer-link">
         ¿No tienes cuenta? <a href="/registro">Regístrate aquí</a>
     </div>
+
+    <div class="footer-link back-link" style="margin-top: 1.5rem;">
+        <a href="/">← Volver al inicio</a>
+    </div>
 </div>
 
 <script>
     document.getElementById('formLogin').onsubmit = async function(e) {
         e.preventDefault();
         
-        // 1. Limpieza absoluta para evitar conflictos entre sesiones 
         localStorage.clear(); 
         sessionStorage.clear();
 
-        // 2. Referencias a la UI
         const errorBox = document.getElementById('errorBox');
         const btn = document.getElementById('btnEntrar');
         
@@ -68,21 +72,16 @@
             const data = await response.json();
 
             if (response.ok) {
-                // 3. Guardamos datos en sessionStorage para mayor seguridad 
                 sessionStorage.setItem('jwt_token', data.token);
                 sessionStorage.setItem('nombre_usuario', data.usuario);
-                // Guardamos los roles para que las páginas de destino puedan validar
                 sessionStorage.setItem('roles', JSON.stringify(data.roles));
 
-                // 4. LÓGICA DE REDIRECCIÓN POR ROL
-                // Usamos replace para que no se pueda volver al login con el botón 'atrás'
                 if (data.roles.includes('admin')) {
                     window.location.replace('/admin');
                 } else {
                     window.location.replace('/dashboard');
                 }
             } else {
-                // Mostramos el error devuelto por tu controlador 
                 errorBox.innerText = data.mensaje || "Error al iniciar sesión";
                 errorBox.style.display = 'block';
             }
@@ -90,7 +89,6 @@
             errorBox.innerText = "Error de conexión con el servidor";
             errorBox.style.display = 'block';
         } finally {
-            // Restauramos el botón pase lo que pase
             btn.innerText = "Entrar";
             btn.disabled = false;
         }

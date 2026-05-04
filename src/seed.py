@@ -78,7 +78,7 @@ def seed():
         pipe5 = Pipeline(id_pipeline=5, id_usuario=1, nombre='Pose de múltiples personas (Recorte + Pose)', publico=1, habilitado=1)
         pipe6 = Pipeline(id_pipeline=6, id_usuario=1, nombre='Deteccion pose', publico=1, habilitado=1)
 
-        db.session.add_all([pipe1, pipe2, pipe3, pipe4, pipe5])
+        db.session.add_all([pipe1, pipe2, pipe3, pipe4, pipe5, pipe6])
         db.session.flush()
 
         # 7. ETAPAS
