@@ -8,6 +8,10 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
         header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
         .user-info { display: flex; gap: 15px; align-items: center; }
+        .btn-tienda { background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; text-decoration: none; transition: 0.2s; }
+        .btn-tienda:hover { background-color: #218838; }
+        .btn-toggle-json, .btn-secundario { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; text-decoration: none; transition: 0.2s; }
+        .btn-toggle-json:hover, .btn-secundario:hover { background-color: #5a6268; }
         .btn-logout { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
         main { max-width: 800px; margin: 30px auto; padding: 20px; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -33,7 +37,10 @@
     <h2>IA Explorer</h2>
     <div class="user-info">
         <span id="userName">Cargando...</span>
-        <a href="/perfil" class="btn-secundario" style="text-decoration: none;">Ajustes de Perfil</a>
+        
+        <a href="/shop" class="btn-tienda">Tienda</a>
+        <a href="/mis-compras" class="btn-secundario"> Mis Compras</a>
+        <a href="/perfil" class="btn-secundario">Perfil</a>
         <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
     </div>
 </header>
@@ -105,7 +112,7 @@ async function cargarPipelines() {
             if (data.length === 0) {
                 const opt = document.createElement('option');
                 opt.value = "";
-                opt.textContent = "⚠️ No hay pipelines disponibles (Alquila un modelo o cambia de plan)";
+                opt.textContent = "No hay pipelines disponibles (Alquila un modelo o cambia de plan)";
                 select.appendChild(opt);
                 
                 select.disabled = true; 

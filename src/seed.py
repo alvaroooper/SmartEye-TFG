@@ -68,7 +68,7 @@ def seed():
         ))
 
         # Ramón: Plan Pro (ID 2)
-        db.session.add(SuscripcionPlan(id_usuario=u_ramon.id_usuario, id_plan=p_pro.id_plan, activo=1))
+        db.session.add(SuscripcionPlan(id_usuario=u_ramon.id_usuario, id_plan=p_pro.id_plan, activo=1, fecha_fin=datetime.now() + timedelta(days=30)))
 
         # 6. PIPELINES
         pipe1 = Pipeline(id_pipeline=1, id_usuario=1, nombre='Objetos y pose', publico=1, habilitado=1)
@@ -76,7 +76,7 @@ def seed():
         pipe3 = Pipeline(id_pipeline=3, id_usuario=1, nombre='Pipeline Privado Admin', publico=0, habilitado=1)
         pipe4 = Pipeline(id_pipeline=4, id_usuario=1, nombre='Deteccion pose', publico=1, habilitado=1)
         pipe5 = Pipeline(id_pipeline=5, id_usuario=1, nombre='Pose de múltiples personas (Recorte + Pose)', publico=1, habilitado=1)
-        pipe6 = Pipeline(id_pipeline=6, id_usuario=1, nombre='Deteccion pose', publico=1, habilitado=1)
+        pipe6 = Pipeline(id_pipeline=6, id_usuario=1, nombre='Aislamiento de personas', publico=1, habilitado=1)
 
         db.session.add_all([pipe1, pipe2, pipe3, pipe4, pipe5, pipe6])
         db.session.flush()

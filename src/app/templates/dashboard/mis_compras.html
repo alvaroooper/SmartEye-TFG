@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Compras - IA Explorer</title>
+    <style>
+        :root { --primary: #0056b3; --bg: #f4f7f6; --success: #28a745; --danger: #dc3545; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-header { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; transition: background 0.3s; }
+        .btn-header:hover { background: rgba(255,255,255,0.3); }
+        
+        main { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .section-title { margin-top: 40px; color: #1c1e21; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        /* Estilos de las tarjetas de compra */
+        .grid-compras { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card-compra { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+        .card-plan { border-left-color: var(--success); } /* Distinguir color para los planes */
+        
+        .compra-nombre { font-size: 1.2rem; font-weight: bold; margin: 0 0 10px 0; }
+        .compra-detalle { font-size: 0.9rem; color: #555; margin-bottom: 5px; }
+        .compra-precio { font-size: 1.1rem; font-weight: bold; color: var(--success); margin: 15px 0; }
+        
+        .btn-toggle { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; width: 100%; }
+        .btn-toggle.active { background: var(--danger); } /* Si está activo, el botón ofrecerá "Desactivar" en rojo */
+        .btn-toggle:hover { opacity: 0.9; }
+
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; text-align: center; font-weight: bold; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .empty-state { background: white; padding: 30px; text-align: center; border-radius: 8px; color: #666; border: 1px dashed #ccc; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>Mis Suscripciones y Alquileres</h2>
+    <div>
+        <a href="/dashboard" class="btn-header">← Volver al Panel</a>
+    </div>
+</header>
+
+<main>
+    <div id="mensajeAlerta" class="alert"></div>
+
+    <!-- SECCIÓN 1: EL PLAN DE SUSCRIPCIÓN (Preparado para el futuro) -->
+    <h3 class="section-title">Mi Plan Actual</h3>
+    <div id="contenedorPlanes" class="grid-compras">
+        <div class="empty-state">Actualmente estás en el plan básico gratuito.</div>
+    </div>
+
+    <!-- SECCIÓN 2: LOS MOTORES DE IA ALQUILADOS SUELTOS -->
+    <h3 class="section-title">Motores IA Alquilados</h3>
+    <div id="contenedorAlquileres" class="grid-compras">
+        <p style="text-align: center; color: #666; grid-column: 1 / -1;">Cargando tus alquileres...</p>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', cargarMisCompras);
+
+    function mostrarAlerta(mensaje, tipo) {
+        const alerta = document.getElementById('mensajeAlerta');
+        alerta.textContent = mensaje;
+        alerta.className = `alert alert-${tipo}`;
+        alerta.style.display = 'block';
+        setTimeout(() => alerta.style.display = 'none', 4000);
+    }
+
+    async function cargarMisCompras() {
+        const contenedorAlquileres = document.getElementById('contenedorAlquileres');
+        const token = sessionStorage.getItem('jwt_token');
+        if (!token) { window.location.replace('/login'); return; }
+
+        try {
+            const response = await fetch('/api/v1/shop/mis_compras', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (!response.ok) throw new Error("Error al cargar los datos");
+            const data = await response.json();
+            
+            // --- 1. RENDERIZAR ALQUILERES ---
+            contenedorAlquileres.innerHTML = ''; 
+            if (data.alquileres.length === 0) {
+                contenedorAlquileres.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No tienes ningún motor de IA alquilado actualmente.</div>';
+            } else {
+                data.alquileres.forEach(a => {
+                    const card = document.createElement('div');
+                    card.className = 'card-compra';
+                    
+                    // Configuración del botón de renovación según el estado
+                    const btnClass = a.renovacion_auto ? 'btn-toggle active' : 'btn-toggle';
+                    const btnText = a.renovacion_auto ? 'Cancelar Renovación Automática' : 'Activar Renovación Automática';
+                    
+                    card.innerHTML = `
+                        <h4 class="compra-nombre">${a.nombre}</h4>
+                        <div class="compra-detalle"><b>Válido hasta:</b> ${a.fecha_fin}</div>
+                        <div class="compra-detalle"><b>Renovación:</b> ${a.renovacion_auto ? '<span style="color: green;">Activada</span>' : '<span style="color: red;">Desactivada</span>'}</div>
+                        <div class="compra-precio">${a.importe} € / mes</div>
+                        <button class="${btnClass}" onclick="toggleRenovacion(${a.id_compra}, this)">${btnText}</button>
+                    `;
+                    contenedorAlquileres.appendChild(card);
+                });
+            }
+
+            // --- 2. RENDERIZAR PLANES (Futuro) ---
+
+        } catch (error) {
+            contenedorAlquileres.innerHTML = `<p style="color: red; text-align: center; grid-column: 1 / -1;">Error de conexión: ${error.message}</p>`;
+        }
+    }
+
+    async function toggleRenovacion(id_compra, botonElement) {
+        botonElement.disabled = true;
+        const textoOriginal = botonElement.textContent;
+        botonElement.textContent = "Procesando...";
+
+        try {
+            const response = await fetch(`/api/v1/shop/alquiler/${id_compra}/toggle_renovacion`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+            });
+
+            const res = await response.json();
+
+            if (response.ok) {
+                mostrarAlerta(res.mensaje, 'success');
+                // Recargar toda la vista para que los textos y colores se actualicen correctamente
+                cargarMisCompras(); 
+            } else {
+                mostrarAlerta(res.mensaje, 'danger');
+                botonElement.disabled = false;
+                botonElement.textContent = textoOriginal;
+            }
+        } catch (error) {
+            mostrarAlerta("Error al procesar la solicitud", 'danger');
+            botonElement.disabled = false;
+            botonElement.textContent = textoOriginal;
+        }
+    }
+</script>
+</body>
+</html>

@@ -18,48 +18,87 @@ os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 # --- 1. RECOLECTOR DE BASURA AUTOMÁTICO ---
 @pipeline_bp.before_request
-def limpiar_archivos_caducados():
+@pipeline_bp.before_app_request # <--- IMPORTANTE: Usamos before_app_request para que aplique a TODA la app
+def tareas_mantenimiento_automaticas():
     """
-    Se ejecuta automáticamente antes de procesar cualquier petición.
-    Busca los archivos caducados en la BD, borra el archivo físico y elimina el registro.
+    Se ejecuta automáticamente en silencio antes de procesar cualquier petición.
+    Sirve como un "Cron Job" simulado para mantener el TFG limpio y gestionar pagos.
     """
     try:
         now = datetime.now()
-        archivos_caducados = TemporalArchivo.query.filter(TemporalArchivo.expira_en <= now).all()
+        cambios_realizados = False
         
+        # --- 1. RECOLECTOR DE BASURA (Imágenes y JSON temporales) ---
+        archivos_caducados = TemporalArchivo.query.filter(TemporalArchivo.expira_en <= now).all()
         for archivo in archivos_caducados:
-            # Si el archivo físico existe, lo borramos
             if archivo.ruta_servidor and os.path.exists(archivo.ruta_servidor):
                 try:
                     os.remove(archivo.ruta_servidor)
-                except Exception as e:
-                    print(f"No se pudo borrar archivo físico {archivo.ruta_servidor}: {e}")
-            
-            # Borramos el registro de la base de datos
+                except Exception:
+                    pass
             db.session.delete(archivo)
+            cambios_realizados = True
             
-        if archivos_caducados:
+        # --- 2. GESTOR DE ALQUILERES DE IA ---
+        # Buscamos todos los alquileres que están activos pero su fecha ya caducó
+        alquileres_vencidos = Alquila.query.filter(
+            Alquila.activo == 1,
+            Alquila.periodo_fin <= now
+        ).all()
+        
+        for alquiler in alquileres_vencidos:
+            if alquiler.renovacion_auto == 1:
+                # SIMULACIÓN DE PAGO: Como tiene renovación automática, le sumamos 30 días
+                # (En el mundo real aquí se realizaría una petición a la pasarela de pagos y solo si el pago es exitoso se renovaría)
+                alquiler.periodo_inicio = now
+                alquiler.periodo_fin = alquiler.periodo_fin + timedelta(days=30)
+            else:
+                alquiler.activo = 0
+            
+            cambios_realizados = True
+            
+        # --- 3. GESTOR DE PLANES ---
+        # Igual que con los alquileres, buscamos suscripciones que hayan caducado
+        suscripciones_vencidas = SuscripcionPlan.query.filter(
+            SuscripcionPlan.activo == 1,
+            SuscripcionPlan.fecha_fin <= now
+        ).all()
+        
+        for sub in suscripciones_vencidas:
+            if sub.renovacion_auto == 1:
+                sub.fecha_inicio = now
+                sub.fecha_fin = sub.fecha_fin + timedelta(days=30)
+            else:
+                sub.activo = 0
+            cambios_realizados = True
+            
+        # Si se han limpiado archivos o renovado cuentas, guarda en base de datos
+        if cambios_realizados:
             db.session.commit()
+            
     except Exception as e:
         db.session.rollback()
-        print(f"Error en el recolector de basura: {e}")
+        # Imprimimos el error en la consola del servidor pero NO interrumpimos al usuario
+        print(f"[MANTENIMIENTO] Error en las tareas automáticas: {str(e)}")
 
 # --- RUTAS DE LA API ---
 
 @pipeline_bp.route('/listado', methods=['GET'])
 @jwt_required()
 def listar_pipelines():
-    # ... (Mismo código que tenías para listar pipelines) ...
     try:
         claims = get_jwt()
         roles = claims.get("roles", [])
         usuario_id = get_jwt_identity()
 
+        # 1. Si es Admin, lo ve todo, pero solo si el pipeline está habilitado
         if "admin" in roles:
-            pipelines = Pipeline.query.all()
+            pipelines = Pipeline.query.filter_by(habilitado=1).all()
             return jsonify([{"id": p.id_pipeline, "nombre": p.nombre} for p in pipelines]), 200
 
         now = datetime.now()
+        
+        # 2. Comprobación estricta del Plan PRO (Activo = 1 + Fechas correctas)
         es_pro_activo = SuscripcionPlan.query.join(TipoPlan).filter(
             SuscripcionPlan.id_usuario == usuario_id,
             SuscripcionPlan.activo == 1,
@@ -69,9 +108,11 @@ def listar_pipelines():
         ).first() is not None
 
         if es_pro_activo:
-            pipelines = Pipeline.query.filter_by(publico=1).all()
+            # Añadido: habilitado=1 para que no salgan los que el admin haya apagado
+            pipelines = Pipeline.query.filter_by(publico=1, habilitado=1).all()
             return jsonify([{"id": p.id_pipeline, "nombre": p.nombre} for p in pipelines]), 200
 
+        # 3. Comprobación estricta de ALQUILERES (Activo = 1 + Fechas correctas)
         alquileres_activos = Alquila.query.filter(
             Alquila.id_usuario == usuario_id,
             Alquila.activo == 1,
@@ -80,13 +121,16 @@ def listar_pipelines():
         ).all()
         
         ias_alquiladas = {alquiler.id_ia for alquiler in alquileres_activos}
-        pipelines_publicos = Pipeline.query.filter_by(publico=1).all()
+        
+        # Añadido: habilitado=1
+        pipelines_publicos = Pipeline.query.filter_by(publico=1, habilitado=1).all()
         pipelines_permitidos = []
 
         for pipeline in pipelines_publicos:
             etapas = PipelineEtapa.query.filter_by(id_pipeline=pipeline.id_pipeline).all()
             ias_requeridas = {etapa.id_ia for etapa in etapas}
 
+            # Si el usuario tiene alquiladas TODAS las IAs que requiere este pipeline, se lo mostramos
             if ias_requeridas and ias_requeridas.issubset(ias_alquiladas):
                 pipelines_permitidos.append(pipeline)
 
@@ -95,7 +139,7 @@ def listar_pipelines():
 
     except Exception as e:
         return jsonify({"status": "error", "mensaje": f"Error al listar: {str(e)}"}), 500
-
+    
 @pipeline_bp.route('/configuracion_pipeline/<int:id_pipeline>', methods=['GET'])
 @jwt_required()
 def obtener_configuracion_completa(id_pipeline):
@@ -119,7 +163,6 @@ def obtener_configuracion_completa(id_pipeline):
 @pipeline_bp.route('/detalles_completos', methods=['GET'])
 @jwt_required()
 def listar_detalles_admin():
-    # ... (Mismo código de detalles_completos sin modificar) ...
     claims = get_jwt()
     if "admin" not in claims.get("roles", []):
         return jsonify({"mensaje": "No autorizado"}), 403

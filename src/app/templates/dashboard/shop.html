@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tienda de Modelos IA - IA Explorer</title>
+    <style>
+        :root { --primary: #0056b3; --bg: #f4f7f6; --success: #28a745; --text: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-header { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; transition: background 0.3s; }
+        .btn-header:hover { background: rgba(255,255,255,0.3); }
+        
+        main { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        h2.title { margin-top: 0; color: #1c1e21; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 30px; }
+        .banner-guia { background: #e9ecef; padding: 15px 20px; border-radius: 8px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); }
+        .banner-guia h4 { margin: 0 0 5px 0; color: var(--primary); }
+        .banner-guia p { margin: 0; font-size: 0.9rem; color: #555; }
+        .btn-banner { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: background 0.2s; white-space: nowrap; }
+        .btn-banner:hover { background: #004494; }
+
+        .grid-tienda { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .card-modelo { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; display: flex; flex-direction: column; transition: transform 0.2s; }
+        .card-modelo:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        
+        .modelo-nombre { font-size: 1.2rem; font-weight: bold; margin: 0 0 10px 0; color: var(--primary); }
+        .modelo-desc { font-size: 0.95rem; color: #666; flex-grow: 1; margin-bottom: 20px; line-height: 1.5; }
+        .modelo-precio { font-size: 1.4rem; font-weight: bold; color: #333; text-align: center; margin-bottom: 20px; background: #f8f9fa; padding: 10px; border-radius: 8px; }
+        
+        .btn-alquilar { background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.3s; }
+        .btn-alquilar:hover { background: #218838; }
+        .btn-alquilar:disabled { background: #6c757d; cursor: not-allowed; }
+        
+        .ya-alquilado { background: #e9ecef; color: #495057; border: 1px solid #ced4da; cursor: not-allowed; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: auto; }
+        
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; text-align: center; font-weight: bold; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>Marketplace de Modelos IA</h2>
+    <div>
+        <a href="/dashboard" class="btn-header">← Volver al Panel</a>
+    </div>
+</header>
+
+<main>
+    <div id="mensajeAlerta" class="alert"></div>
+    <h2 class="title">Potencia tus Pipelines con nuevos Motores IA</h2>
+    
+    <div class="banner-guia">
+        <div>
+            <h4>¿No sabes qué motor necesitas?</h4>
+            <p>Consulta nuestra guía para ver qué Inteligencias Artificiales requiere cada pipeline.</p>
+        </div>
+        <a href="/guia-compra" class="btn-banner">Ver Guía de Pipelines</a>
+    </div>
+    
+    <div id="contenedorModelos" class="grid-tienda">
+        <p style="grid-column: 1 / -1; text-align: center; color: #666;">Cargando motores disponibles...</p>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', cargarTienda);
+
+    function mostrarAlerta(mensaje, tipo) {
+        const alerta = document.getElementById('mensajeAlerta');
+        alerta.textContent = mensaje;
+        alerta.className = `alert alert-${tipo}`;
+        alerta.style.display = 'block';
+        setTimeout(() => alerta.style.display = 'none', 4000);
+    }
+
+    async function cargarTienda() {
+        const contenedor = document.getElementById('contenedorModelos');
+        const token = sessionStorage.getItem('jwt_token');
+        if (!token) { window.location.replace('/login'); return; }
+
+        try {
+            const response = await fetch('/api/v1/shop/modelos', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (!response.ok) throw new Error("Error al cargar la tienda");
+            
+            const modelos = await response.json();
+            contenedor.innerHTML = ''; 
+
+            if (modelos.length === 0) {
+                contenedor.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay modelos de IA configurados en el sistema.</p>';
+                return;
+            }
+
+            modelos.forEach(modelo => {
+                const card = document.createElement('div');
+                card.className = 'card-modelo';
+                
+                let botonHTML = '';
+                if (modelo.alquilado) {
+                    botonHTML = `<div class="ya-alquilado">✔️ IA Activa</div>`;
+                } else {
+                    // AQUÍ AÑADIMOS EL CHECKBOX DE RENOVACIÓN
+                    botonHTML = `
+                        <div style="margin-top: auto;">
+                            <div style="text-align: center; margin-bottom: 12px;">
+                                <label style="font-size: 0.85rem; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <input type="checkbox" id="renovar_${modelo.id_ia}"> Renovar automáticamente cada mes
+                                </label>
+                            </div>
+                            <button class="btn-alquilar" onclick="alquilar(${modelo.id_ia}, this)">Alquilar 30 Días</button>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <h3 class="modelo-nombre">${modelo.nombre}</h3>
+                    <p class="modelo-desc">${modelo.descripcion}</p>
+                    <div class="modelo-precio">${modelo.precio} <span style="font-size: 0.8rem; font-weight: normal;">/ mes</span></div>
+                    ${botonHTML}
+                `;
+                contenedor.appendChild(card);
+            });
+
+        } catch (error) {
+            contenedor.innerHTML = `<p style="color: red; text-align: center; grid-column: 1 / -1;">Error de conexión: ${error.message}</p>`;
+        }
+    }
+
+    async function alquilar(id_ia, botonElement) {
+        if (!confirm("¿Deseas confirmar el alquiler de este motor de IA por 30 días?")) return;
+        
+        // Comprobamos si el usuario ha marcado el checkbox de renovación
+        const checkboxRenovar = document.getElementById(`renovar_${id_ia}`);
+        const quiereRenovacion = checkboxRenovar ? checkboxRenovar.checked : false;
+        
+        botonElement.disabled = true;
+        botonElement.textContent = "Procesando...";
+
+        try {
+            const response = await fetch(`/api/v1/shop/alquilar/${id_ia}`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'Content-Type': 'application/json' // Importante declarar que enviamos JSON
+                },
+                // Mandamos la preferencia de renovación en el body
+                body: JSON.stringify({ renovacion_auto: quiereRenovacion })
+            });
+
+            const res = await response.json();
+
+            if (response.ok) {
+                mostrarAlerta(res.mensaje, 'success');
+                // Sustituimos todo el bloque inferior (incluyendo el checkbox) por el mensaje de éxito
+                const contenedorControles = botonElement.parentElement;
+                contenedorControles.innerHTML = `<div class="ya-alquilado">✔️ IA Activa</div>`;
+            } else {
+                mostrarAlerta(res.mensaje, 'danger');
+                botonElement.disabled = false;
+                botonElement.textContent = "Alquilar 30 Días";
+            }
+        } catch (error) {
+            mostrarAlerta("Error de red al intentar alquilar", 'danger');
+            botonElement.disabled = false;
+            botonElement.textContent = "Alquilar 30 Días";
+        }
+    }
+</script>
+</body>
+</html>

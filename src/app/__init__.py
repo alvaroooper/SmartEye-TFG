@@ -18,12 +18,15 @@ def create_app(config_class=Config):
     db.init_app(app)
     jwt.init_app(app)
     
-    # Aquí registramos los Blueprints (Controladores)
+    # Registro de los Blueprints (Controladores)
     from app.controllers.pipeline_controller import pipeline_bp
     app.register_blueprint(pipeline_bp, url_prefix='/api/v1')
 
     from app.controllers.auth_controller import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/v1/auth')
+
+    from app.controllers.shop_controller import shop_bp
+    app.register_blueprint(shop_bp, url_prefix='/api/v1/shop')
 
     # --- RUTAS DE LA INTERFAZ WEB ---
     @app.route('/')
@@ -49,6 +52,18 @@ def create_app(config_class=Config):
     @app.route('/admin')
     def admin_panel():
         return render_template('admin/admin_panel.html')
+    
+    @app.route('/shop')
+    def shop_view():
+        return render_template('dashboard/shop.html')
+    
+    @app.route('/mis-compras')
+    def mis_compras_view():
+        return render_template('dashboard/mis_compras.html')
+    
+    @app.route('/guia-compra')
+    def guia_compra_view():
+        return render_template('dashboard/guia_compra.html')
 
     # Importar los modelos para que SQLAlchemy los reconozca al iniciar
     with app.app_context():
