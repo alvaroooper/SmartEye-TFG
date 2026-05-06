@@ -93,17 +93,15 @@ def rent_model(id_ia):
 @jwt_required()
 def mis_compras():
     usuario_id = get_jwt_identity()
+    ahora = datetime.now()
     
-    # 1. Obtenemos los alquileres de IA activos
+    # Alquileres de IA
     alquileres = Alquila.query.filter_by(id_usuario=usuario_id, activo=1).all()
-    
     datos_alquileres = []
     for a in alquileres:
         ia = IAModelo.query.get(a.id_ia)
         if ia:
-            # Formateamos la fecha para que sea legible (ej: 30/05/2026)
-            fecha_fin_str = a.periodo_fin.strftime('%d/%m/%Y') if a.periodo_fin else "Indefinido"
-            
+            fecha_fin_str = a.periodo_fin.strftime('%d/%m/%Y') if a.periodo_fin else "Para siempre"
             datos_alquileres.append({
                 "id_compra": a.id_compra,
                 "nombre": ia.nombre.capitalize(),
@@ -112,15 +110,25 @@ def mis_compras():
                 "importe": str(a.importe)
             })
             
-    # 2. ESPACIO PREPARADO PARA EL FUTURO: Suscripciones a Planes
-
-    datos_planes = [] 
+    # Planes 
+    suscripciones = SuscripcionPlan.query.filter_by(id_usuario=usuario_id, activo=1).all()
+    datos_planes = []
+    for sub in suscripciones:
+        plan = TipoPlan.query.get(sub.id_plan)
+        if plan:
+            fecha_fin_str = sub.fecha_fin.strftime('%d/%m/%Y') if sub.fecha_fin else "Para siempre"
+            precio_float = float(sub.importe) if sub.importe is not None else 0.00
+            datos_planes.append({
+                "id_suscripcion": sub.id_suscripcion,
+                "nombre": plan.nombre,
+                "fecha_fin": fecha_fin_str,
+                "renovacion_auto": True if sub.renovacion_auto == 1 else False,
+                "importe": str(precio_float),
+                "es_gratis": precio_float == 0.00
+            })
             
-    return jsonify({
-        "status": "success",
-        "alquileres": datos_alquileres,
-        "planes": datos_planes
-    }), 200
+    return jsonify({"status": "success", "alquileres": datos_alquileres, "planes": datos_planes}), 200
+
 
 @shop_bp.route('/alquiler/<int:id_compra>/toggle_renovacion', methods=['POST'])
 @jwt_required()
@@ -213,3 +221,92 @@ def guia_pipelines():
         })
 
     return jsonify(resultado), 200
+
+
+@shop_bp.route('/planes', methods=['GET'])
+@jwt_required()
+def list_planes():
+    usuario_id = get_jwt_identity()
+    ahora = datetime.now()
+    
+    planes = TipoPlan.query.filter_by(habilitado=True).all()
+    
+    # Buscar el plan activo del usuario
+    suscripcion_activa = SuscripcionPlan.query.filter(
+        SuscripcionPlan.id_usuario == usuario_id,
+        SuscripcionPlan.activo == 1,
+        SuscripcionPlan.fecha_inicio <= ahora,
+        (SuscripcionPlan.fecha_fin >= ahora) | (SuscripcionPlan.fecha_fin.is_(None))
+    ).first()
+    
+    id_plan_activo = suscripcion_activa.id_plan if suscripcion_activa else None
+    
+    datos = []
+    for p in planes:
+        precio = float(p.precio_mensual) if p.precio_mensual is not None else 0.00
+        datos.append({
+            "id_plan": p.id_plan,
+            "nombre": p.nombre,
+            "precio": precio,
+            "activo": p.id_plan == id_plan_activo
+        })
+    return jsonify(datos), 200
+
+@shop_bp.route('/suscribir/<int:id_plan>', methods=['POST'])
+@jwt_required()
+def suscribir_plan(id_plan):
+    usuario_id = get_jwt_identity()
+    ahora = datetime.now()
+    
+    datos = request.get_json() or {}
+    quiere_renovacion = datos.get('renovacion_auto', False)
+    
+    plan = TipoPlan.query.get(id_plan)
+    if not plan:
+        return jsonify({"status": "error", "mensaje": "Plan no encontrado"}), 404
+        
+    try:
+        # 1. Desactivamos cualquier plan que tuviera activo antes
+        SuscripcionPlan.query.filter_by(id_usuario=usuario_id, activo=1).update({"activo": 0})
+        
+        precio = float(plan.precio_mensual) if plan.precio_mensual is not None else 0.00
+        
+        # 2. Si el plan es gratis (0.00), le damos acceso infinito (None). Si no, 30 días.
+        fecha_fin = None if precio == 0.0 else ahora + timedelta(days=30)
+        
+        nueva_sub = SuscripcionPlan(
+            id_usuario=usuario_id,
+            id_plan=id_plan,
+            fecha_compra=ahora,
+            fecha_inicio=ahora,
+            fecha_fin=fecha_fin,
+            activo=1,
+            renovacion_auto=1 if quiere_renovacion and precio > 0 else 0, # Gratis no se renueva auto
+            importe=precio
+        )
+        db.session.add(nueva_sub)
+        db.session.commit()
+        return jsonify({"status": "success", "mensaje": f"¡Suscrito al Plan {plan.nombre} con éxito!"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "mensaje": str(e)}), 500
+    
+
+@shop_bp.route('/plan/<int:id_suscripcion>/toggle_renovacion', methods=['POST'])
+@jwt_required()
+def toggle_renovacion_plan(id_suscripcion):
+    usuario_id = get_jwt_identity()
+    sub = SuscripcionPlan.query.filter_by(id_suscripcion=id_suscripcion, id_usuario=usuario_id).first()
+    
+    if not sub:
+        return jsonify({"status": "error", "mensaje": "Suscripción no encontrada"}), 404
+        
+    sub.renovacion_auto = 0 if sub.renovacion_auto == 1 else 1
+    
+    try:
+        db.session.commit()
+        return jsonify({"status": "success", "mensaje": "Renovación actualizada"}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({"status": "error", "mensaje": "Error en BD"}), 500

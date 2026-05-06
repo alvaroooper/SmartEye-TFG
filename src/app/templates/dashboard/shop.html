@@ -57,14 +57,22 @@
         </div>
         <a href="/guia-compra" class="btn-banner">Ver Guía de Pipelines</a>
     </div>
-    
+    <h3 class="title" style="border: none; margin-bottom: 10px;">Planes de Suscripción</h3>
+    <div id="contenedorPlanes" class="grid-tienda" style="margin-bottom: 40px;">
+        <p style="text-align: center; color: #666;">Cargando planes...</p>
+    </div>
+
+    <h3 class="title" style="border: none; margin-bottom: 10px;">Alquiler de Motores Sueltos</h3>
     <div id="contenedorModelos" class="grid-tienda">
         <p style="grid-column: 1 / -1; text-align: center; color: #666;">Cargando motores disponibles...</p>
     </div>
 </main>
 
 <script>
-    document.addEventListener('DOMContentLoaded', cargarTienda);
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarPlanes();
+        cargarTienda();
+    });
 
     function mostrarAlerta(mensaje, tipo) {
         const alerta = document.getElementById('mensajeAlerta');
@@ -168,6 +176,82 @@
             botonElement.textContent = "Alquilar 30 Días";
         }
     }
+    async function cargarPlanes() {
+        const contenedor = document.getElementById('contenedorPlanes');
+        const token = sessionStorage.getItem('jwt_token');
+
+        try {
+            const response = await fetch('/api/v1/shop/planes', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const planes = await response.json();
+            contenedor.innerHTML = ''; 
+
+            planes.forEach(plan => {
+                const card = document.createElement('div');
+                card.className = 'card-modelo';
+                card.style.borderTop = plan.nombre.toLowerCase() === 'pro' ? '5px solid #ffc107' : '5px solid var(--primary)';
+                
+                let botonHTML = '';
+                if (plan.activo) {
+                    botonHTML = `<div class="ya-alquilado">✔️ Plan Actual</div>`;
+                } else {
+                    let extraHTML = plan.precio > 0 
+                        ? `<div style="text-align: center; margin-bottom: 12px;"><label style="font-size: 0.85rem; color: #555;"><input type="checkbox" id="renovar_plan_${plan.id_plan}"> Auto-renovar</label></div>`
+                        : '';
+                    
+                    botonHTML = `
+                        <div style="margin-top: auto;">
+                            ${extraHTML}
+                            <button class="btn-alquilar" style="background: var(--primary);" onclick="suscribirPlan(${plan.id_plan}, this)">Cambiar a este plan</button>
+                        </div>`;
+                }
+
+                card.innerHTML = `
+                    <h3 class="modelo-nombre">${plan.nombre}</h3>
+                    <div class="modelo-precio">${plan.precio} € <span style="font-size: 0.8rem; font-weight: normal;">/ mes</span></div>
+                    <p class="modelo-desc">${plan.precio > 0 ? 'Desbloquea todos los pipelines y funciones premium sin límites.' : 'Funciones básicas con acceso limitado.'}</p>
+                    ${botonHTML}
+                `;
+                contenedor.appendChild(card);
+            });
+        } catch (error) {
+            contenedor.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
+
+    async function suscribirPlan(id_plan, botonElement) {
+        if (!confirm("¿Estás seguro de querer cambiar tu plan actual?")) return;
+        
+        const checkboxRenovar = document.getElementById(`renovar_plan_${id_plan}`);
+        const quiereRenovacion = checkboxRenovar ? checkboxRenovar.checked : false;
+        
+        botonElement.disabled = true;
+        botonElement.textContent = "Procesando...";
+
+        try {
+            const response = await fetch(`/api/v1/shop/suscribir/${id_plan}`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ renovacion_auto: quiereRenovacion })
+            });
+            const res = await response.json();
+            if (response.ok) {
+                mostrarAlerta(res.mensaje, 'success');
+                setTimeout(() => location.reload(), 1500); // Recargamos para actualizar botones
+            } else {
+                mostrarAlerta(res.mensaje, 'danger');
+                botonElement.disabled = false;
+                botonElement.textContent = "Cambiar a este plan";
+            }
+        } catch (error) {
+            mostrarAlerta("Error de red", 'danger');
+        }
+    }
+
 </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_jwt_identity
-from app.models import Usuario, Rol, Ejecucion, TemporalArchivo, SuscripcionPlan, Alquila # Asegúrate de importar todos
+from app.models import Usuario, Rol, Ejecucion, TemporalArchivo, SuscripcionPlan, Alquila, TipoPlan
 from app import db
 import os
 
@@ -38,9 +38,26 @@ def register():
         nuevo_usuario.roles.append(rol_estandar)
 
     try:
-        # Añadir a la sesión y persistir en la base de datos
+        # 1. Añadimos el usuario y hacemos flush para obtener su ID asignada por la base de datos
         db.session.add(nuevo_usuario)
+        db.session.flush() 
+
+        # 2. Buscamos el plan básico y se lo asignamos por defecto
+        plan_basico = TipoPlan.query.filter_by(nombre='Basico').first()
+        if plan_basico:
+            nueva_sub = SuscripcionPlan(
+                id_usuario=nuevo_usuario.id_usuario,
+                id_plan=plan_basico.id_plan,
+                activo=1,
+                renovacion_auto=0,
+                importe=0.00,
+                fecha_fin=None # Acceso de por vida
+            )
+            db.session.add(nueva_sub)
+
+        # 3. Guardamos todo definitivamente
         db.session.commit()
+        
         lista_roles = [rol.nombre for rol in nuevo_usuario.roles]
         token = create_access_token(
             identity=str(nuevo_usuario.id_usuario),

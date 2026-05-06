@@ -106,7 +106,36 @@
                 });
             }
 
-            // --- 2. RENDERIZAR PLANES (Futuro) ---
+            // --- 2. RENDERIZAR PLANES ---
+            const contenedorPlanes = document.getElementById('contenedorPlanes');
+            contenedorPlanes.innerHTML = '';
+            
+            if (data.planes.length === 0) {
+                 contenedorPlanes.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;">No tienes ningún plan activo.</div>';
+            } else {
+                 data.planes.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'card-compra card-plan';
+                    
+                    let htmlBotones = '';
+                    if (!p.es_gratis) {
+                        const btnClass = p.renovacion_auto ? 'btn-toggle active' : 'btn-toggle';
+                        const btnText = p.renovacion_auto ? 'Cancelar Renovación Automática' : 'Activar Renovación Automática';
+                        htmlBotones = `<button class="${btnClass}" onclick="toggleRenovacionPlan(${p.id_suscripcion}, this)">${btnText}</button>`;
+                    } else {
+                        htmlBotones = `<div style="text-align:center; color:#666; font-size:0.9rem; padding: 8px;">Plan Permanente Gratuito</div>`;
+                    }
+                    
+                    card.innerHTML = `
+                        <h4 class="compra-nombre">Plan ${p.nombre}</h4>
+                        <div class="compra-detalle"><b>Válido hasta:</b> ${p.fecha_fin}</div>
+                        ${!p.es_gratis ? `<div class="compra-detalle"><b>Renovación:</b> ${p.renovacion_auto ? '<span style="color: green;">Activada</span>' : '<span style="color: red;">Desactivada</span>'}</div>` : ''}
+                        <div class="compra-precio">${p.importe} € / mes</div>
+                        ${htmlBotones}
+                    `;
+                    contenedorPlanes.appendChild(card);
+                 });
+            }
 
         } catch (error) {
             contenedorAlquileres.innerHTML = `<p style="color: red; text-align: center; grid-column: 1 / -1;">Error de conexión: ${error.message}</p>`;
@@ -137,6 +166,29 @@
             }
         } catch (error) {
             mostrarAlerta("Error al procesar la solicitud", 'danger');
+            botonElement.disabled = false;
+            botonElement.textContent = textoOriginal;
+        }
+    }
+
+    async function toggleRenovacionPlan(id_suscripcion, botonElement) {
+        botonElement.disabled = true;
+        const textoOriginal = botonElement.textContent;
+        botonElement.textContent = "Procesando...";
+
+        try {
+            const response = await fetch(`/api/v1/shop/plan/${id_suscripcion}/toggle_renovacion`, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+            });
+
+            if (response.ok) {
+                cargarMisCompras(); 
+            } else {
+                botonElement.disabled = false;
+                botonElement.textContent = textoOriginal;
+            }
+        } catch (error) {
             botonElement.disabled = false;
             botonElement.textContent = textoOriginal;
         }
