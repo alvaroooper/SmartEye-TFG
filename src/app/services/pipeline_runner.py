@@ -39,7 +39,7 @@ class PipelineRunner:
 
             # 4. EJECUCIÓN RAMIFICADA
             for ruta in rutas_actuales:
-                # --- NUEVO: Pasamos el 'prefijo' al launcher para que las IAs lo usen al guardar ---
+                # Pasamos el 'prefijo' al launcher para que las IAs lo usen al guardar ---
                 res_rutas, json_res = launcher.ejecutar_modo(nombre_modo, ruta, config_etapa, prefijo)
                 
                 if isinstance(res_rutas, list):

@@ -64,6 +64,14 @@ def create_app(config_class=Config):
     @app.route('/guia-compra')
     def guia_compra_view():
         return render_template('dashboard/guia_compra.html')
+    
+    @app.route('/historial')
+    def historial_view():
+        return render_template('dashboard/historial.html')
+    
+    @app.route('/resultados/<int:id_ejecucion>')
+    def resultados_view(id_ejecucion):
+        return render_template('dashboard/resultados_ejecucion.html', id_ejecucion=id_ejecucion)
 
     # Importar los modelos para que SQLAlchemy los reconozca al iniciar
     with app.app_context():

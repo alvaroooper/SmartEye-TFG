@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Ejecuciones - IA Explorer</title>
+    <style>
+        :root { --primary: #0056b3; --bg: #f4f7f6; --text: #333; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-header { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; transition: background 0.3s; }
+        .btn-header:hover { background: rgba(255,255,255,0.3); }
+        
+        main { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px 15px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; text-transform: uppercase; font-size: 0.85rem; }
+        
+        .badge { padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .badge-completado { background: #d4edda; color: #155724; }
+        .badge-error { background: #f8d7da; color: #721c24; }
+        .badge-procesando { background: #fff3cd; color: #856404; }
+        
+        .btn-config { background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+        .btn-config:hover { background: #138496; }
+        
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; margin-top: 10px; display: none; }
+        
+        .empty-state { text-align: center; padding: 40px; color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>Historial de Ejecuciones</h2>
+    <div>
+        <a href="/dashboard" class="btn-header">← Volver al Panel</a>
+    </div>
+</header>
+
+<main>
+    <div class="card">
+        <h3 style="margin-top: 0; color: var(--primary);">Registros de Análisis</h3>
+        <p style="color: #666; font-size: 0.95rem;">Aquí puedes consultar el resultado de todos tus pipelines ejecutados y la configuración que inyectaste en cada uno.</p>
+        
+        <table id="tablaHistorial">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Pipeline</th>
+                    <th>Estado</th>
+                    <th>Duración</th>
+                    <th>Configuración</th>
+                    <th>Resultados</th> </tr>
+            </thead>
+            <tbody id="tbodyHistorial">
+                <tr><td colspan="5" class="empty-state">Cargando historial...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', cargarHistorial);
+
+    async function cargarHistorial() {
+        const tbody = document.getElementById('tbodyHistorial');
+        const token = sessionStorage.getItem('jwt_token');
+        if (!token) { window.location.replace('/login'); return; }
+
+        try {
+            const response = await fetch('/api/v1/historial', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (!response.ok) throw new Error("Error al cargar el historial");
+            
+            const ejecuciones = await response.json();
+            tbody.innerHTML = ''; 
+
+            if (ejecuciones.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aún no has ejecutado ningún pipeline.</td></tr>';
+                return;
+            }
+
+            ejecuciones.forEach(ej => {
+                // Determinar el color del estado
+                let claseEstado = 'badge-procesando';
+                if (ej.estado === 'completado') claseEstado = 'badge-completado';
+                if (ej.estado === 'error') claseEstado = 'badge-error';
+                
+                // Si hubo error, lo añadimos al nombre del pipeline para que lo vea
+                let errorHtml = ej.error ? `<br><small style="color: red;">Error: ${ej.error}</small>` : '';
+
+                // Comprobar si hay configuración personalizada válida
+                let configHtml = '<span style="color: #999; font-size: 0.85rem;">Predeterminada</span>';
+                if (ej.config_aplicada && ej.config_aplicada.trim() !== "" && ej.config_aplicada !== "{}") {
+                    // Formatear el JSON para que quede bonito en el <pre>
+                    let jsonFormateado = "";
+                    try {
+                        jsonFormateado = JSON.stringify(JSON.parse(ej.config_aplicada), null, 4);
+                    } catch(e) {
+                        jsonFormateado = ej.config_aplicada; // Si falla el parseo, lo ponemos en crudo
+                    }
+
+                    configHtml = `
+                        <button class="btn-config" onclick="toggleConfig(this)">Ver JSON</button>
+                        <pre>${jsonFormateado}</pre>
+                    `;
+                }
+
+                let btnResultados = ej.archivos_disponibles 
+                    ? `<button onclick="abrirPestanaResultados(${ej.id})" style="background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold; display: inline-block;">Ver Resultados ↗</button>` 
+                    : `<span style="color: #999; font-size: 0.85rem; font-style: italic;">Expirados</span>`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="white-space: nowrap;">${ej.fecha}</td>
+                        <td><b>${ej.pipeline}</b>${errorHtml}</td>
+                        <td><span class="badge ${claseEstado}">${ej.estado}</span></td>
+                        <td>${ej.duracion}</td>
+                        <td>${configHtml}</td>
+                        <td>${btnResultados}</td> </tr>
+                `;
+            });
+
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="5" style="color: red; text-align: center;">Error de conexión: ${error.message}</td></tr>`;
+        }
+    }
+
+    function toggleConfig(btn) {
+        const pre = btn.nextElementSibling;
+        if (pre.style.display === "none" || pre.style.display === "") {
+            pre.style.display = "block";
+            btn.textContent = "Ocultar JSON";
+        } else {
+            pre.style.display = "none";
+            btn.textContent = "Ver JSON";
+        }
+    }
+    function abrirPestanaResultados(id) {
+        // 1. Copiamos el token al localStorage para que la nueva pestaña pueda verlo
+        localStorage.setItem('puente_token', sessionStorage.getItem('jwt_token'));
+        // 2. Abrimos la nueva pestaña
+        window.open(`/resultados/${id}`, '_blank');
+    }
+</script>
+</body>
+</html>

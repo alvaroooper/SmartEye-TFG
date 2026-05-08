@@ -213,3 +213,4 @@ def eliminar_cuenta():
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "mensaje": f"Error al eliminar la cuenta: {str(e)}"}), 500
+    

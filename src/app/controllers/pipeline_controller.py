@@ -200,13 +200,14 @@ def listar_detalles_admin():
 @jwt_required()
 def analizar_imagen():
     usuario_id = get_jwt_identity()
+    ahora = datetime.now() # Capturamos el momento exacto
     
     # Buscamos al usuario para obtener su username
     usuario = Usuario.query.get(usuario_id)
     nombre_user = usuario.username if usuario else "desconocido"
     
     # Generamos la fecha hasta los segundos y creamos el prefijo único
-    fecha_str = datetime.now().strftime("%Y%m%d%H%M%S")
+    fecha_str = ahora.strftime("%Y%m%d%H%M%S")
     prefijo = f"{nombre_user}_{fecha_str}"
 
     id_pipeline = request.form.get('id_pipeline')
@@ -219,6 +220,21 @@ def analizar_imagen():
     imagen_file = request.files['imagen']
     if imagen_file.filename == '':
         return jsonify({"status": "error", "mensaje": "No se ha seleccionado ninguna imagen"}), 400
+
+    # --- LÓGICA DE RETENCIÓN DE DATOS (PRO vs BÁSICO) ---
+    # Comprobamos si el usuario tiene un Plan Pro activo
+    es_pro_activo = SuscripcionPlan.query.join(TipoPlan).filter(
+        SuscripcionPlan.id_usuario == usuario_id,
+        SuscripcionPlan.activo == 1,
+        TipoPlan.nombre == 'Pro',
+        SuscripcionPlan.fecha_inicio <= ahora,
+        (SuscripcionPlan.fecha_fin >= ahora) | (SuscripcionPlan.fecha_fin.is_(None))
+    ).first() is not None
+
+    # Si es Pro le damos 7 días, si es básico le damos 5 minutos
+    tiempo_retencion = timedelta(days=7) if es_pro_activo else timedelta(minutes=5)
+    fecha_expiracion = ahora + tiempo_retencion
+    # -----------------------------------------------------------
 
     # 1. Crear el registro de ejecución en la base de datos
     nueva_ejecucion = Ejecucion(
@@ -242,14 +258,14 @@ def analizar_imagen():
         ruta_input = os.path.join(folder_ejecucion, filename_orig)
         imagen_file.save(ruta_input)
 
-        # REGISTRAR LA IMAGEN ORIGINAL para que el recolector de basura la borre
+        # REGISTRAR LA IMAGEN ORIGINAL aplicando la fecha de expiración calculada
         token_original = str(uuid.uuid4())
         archivo_original_temp = TemporalArchivo(
             id_ejecucion=nueva_ejecucion.id_ejecucion,
             tipo="imagen_original",
             ruta_servidor=ruta_input,
             token_descarga=token_original,
-            expira_en=datetime.now() + timedelta(minutes=5)
+            expira_en=fecha_expiracion 
         )
         db.session.add(archivo_original_temp)
 
@@ -273,7 +289,7 @@ def analizar_imagen():
                     tipo="resultado_imagen",
                     ruta_servidor=ruta_completa_img,
                     token_descarga=token_img,
-                    expira_en=datetime.now() + timedelta(minutes=5)
+                    expira_en=fecha_expiracion 
                 )
                 db.session.add(archivo_temp_img)
                 tokens_imagenes.append(token_img)
@@ -282,7 +298,6 @@ def analizar_imagen():
             etapa["imagenes"] = tokens_imagenes
 
             # --- Gestión del JSON físico ---
-            # Nombre: usuario_fecha_datos_etapa_X_modo.json
             nombre_archivo_json = f"{prefijo}_datos_etapa_{etapa['etapa']}_{etapa['modo']}.json"
             ruta_json_completa = os.path.join(folder_ejecucion, nombre_archivo_json)
             
@@ -297,7 +312,7 @@ def analizar_imagen():
                 tipo="resultado_json",
                 ruta_servidor=ruta_json_completa,
                 token_descarga=token_json,
-                expira_en=datetime.now() + timedelta(minutes=5)
+                expira_en=fecha_expiracion # 
             )
             db.session.add(archivo_temp_json)
             
@@ -318,7 +333,7 @@ def analizar_imagen():
         nueva_ejecucion.mensaje_error_user = str(e)
         db.session.commit()
         return jsonify({"status": "error", "mensaje": str(e)}), 500
-        
+            
 # --- 4. DESCARGA MEDIANTE TOKEN ---
 @pipeline_bp.route('/outputs/<token>')
 def serve_output(token):
@@ -339,3 +354,98 @@ def serve_output(token):
 
     # Enviamos el archivo real desde su ruta absoluta
     return send_file(archivo.ruta_servidor)
+
+@pipeline_bp.route('/historial', methods=['GET'])
+@jwt_required()
+def historial_ejecuciones():
+    usuario_id = get_jwt_identity()
+    now = datetime.now()
+    
+    ejecuciones = Ejecucion.query.filter_by(id_usuario=usuario_id)\
+                                 .order_by(Ejecucion.creado_en.desc())\
+                                 .all()
+    
+    resultado = []
+    for ej in ejecuciones:
+        pipeline = Pipeline.query.get(ej.id_pipeline)
+        nombre_pipe = pipeline.nombre if pipeline else "Pipeline Eliminado"
+        fecha_formateada = ej.creado_en.strftime("%d/%m/%Y %H:%M")
+        
+        # Comprobar si todavía existen archivos vivos para esta ejecución
+        archivos_activos = TemporalArchivo.query.filter(
+            TemporalArchivo.id_ejecucion == ej.id_ejecucion,
+            TemporalArchivo.expira_en > now
+        ).first()
+        
+        resultado.append({
+            "id": ej.id_ejecucion,
+            "pipeline": nombre_pipe,
+            "fecha": fecha_formateada,
+            "estado": ej.estado,
+            "duracion": f"{ej.duracion_ms} ms" if ej.duracion_ms else "-",
+            "error": ej.mensaje_error_user,
+            "config_aplicada": ej.config_aplicada,
+            "archivos_disponibles": True if archivos_activos else False # <--- NUEVO
+        })
+        
+    return jsonify(resultado), 200
+
+@pipeline_bp.route('/ejecucion/<int:id_ejecucion>/archivos', methods=['GET'])
+@jwt_required()
+def obtener_archivos_ejecucion(id_ejecucion):
+    usuario_id = get_jwt_identity()
+    now = datetime.now()
+    
+    ejecucion = Ejecucion.query.filter_by(id_ejecucion=id_ejecucion, id_usuario=usuario_id).first()
+    if not ejecucion:
+        return jsonify({"error": "No autorizado"}), 403
+        
+    archivos = TemporalArchivo.query.filter(
+        TemporalArchivo.id_ejecucion == id_ejecucion,
+        TemporalArchivo.expira_en > now
+    ).order_by(TemporalArchivo.id_temporal).all()
+    
+    etapas = PipelineEtapa.query.filter_by(id_pipeline=ejecucion.id_pipeline).order_by(PipelineEtapa.orden).all()
+    
+    datos_etapas = []
+    imagen_original = None 
+    indice_etapa = 0
+    imagenes_etapa_actual = []
+    
+    for arch in archivos:
+        info = {
+            "token": arch.token_descarga,
+            "nombre": os.path.basename(arch.ruta_servidor) if arch.ruta_servidor else "archivo"
+        }
+        
+        if arch.tipo == "imagen_original":
+            imagen_original = info 
+        elif arch.tipo == "resultado_imagen":
+            imagenes_etapa_actual.append(info)
+        elif arch.tipo == "resultado_json":
+            # (Lógica de agrupación de etapas)
+            if indice_etapa < len(etapas):
+                e = etapas[indice_etapa]
+                ia_obj = IAModelo.query.get(e.id_ia)
+                modo_obj = IAModo.query.get(e.id_modo)
+                etapa_info = {
+                    "etapa": e.orden, "nombre_etapa": e.nombre,
+                    "ia": ia_obj.nombre if ia_obj else "Desconocida",
+                    "modo": modo_obj.nombre_modo if modo_obj else "Desconocido"
+                }
+            else:
+                etapa_info = {"etapa": indice_etapa + 1, "nombre_etapa": "Etapa"}
+                
+            datos_etapas.append({
+                "info": etapa_info,
+                "imagenes": imagenes_etapa_actual,
+                "json": info
+            })
+            imagenes_etapa_actual = []
+            indice_etapa += 1
+            
+    # Devolvemos también la imagen original en el JSON 
+    return jsonify({
+        "imagen_original": imagen_original, 
+        "etapas": datos_etapas
+    }), 200

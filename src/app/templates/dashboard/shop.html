@@ -57,6 +57,7 @@
         </div>
         <a href="/guia-compra" class="btn-banner">Ver Guía de Pipelines</a>
     </div>
+    
     <h3 class="title" style="border: none; margin-bottom: 10px;">Planes de Suscripción</h3>
     <div id="contenedorPlanes" class="grid-tienda" style="margin-bottom: 40px;">
         <p style="text-align: center; color: #666;">Cargando planes...</p>
@@ -88,17 +89,16 @@
         if (!token) { window.location.replace('/login'); return; }
 
         try {
+            const hoy = new Date().toISOString().split('T')[0];
+            
             const response = await fetch('/api/v1/shop/modelos', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
-            
-            if (!response.ok) throw new Error("Error al cargar la tienda");
-            
             const modelos = await response.json();
             contenedor.innerHTML = ''; 
 
             if (modelos.length === 0) {
-                contenedor.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay modelos de IA configurados en el sistema.</p>';
+                contenedor.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay modelos de IA disponibles.</p>';
                 return;
             }
 
@@ -107,18 +107,23 @@
                 card.className = 'card-modelo';
                 
                 let botonHTML = '';
-                if (modelo.alquilado) {
+                if (modelo.estado === 'activo') {
                     botonHTML = `<div class="ya-alquilado">✔️ IA Activa</div>`;
+                } else if (modelo.estado === 'programado') {
+                    botonHTML = `<div class="ya-alquilado" style="background:#fff3cd; color:#856404; border-color:#ffeeba;">⏳ Programada</div>`;
                 } else {
-                    // AQUÍ AÑADIMOS EL CHECKBOX DE RENOVACIÓN
                     botonHTML = `
-                        <div style="margin-top: auto;">
-                            <div style="text-align: center; margin-bottom: 12px;">
+                        <div style="margin-top: auto; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
+                            <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <label style="font-size: 0.85rem; color: #555; font-weight: bold;">Iniciar el:</label>
+                                <input type="date" id="fecha_inicio_ia_${modelo.id_ia}" min="${hoy}" value="${hoy}" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.85rem; cursor: pointer;">
+                            </div>
+                            <div style="text-align: center; margin-bottom: 12px; border-top: 1px dashed #ccc; padding-top: 10px;">
                                 <label style="font-size: 0.85rem; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                    <input type="checkbox" id="renovar_${modelo.id_ia}"> Renovar automáticamente cada mes
+                                    <input type="checkbox" id="renovar_${modelo.id_ia}"> Auto-renovar mes a mes
                                 </label>
                             </div>
-                            <button class="btn-alquilar" onclick="alquilar(${modelo.id_ia}, this)">Alquilar 30 Días</button>
+                            <button class="btn-alquilar" onclick="alquilar(${modelo.id_ia}, this)">Programar Alquiler</button>
                         </div>
                     `;
                 }
@@ -126,23 +131,23 @@
                 card.innerHTML = `
                     <h3 class="modelo-nombre">${modelo.nombre}</h3>
                     <p class="modelo-desc">${modelo.descripcion}</p>
-                    <div class="modelo-precio">${modelo.precio} <span style="font-size: 0.8rem; font-weight: normal;">/ mes</span></div>
+                    <div class="modelo-precio">${modelo.precio}</div>
                     ${botonHTML}
                 `;
                 contenedor.appendChild(card);
             });
 
         } catch (error) {
-            contenedor.innerHTML = `<p style="color: red; text-align: center; grid-column: 1 / -1;">Error de conexión: ${error.message}</p>`;
+            contenedor.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
         }
     }
 
     async function alquilar(id_ia, botonElement) {
-        if (!confirm("¿Deseas confirmar el alquiler de este motor de IA por 30 días?")) return;
-        
-        // Comprobamos si el usuario ha marcado el checkbox de renovación
+        if (!confirm("¿Deseas confirmar este alquiler?")) return;
         const checkboxRenovar = document.getElementById(`renovar_${id_ia}`);
         const quiereRenovacion = checkboxRenovar ? checkboxRenovar.checked : false;
+        const inputFecha = document.getElementById(`fecha_inicio_ia_${id_ia}`);
+        const fechaElegida = inputFecha ? inputFecha.value : null;
         
         botonElement.disabled = true;
         botonElement.textContent = "Procesando...";
@@ -152,40 +157,41 @@
                 method: 'POST',
                 headers: { 
                     'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
-                    'Content-Type': 'application/json' // Importante declarar que enviamos JSON
+                    'Content-Type': 'application/json' 
                 },
-                // Mandamos la preferencia de renovación en el body
-                body: JSON.stringify({ renovacion_auto: quiereRenovacion })
+                body: JSON.stringify({ renovacion_auto: quiereRenovacion, fecha_inicio: fechaElegida })
             });
 
             const res = await response.json();
-
             if (response.ok) {
                 mostrarAlerta(res.mensaje, 'success');
-                // Sustituimos todo el bloque inferior (incluyendo el checkbox) por el mensaje de éxito
-                const contenedorControles = botonElement.parentElement;
-                contenedorControles.innerHTML = `<div class="ya-alquilado">✔️ IA Activa</div>`;
+                botonElement.parentElement.innerHTML = `<div class="ya-alquilado">✔️ IA Activa/Programada</div>`;
             } else {
                 mostrarAlerta(res.mensaje, 'danger');
                 botonElement.disabled = false;
-                botonElement.textContent = "Alquilar 30 Días";
+                botonElement.textContent = "Programar Alquiler";
             }
         } catch (error) {
-            mostrarAlerta("Error de red al intentar alquilar", 'danger');
+            mostrarAlerta("Error de red", 'danger');
             botonElement.disabled = false;
-            botonElement.textContent = "Alquilar 30 Días";
         }
     }
+
     async function cargarPlanes() {
         const contenedor = document.getElementById('contenedorPlanes');
         const token = sessionStorage.getItem('jwt_token');
 
         try {
+            const hoy = new Date().toISOString().split('T')[0];
+            
             const response = await fetch('/api/v1/shop/planes', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             const planes = await response.json();
             contenedor.innerHTML = ''; 
+
+            // DETECCIÓN: Miramos si el usuario ya tiene contratado el plan Pro (activo o futuro)
+            const tienePro = planes.some(p => p.nombre.toLowerCase() === 'pro' && (p.estado === 'activo' || p.estado === 'programado'));
 
             planes.forEach(plan => {
                 const card = document.createElement('div');
@@ -193,15 +199,35 @@
                 card.style.borderTop = plan.nombre.toLowerCase() === 'pro' ? '5px solid #ffc107' : '5px solid var(--primary)';
                 
                 let botonHTML = '';
-                if (plan.activo) {
+                
+                if (plan.estado === 'activo') {
                     botonHTML = `<div class="ya-alquilado">✔️ Plan Actual</div>`;
-                } else {
+                } 
+                else if (plan.estado === 'programado') {
+                    botonHTML = `<div class="ya-alquilado" style="background:#fff3cd; color:#856404; border-color:#ffeeba;">⏳ Programado</div>`;
+                }
+                // RESTRICCIÓN SOLICITADA: Si ya tiene Pro, bloqueamos el botón del Básico
+                else if (tienePro && plan.nombre.toLowerCase() === 'basico') {
+                    botonHTML = `
+                        <div style="margin-top: auto; background: #f0f2f5; padding: 15px; border-radius: 8px; text-align: center; color: #666; font-size: 0.85rem; border: 1px solid #ddd;">
+                            ℹ️ Ya tienes una suscripción Pro activa o programada.
+                        </div>`;
+                }
+                else {
                     let extraHTML = plan.precio > 0 
-                        ? `<div style="text-align: center; margin-bottom: 12px;"><label style="font-size: 0.85rem; color: #555;"><input type="checkbox" id="renovar_plan_${plan.id_plan}"> Auto-renovar</label></div>`
+                        ? ` <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                                <label style="font-size: 0.85rem; color: #555; font-weight: bold;">Iniciar el:</label>
+                                <input type="date" id="fecha_inicio_plan_${plan.id_plan}" min="${hoy}" value="${hoy}" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.85rem; cursor: pointer;">
+                            </div>
+                            <div style="text-align: center; margin-bottom: 12px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                                <label style="font-size: 0.85rem; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <input type="checkbox" id="renovar_plan_${plan.id_plan}"> Auto-renovar mes a mes
+                                </label>
+                            </div>`
                         : '';
                     
                     botonHTML = `
-                        <div style="margin-top: auto;">
+                        <div style="margin-top: auto; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
                             ${extraHTML}
                             <button class="btn-alquilar" style="background: var(--primary);" onclick="suscribirPlan(${plan.id_plan}, this)">Cambiar a este plan</button>
                         </div>`;
@@ -210,7 +236,7 @@
                 card.innerHTML = `
                     <h3 class="modelo-nombre">${plan.nombre}</h3>
                     <div class="modelo-precio">${plan.precio} € <span style="font-size: 0.8rem; font-weight: normal;">/ mes</span></div>
-                    <p class="modelo-desc">${plan.precio > 0 ? 'Desbloquea todos los pipelines y funciones premium sin límites.' : 'Funciones básicas con acceso limitado.'}</p>
+                    <p class="modelo-desc">${plan.precio > 0 ? 'Acceso total sin límites.' : 'Funciones básicas.'}</p>
                     ${botonHTML}
                 `;
                 contenedor.appendChild(card);
@@ -221,10 +247,11 @@
     }
 
     async function suscribirPlan(id_plan, botonElement) {
-        if (!confirm("¿Estás seguro de querer cambiar tu plan actual?")) return;
-        
+        if (!confirm("¿Deseas confirmar el cambio de plan?")) return;
         const checkboxRenovar = document.getElementById(`renovar_plan_${id_plan}`);
         const quiereRenovacion = checkboxRenovar ? checkboxRenovar.checked : false;
+        const inputFecha = document.getElementById(`fecha_inicio_plan_${id_plan}`);
+        const fechaElegida = inputFecha ? inputFecha.value : null;
         
         botonElement.disabled = true;
         botonElement.textContent = "Procesando...";
@@ -236,12 +263,12 @@
                     'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ renovacion_auto: quiereRenovacion })
+                body: JSON.stringify({ renovacion_auto: quiereRenovacion, fecha_inicio: fechaElegida })
             });
             const res = await response.json();
             if (response.ok) {
                 mostrarAlerta(res.mensaje, 'success');
-                setTimeout(() => location.reload(), 1500); // Recargamos para actualizar botones
+                setTimeout(() => location.reload(), 1500);
             } else {
                 mostrarAlerta(res.mensaje, 'danger');
                 botonElement.disabled = false;
@@ -249,6 +276,7 @@
             }
         } catch (error) {
             mostrarAlerta("Error de red", 'danger');
+            botonElement.disabled = false;
         }
     }
 
