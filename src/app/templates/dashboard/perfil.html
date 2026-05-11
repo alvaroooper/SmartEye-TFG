@@ -4,116 +4,319 @@
     <meta charset="UTF-8">
     <title>Mi Perfil - IA Explorer</title>
     <style>
-        :root { --primary: #0056b3; --bg: #f4f7f6; --danger: #dc3545; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
-        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .btn-header { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
-        .btn-header:hover { background: rgba(255,255,255,0.3); }
-        main { max-width: 600px; margin: 40px auto; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        /* Paleta de colores profesional */
+        :root { 
+            --primary: #0056b3; 
+            --primary-light: #e7f1ff;
+            --bg: #f4f7f6; 
+            --text: #2d3436;
+            --danger: #d63031;
+            --success: #27ae60;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 1.2rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn-header { 
+            background: rgba(255,255,255,0.15); 
+            color: white; 
+            padding: 8px 18px; 
+            border-radius: 6px; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+            transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-header:hover { background: rgba(255,255,255,0.25); }
+
+        main { max-width: 700px; margin: 40px auto; padding: 0 20px; }
+
+        /* Estilo de tarjetas */
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 30px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
+            margin-bottom: 30px;
+            border: 1px solid #edf2f7;
+        }
+
+        h3 { 
+            margin-top: 0; 
+            color: #1a202c; 
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        /* Grid para visualizar datos actuales del usuario */
+        .info-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px;
+            background: var(--primary-light);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .info-item label { 
+            display: block; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            color: #64748b; 
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .info-item span { 
+            font-size: 1rem; 
+            color: var(--primary); 
+            font-weight: 600;
+        }
+
+        /* Estilos del formulario */
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-guardar { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-eliminar { width: 100%; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .zona-peligrosa { border: 2px dashed var(--danger); padding: 20px; border-radius: 8px; background: #fff8f8; text-align: center; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 8px; 
+            box-sizing: border-box;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-light); }
+        
+        .hint { font-size: 0.75rem; color: #718096; margin-top: 6px; display: block; }
+
+        .btn-save { 
+            width: 100%; 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 1rem;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .btn-save:hover { background: #219150; transform: translateY(-1px); }
+
+        /* Estilo para la zona de eliminación */
+        .danger-zone { 
+            border: 2px dashed #feb2b2; 
+            background: #fff5f5; 
+            padding: 25px; 
+            border-radius: 12px; 
+            text-align: center; 
+        }
+        .btn-delete { 
+            background: var(--danger); 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* Alertas de respuesta del servidor */
+        .alert { 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            display: none; 
+            text-align: center; 
+            font-weight: 600;
+        }
+        .alert-success { background: #def7ec; color: #03543f; border: 1px solid #84e1bc; }
+        .alert-danger { background: #fde8e8; color: #9b1c1c; border: 1px solid #f8b4b4; }
+
+        /* Error visual de coincidencia de contraseña */
+        #match_error { 
+            color: var(--danger); 
+            font-size: 0.8rem; 
+            display: none; 
+            margin-top: 5px; 
+            font-weight: bold; 
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <h2>Mi Perfil</h2>
-    <div>
-        <a href="javascript:history.back()" class="btn-header">Volver al Panel</a>
-    </div>
+    <div style="font-weight: 700; font-size: 1.4rem;">IA Explorer</div>
+    <a href="/dashboard" class="btn-header">← Volver al Panel</a>
 </header>
 
 <main>
-    <div id="mensajeAlerta" class="alert"></div>
+    <div id="statusAlert" class="alert"></div>
 
     <div class="card">
-        <h3>Actualizar Datos</h3>
-        <form id="formPerfil">
+        <h3>👤 Información de mi Cuenta</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Nombre Visible Actual</label>
+                <span id="cur_nombre">Cargando...</span>
+            </div>
+            <div class="info-item">
+                <label>Nombre de Usuario (Login)</label>
+                <span id="cur_username">Cargando...</span>
+            </div>
+            <div class="info-item">
+                <label>Correo Electrónico</label>
+                <span id="cur_email">Cargando...</span>
+            </div>
+            <div class="info-item">
+                <label>Fecha de Registro</label>
+                <span id="cur_fecha">Cargando...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>⚙️ Editar mi Perfil</h3>
+        <form id="profileForm">
             <div class="form-group">
-                <label>Nombre Visible:</label>
-                <input type="text" id="username" name="username" placeholder="Tu nuevo nombre">
+                <label for="input_nombre">Nuevo Nombre Visible:</label>
+                <input type="text" id="input_nombre" placeholder="¿Cómo quieres aparecer?">
+                <span class="hint">Esto cambiará cómo te saludamos en el panel. No afecta a tu login.</span>
             </div>
-            
-            <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px;">
-                <h4 style="margin-top: 0; margin-bottom: 15px; color: #555;">Cambio de Contraseña</h4>
+
+            <div style="margin: 30px 0; border-top: 1px solid #edf2f7; padding-top: 25px;">
+                <h4 style="margin-bottom: 20px; font-size: 0.9rem; color: #718096; text-transform: uppercase;">Cambiar Seguridad</h4>
+                
                 <div class="form-group">
-                    <label>Contraseña Actual (Requerida si deseas cambiarla):</label>
-                    <input type="password" id="old_password" name="old_password" placeholder="Tu contraseña actual">
+                    <label for="old_password">Contraseña Actual:</label>
+                    <input type="password" id="old_password" placeholder="Indispensable para autorizar cambios">
                 </div>
+
                 <div class="form-group">
-                    <label>Nueva Contraseña:</label>
-                    <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" minlength="6">
+                    <label for="new_password">Nueva Contraseña (Opcional):</label>
+                    <input type="password" id="new_password" 
+                           pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                           placeholder="Mínimo 8 caracteres, Mayús, Minús y Número">
+                    <span class="hint">Déjalo en blanco si no quieres cambiar tu contraseña.</span>
                 </div>
-                <!-- NUEVO CAMPO: Confirmación de contraseña -->
+
                 <div class="form-group">
-                    <label>Confirmar Nueva Contraseña:</label>
-                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Repite la nueva contraseña" minlength="6">
+                    <label for="confirm_password">Repetir Nueva Contraseña:</label>
+                    <input type="password" id="confirm_password" placeholder="Confirma tu nueva contraseña">
+                    <span id="match_error">⚠️ Las nuevas contraseñas no coinciden.</span>
                 </div>
             </div>
-            
-            <button type="submit" class="btn-guardar">Guardar Cambios</button>
+
+            <button type="submit" class="btn-save">Guardar Cambios</button>
         </form>
     </div>
 
-    <div class="zona-peligrosa">
-        <h3 style="color: var(--danger); margin-top: 0;">Zona Peligrosa</h3>
-        <p style="font-size: 0.9rem; color: #666;">Al eliminar tu cuenta, se borrará todo tu historial de ejecuciones y suscripciones. Esta acción no se puede deshacer.</p>
-        <button id="btnEliminarCuenta" class="btn-eliminar">Eliminar mi cuenta definitivamente</button>
+    <div class="danger-zone">
+        <h4 style="margin: 0; color: var(--danger);">Zona de Peligro</h4>
+        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">Al borrar tu cuenta, se anonimizarán tus datos y perderás el acceso permanentemente.</p>
+        <button id="btnDelete" class="btn-delete">Eliminar mi cuenta definitivamente</button>
     </div>
 </main>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    // Al cargar la página, verificamos si hay sesión activa
+    document.addEventListener('DOMContentLoaded', () => {
         const token = sessionStorage.getItem('jwt_token');
         if (!token) { window.location.replace('/login'); return; }
-        
-        // Rellenar el nombre actual
-        document.getElementById('username').value = sessionStorage.getItem('nombre_usuario') || '';
+        cargarDatosPerfil();
     });
 
-    function mostrarAlerta(mensaje, tipo) {
-        const alerta = document.getElementById('mensajeAlerta');
-        alerta.textContent = mensaje;
-        alerta.className = `alert alert-${tipo}`;
-        alerta.style.display = 'block';
-        setTimeout(() => alerta.style.display = 'none', 4000);
+    /**
+     * Obtiene los datos del usuario desde el servidor
+     */
+    async function cargarDatosPerfil() {
+        try {
+            const response = await fetch('/api/v1/auth/perfil', {
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+            });
+            const res = await response.json();
+            
+            if (response.ok) {
+                document.getElementById('cur_email').innerText = res.datos.email;
+                document.getElementById('cur_username').innerText = res.datos.username;
+                document.getElementById('cur_nombre').innerText = res.datos.nombre_visible || 'No definido';
+                document.getElementById('cur_fecha').innerText = res.datos.fecha_registro;
+                
+                // Rellenamos el input para facilitar la edición
+                document.getElementById('input_nombre').value = res.datos.nombre_visible;
+            }
+        } catch (e) {
+            console.error("Error cargando perfil:", e);
+        }
     }
 
-    // ACTUALIZAR DATOS
-    document.getElementById('formPerfil').onsubmit = async function(e) {
+    /**
+     * Muestra mensajes de alerta en la parte superior
+     */
+    function showAlert(mensaje, tipo) {
+        const div = document.getElementById('statusAlert');
+        div.innerText = mensaje;
+        div.className = `alert alert-${tipo}`;
+        div.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => div.style.display = 'none', 5000);
+    }
+
+    /**
+     * Manejo del formulario de actualización
+     */
+    document.getElementById('profileForm').onsubmit = async function(e) {
         e.preventDefault();
         
         const payload = {};
-        const username = document.getElementById('username').value;
-        const oldPassword = document.getElementById('old_password').value;
-        const newPassword = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm_password').value; // Recogemos el nuevo campo
-        
-        if (username) payload.username = username;
-        
-        // Validar en el cliente antes de enviar al servidor
-        if (newPassword || confirmPassword) {
-            if (!oldPassword) {
-                mostrarAlerta("Debes introducir tu contraseña actual para establecer una nueva", "danger");
+        const nombreVisible = document.getElementById('input_nombre').value;
+        const oldPass = document.getElementById('old_password').value;
+        const newPass = document.getElementById('new_password').value;
+        const confirmPass = document.getElementById('confirm_password').value;
+        const matchError = document.getElementById('match_error');
+
+        // Solo enviamos el nombre si el campo tiene contenido
+        if (nombreVisible) payload.nombre_visible = nombreVisible;
+
+        // Lógica de Doble Verificación de contraseña
+        if (newPass || confirmPass) {
+            // 1. ¿Coinciden las dos nuevas?
+            if (newPass !== confirmPass) {
+                matchError.style.display = 'block';
+                showAlert("Las nuevas contraseñas no coinciden.", "danger");
                 return;
             }
-            
-            // Verificar que las contraseñas coincidan
-            if (newPassword !== confirmPassword) {
-                mostrarAlerta("Las contraseñas nuevas no coinciden. Por favor, revísalas.", "danger");
+            // 2. ¿Ha puesto la vieja para autorizar?
+            if (!oldPass) {
+                showAlert("Debes introducir tu contraseña ACTUAL para poder cambiarla.", "danger");
                 return;
             }
-            
-            payload.password = newPassword;
-            payload.old_password = oldPassword;
+            matchError.style.display = 'none';
+            payload.password = newPass;
+            payload.old_password = oldPass;
+        }
+
+        // Si no se ha escrito nada
+        if (Object.keys(payload).length === 0) {
+            showAlert("No hay cambios que guardar.", "danger");
+            return;
         }
 
         try {
@@ -125,29 +328,49 @@
                 },
                 body: JSON.stringify(payload)
             });
+            
             const res = await response.json();
             
             if (response.ok) {
-                mostrarAlerta(res.mensaje, 'success');
-                // Actualizar el session storage si el nombre cambió
-                if (res.nuevo_nombre) {
-                    sessionStorage.setItem('nombre_usuario', res.nuevo_nombre);
-                }
-                // Limpiar todos los campos de contraseñas por seguridad
-                document.getElementById('old_password').value = ''; 
-                document.getElementById('password').value = ''; 
-                document.getElementById('confirm_password').value = ''; 
+                showAlert("✅ " + res.mensaje, "success");
+                
+                // Actualizamos el nombre en el navegador (para el saludo del Dashboard)
+                if (res.nuevo_nombre) sessionStorage.setItem('nombre_usuario', res.nuevo_nombre);
+                
+                // Limpiamos los campos de texto de seguridad por privacidad
+                document.getElementById('old_password').value = '';
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+                
+                // Refrescamos los datos actuales de la tarjeta superior
+                cargarDatosPerfil();
             } else {
-                mostrarAlerta(res.mensaje, 'danger');
+                showAlert("❌ " + res.mensaje, "danger");
             }
         } catch (e) {
-            mostrarAlerta("Error de conexión", 'danger');
+            showAlert("Error de conexión con el servidor.", "danger");
         }
     };
 
-    // ELIMINAR CUENTA
-    document.getElementById('btnEliminarCuenta').onclick = async function() {
-        if (!confirm("¿Estás completamente seguro de que deseas eliminar tu cuenta? Perderás todos tus datos.")) return;
+    /**
+     * Validador visual en tiempo real:
+     * Compara las claves mientras el usuario escribe en el segundo campo.
+     */
+    document.getElementById('confirm_password').oninput = function() {
+        const newPass = document.getElementById('new_password').value;
+        const matchError = document.getElementById('match_error');
+        if (this.value !== newPass && this.value !== "") {
+            matchError.style.display = 'block';
+        } else {
+            matchError.style.display = 'none';
+        }
+    };
+
+    /**
+     * Borrado de cuenta (Lógica DELETE)
+     */
+    document.getElementById('btnDelete').onclick = async function() {
+        if (!confirm("⚠️ ¿Estás COMPLETAMENTE seguro? Esta acción no se puede deshacer.")) return;
         
         try {
             const response = await fetch('/api/v1/auth/cuenta', {
@@ -159,12 +382,9 @@
                 alert("Cuenta eliminada correctamente.");
                 sessionStorage.clear();
                 window.location.replace('/');
-            } else {
-                const res = await response.json();
-                mostrarAlerta(res.mensaje, 'danger');
             }
         } catch (e) {
-            mostrarAlerta("Error de conexión al intentar eliminar la cuenta", 'danger');
+            showAlert("Error al procesar la baja de la cuenta.", "danger");
         }
     };
 </script>

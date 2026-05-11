@@ -235,6 +235,7 @@ __pycache__/
 *.pyd
 .venv/
 env/
+__pycache
 
 # Tests
 .pytest_cache/
@@ -256,5 +257,5 @@ runs/
 .DS_Store
 Thumbs.db
 
-# === ARCHIVOS DEL PROYECTO LOCAL QUE NO DEBES SUBIR ===
+# === ARCHIVOS DEL PROYECTO LOCAL===
 ia_env/

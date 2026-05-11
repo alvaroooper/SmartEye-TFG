@@ -2,62 +2,201 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Resultados Rescatados - IA Explorer</title>
+    <title>Resultados de Ejecución - IA Explorer</title>
     <style>
-        :root { --primary: #0056b3; --bg: #f4f7f6; --text: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: var(--text); padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .cabecera-resultados { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        h2 { color: var(--text); margin: 0; }
-        .btn-volver { background: #6c757d; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
-        .btn-volver:hover { background: #5a6268; }
+        /* ==========================================================================
+           VARIABLES GLOBALES Y ESTILOS BASE
+           ========================================================================== */
+        :root { 
+            --primary: #0056b3; 
+            --bg: #f4f7f6; 
+            --text: #333; 
+            --border: #ddd; 
+        }
         
-        /* Estilos idénticos a la foto que mandaste */
-        .etapa-card { border: 2px solid var(--primary); border-radius: 8px; margin-bottom: 25px; background: #fafafa; overflow: hidden; }
-        .etapa-header { background: white; border-bottom: 1px solid #ddd; padding: 15px 20px; }
-        .etapa-header h4 { color: var(--primary); margin: 0; font-size: 1.1rem; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            color: var(--text); 
+            padding: 20px; 
+        }
+        
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+        }
+        
+        .header-box { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid #eee; 
+            padding-bottom: 15px; 
+            margin-bottom: 25px; 
+        }
+        
+        h2 { margin: 0; font-weight: 600; color: var(--text); }
+        
+        .btn-nav { 
+            background: #6c757d; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+            transition: 0.3s; 
+        }
+        .btn-nav:hover { background: #5a6268; }
+        
+        /* ==========================================================================
+           TARJETAS DE ETAPA Y CONTENEDORES
+           ========================================================================== */
+        .etapa-card { 
+            border: 2px solid var(--primary); 
+            border-radius: 10px; 
+            margin-bottom: 30px; 
+            background: #fff; 
+            overflow: hidden; 
+        }
+        
+        .etapa-header { 
+            background: #f8f9fa; 
+            border-bottom: 1px solid var(--border); 
+            padding: 15px 20px; 
+        }
+        
+        .etapa-header h4 { 
+            color: var(--primary); 
+            margin: 0; 
+            font-size: 1.15rem; 
+        }
+        
         .etapa-body { padding: 20px; }
         
-        .scroll-container { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 15px; }
+        /* ==========================================================================
+           CARRUSEL DE IMÁGENES Y ESTADOS DE ERROR
+           ========================================================================== */
+        .scroll-container { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 20px; 
+            padding-bottom: 20px; 
+            scroll-behavior: smooth; 
+        }
         
-        /* Scrollbar personalizada */
-        .scroll-container::-webkit-scrollbar { height: 10px; }
-        .scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 5px; }
-        .scroll-container::-webkit-scrollbar-thumb { background: #a8a8a8; border-radius: 5px; }
-        .scroll-container::-webkit-scrollbar-thumb:hover { background: #888; }
+        /* Personalización de la barra de desplazamiento horizontal */
+        .scroll-container::-webkit-scrollbar { height: 8px; }
+        .scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .scroll-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .scroll-container::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
         
-        .img-wrapper { flex: 0 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; width: 220px; }
-        .img-wrapper img { width: 100%; height: 300px; border-radius: 8px; object-fit: cover; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15); margin-bottom: 10px; }
+        .img-wrapper { 
+            flex: 0 0 auto; 
+            width: 230px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
         
-        .btn-gris { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.85rem; transition: background 0.2s; display: inline-block; }
+        .img-wrapper img { 
+            width: 100%; 
+            height: 320px; 
+            border-radius: 8px; 
+            object-fit: cover; 
+            background: #eee; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            margin-bottom: 12px; 
+            display: block; 
+        }
+        
+        /* Diseño para imágenes que han sido eliminadas por el servidor */
+        .imagen-caducada { 
+            width: 100%; 
+            height: 320px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            background: #f1f3f5; 
+            border: 2px dashed #adb5bd; 
+            border-radius: 8px; 
+            color: #495057; 
+            margin-bottom: 12px; 
+            box-sizing: border-box; 
+        }
+        
+        /* ==========================================================================
+           BOTONES Y BLOQUES DE CÓDIGO (JSON)
+           ========================================================================== */
+        .btn-gris { 
+            background: #6c757d; 
+            color: white; 
+            border: none; 
+            padding: 8px 14px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            font-size: 0.85rem; 
+            transition: 0.2s; 
+            display: inline-block;
+        }
         .btn-gris:hover { background: #5a6268; }
+        .btn-gris:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .actions-footer { text-align: center; margin-top: 5px; border-top: 1px solid #ddd; padding-top: 15px; display: flex; justify-content: center; gap: 10px; }
+        .actions-footer { 
+            text-align: center; 
+            margin-top: 15px; 
+            border-top: 1px solid #eee; 
+            padding-top: 20px; 
+            display: flex; 
+            justify-content: center; 
+            gap: 15px; 
+        }
         
-        .json-data { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; margin-top: 15px; display: none; text-align: left; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+        .json-data { 
+            background: #272822; 
+            color: #f8f8f2; 
+            padding: 20px; 
+            border-radius: 8px; 
+            overflow-x: auto; 
+            font-family: 'Consolas', 'Courier New', monospace; 
+            font-size: 0.9rem; 
+            margin-top: 20px; 
+            display: none; 
+            text-align: left; 
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.3); 
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="cabecera-resultados">
-        <h2>Evolución del Pipeline:</h2>
-        <a href="/historial" class="btn-volver">← Volver al Historial</a>
+    <div class="header-box">
+        <h2>Análisis de Resultados de la Ejecución #{{ id_ejecucion }}</h2>
+        <a href="/historial" class="btn-nav">← Regresar al Historial</a>
     </div>
     
-    <div id="cargando" style="text-align: center; padding: 40px; color: #666;">Recuperando archivos desde el servidor temporal...</div>
-    <div id="errorMsg" style="color: #721c24; background: #f8d7da; padding: 15px; border-radius: 6px; border: 1px solid #f5c6cb; display: none; margin-bottom: 20px;"></div>
+    <div id="cargando" style="text-align: center; padding: 50px; color: #888;">Consultando estado de la ejecución en el servidor...</div>
+    <div id="errorMsg" style="display: none; background: #f8d7da; color: #721c24; padding: 20px; border-radius: 8px; border: 1px solid #f5c6cb; margin-bottom: 20px;"></div>
     
-    <div id="contenido" style="display: none;">
-        </div>
+    <div id="contenido" style="display: none;"></div>
 </div>
 
 <script>
+    // Asignación de la variable inyectada por el backend de Flask
     const idEjecucion = "{{ id_ejecucion }}";
 
     document.addEventListener('DOMContentLoaded', async () => {
         
-        // El puente del token
+        // --- 1. GESTIÓN DEL PUENTE DE SESIÓN (TOKEN BRIDGE) ---
+        // Este bloque permite mantener la sesión activa al abrir nuevas pestañas
+        // recogiendo el token del localStorage y devolviéndolo al sessionStorage aislado.
         let token = sessionStorage.getItem('jwt_token');
         if (!token && localStorage.getItem('puente_token')) {
             token = localStorage.getItem('puente_token');
@@ -72,16 +211,19 @@
         if (!token) { 
             cargandoDiv.style.display = 'none';
             errorDiv.style.display = 'block';
-            errorDiv.innerText = "Sesión caducada o inválida. Cierra esta pestaña y vuelve a identificarte."; 
+            errorDiv.innerText = "Sesión caducada o inválida. Por favor, cierre esta pestaña e inicie sesión de nuevo en el panel principal."; 
             return; 
         }
 
         try {
+            // --- 2. PETICIÓN DE ARCHIVOS A LA API ---
             const response = await fetch(`/api/v1/ejecucion/${idEjecucion}/archivos`, {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
             
-            if (!response.ok) throw new Error("Los archivos han expirado, han sido borrados por el servidor, o no tienes permisos.");
+            if (!response.ok) {
+                throw new Error("Los archivos solicitados han expirado, han sido eliminados por el servidor o carece de permisos para visualizarlos.");
+            }
             
             const data = await response.json();
             
@@ -89,51 +231,51 @@
             contenidoDiv.style.display = 'block';
             
             if (!data.etapas || data.etapas.length === 0) {
-                contenidoDiv.innerHTML = "<p style='text-align: center; color: #666;'>No se han encontrado resultados en el servidor.</p>";
+                contenidoDiv.innerHTML = "<p style='text-align: center; color: #666; font-style: italic;'>No se han encontrado registros ni resultados visuales en el servidor para esta ejecución.</p>";
                 return;
             }
-            // --- RENDERIZAR IMAGEN ORIGINAL ---
+
+            // --- 3. RENDERIZADO DE LA IMAGEN ORIGINAL ---
             if (data.imagen_original) {
                 const originalDiv = document.createElement('div');
                 originalDiv.className = 'etapa-card';
-                originalDiv.style.borderColor = '#6c757d'; // Color gris para diferenciarla
+                originalDiv.style.borderColor = '#6c757d'; 
                 originalDiv.innerHTML = `
                     <div class="etapa-header">
-                        <h4 style="color: #444;">🖼️ Imagen Original subida</h4>
+                        <h4 style="color: #444;">🖼️ Imagen Original Analizada</h4>
                     </div>
                     <div class="etapa-body" style="text-align: center;">
-                        <div class="img-wrapper" style="margin: 0 auto; width: 300px;">
-                            <img src="/api/v1/outputs/${data.imagen_original.token}" alt="Original" style="height: auto; max-height: 400px;">
-                            <a href="/api/v1/outputs/${data.imagen_original.token}" download="${data.imagen_original.nombre}" class="btn-gris">Descargar Original</a>
+                        <div class="img-wrapper" id="wrapper_${data.imagen_original.token}" style="margin: 0 auto; width: 300px;">
+                            <img src="/api/v1/outputs/${data.imagen_original.token}" alt="Original" style="height: auto; max-height: 400px;" onerror="manejarImagenRota('${data.imagen_original.token}')">
+                            <a href="/api/v1/outputs/${data.imagen_original.token}" download="${data.imagen_original.nombre}" class="btn-gris">Descargar Archivo Original</a>
                         </div>
                     </div>
                 `;
                 contenidoDiv.appendChild(originalDiv);
             }
-            // --- RENDERIZAR CADA ETAPA ---
+
+            // --- 4. RENDERIZADO SECUENCIAL DE ETAPAS (PIPELINE) ---
             data.etapas.forEach(etapa => {
                 
-                // 1. Crear las imágenes
                 let htmlImagenes = '';
                 if (etapa.imagenes.length === 0) {
-                    htmlImagenes = "<p style='color: #666; font-style: italic;'>No se generaron imágenes en esta etapa.</p>";
+                    htmlImagenes = "<p style='color: #666; font-style: italic;'>El procesamiento de esta etapa no generó salidas visuales.</p>";
                 } else {
                     etapa.imagenes.forEach(img => {
                         htmlImagenes += `
-                            <div class="img-wrapper">
-                                <img src="/api/v1/outputs/${img.token}" alt="Resultado">
+                            <div class="img-wrapper" id="wrapper_${img.token}">
+                                <img src="/api/v1/outputs/${img.token}" alt="Resultado Procesado" onerror="manejarImagenRota('${img.token}')">
                                 <a href="/api/v1/outputs/${img.token}" download="${img.nombre}" class="btn-gris">Descargar Imagen</a>
                             </div>
                         `;
                     });
                 }
 
-                // 2. Construir la tarjeta (Card) calcada a la foto
                 const card = document.createElement('div');
                 card.className = 'etapa-card';
                 card.innerHTML = `
                     <div class="etapa-header">
-                        <h4>Etapa ${etapa.info.etapa}: ${etapa.info.nombre_etapa} <span style="font-size: 0.95rem; color: #777; font-weight: normal;">(IA: ${etapa.info.ia} - Modo: ${etapa.info.modo})</span></h4>
+                        <h4>Etapa ${etapa.info.etapa}: ${etapa.info.nombre_etapa} <span style="font-size: 0.95rem; color: #777; font-weight: normal;">(Motor IA: ${etapa.info.ia} - Análisis: ${etapa.info.modo})</span></h4>
                     </div>
                     <div class="etapa-body">
                         <div class="scroll-container">
@@ -141,8 +283,8 @@
                         </div>
                         
                         <div class="actions-footer">
-                            <button class="btn-gris btn-mostrar-json" data-token="${etapa.json.token}">Mostrar JSON</button>
-                            <a href="/api/v1/outputs/${etapa.json.token}" download="${etapa.json.nombre}" class="btn-gris">Descargar JSON</a>
+                            <button class="btn-gris btn-mostrar-json" data-token="${etapa.json.token}">Mostrar Datos JSON</button>
+                            <a href="/api/v1/outputs/${etapa.json.token}" download="${etapa.json.nombre}" class="btn-gris">Descargar Datos JSON</a>
                         </div>
                         
                         <div class="json-data"></div>
@@ -151,30 +293,34 @@
                 contenidoDiv.appendChild(card);
             });
 
-            // 3. Añadir evento dinámico a los botones "Mostrar JSON"
+            // --- 5. LÓGICA DE INTERACCIÓN DE LOS VISORES JSON ---
             document.querySelectorAll('.btn-mostrar-json').forEach(btn => {
                 btn.addEventListener('click', async function() {
                     const jsonContainer = this.parentElement.nextElementSibling;
                     
+                    // Comportamiento Toggle (Mostrar/Ocultar)
                     if (jsonContainer.style.display === 'block') {
                         jsonContainer.style.display = 'none';
-                        this.innerText = 'Mostrar JSON';
+                        this.innerText = 'Mostrar Datos JSON';
                         return;
                     }
 
-                    this.innerText = 'Cargando...';
+                    this.innerText = 'Consultando Servidor...';
                     try {
                         const tokenJson = this.getAttribute('data-token');
                         const res = await fetch(`/api/v1/outputs/${tokenJson}`);
+                        
+                        // Validación de disponibilidad del archivo físico
+                        if (!res.ok) throw new Error("El archivo ha sido purgado del almacenamiento persistente.");
+                        
                         const jsonData = await res.json();
- 
-                        jsonContainer.innerHTML = `<pre style="margin:0; font-family: monospace;">${JSON.stringify(jsonData, null, 4)}</pre>`;
+                        jsonContainer.innerHTML = `<pre style="margin:0;">${JSON.stringify(jsonData, null, 4)}</pre>`;
                         jsonContainer.style.display = 'block';
-                        this.innerText = 'Ocultar JSON';
+                        this.innerText = 'Ocultar Datos JSON';
                     } catch (err) {
-                        jsonContainer.innerHTML = `<p style="color:#ff6b6b; margin:0;">Error al cargar el JSON desde el servidor.</p>`;
+                        jsonContainer.innerHTML = `<p style="color:#ff6b6b; margin:0;">⚠️ <b>Aviso:</b> El archivo JSON correspondiente a esta etapa ha caducado y ya no se encuentra en el servidor.</p>`;
                         jsonContainer.style.display = 'block';
-                        this.innerText = 'Mostrar JSON';
+                        this.innerText = 'Mostrar Datos JSON';
                     }
                 });
             });
@@ -185,6 +331,25 @@
             errorDiv.innerText = error.message;
         }
     });
+
+    /**
+     * Controlador de Excepciones Visuales (Imágenes Faltantes)
+     * Reemplaza el nodo del DOM correspondiente a una imagen cuando el navegador 
+     * detecta que la solicitud HTTP hacia el servidor ha devuelto un error.
+     */
+    function manejarImagenRota(tokenId) {
+        const wrapper = document.getElementById(`wrapper_${tokenId}`);
+        if (wrapper) {
+            wrapper.innerHTML = `
+                <div class="imagen-caducada">
+                    <span style="font-size: 2rem; margin-bottom: 5px;">🗑️</span>
+                    <span style="font-weight: bold;">Archivo Expirado</span>
+                    <span style="font-size: 0.8rem; margin-top: 5px; text-align: center; padding: 0 10px;">Purge automático realizado<br>por el sistema</span>
+                </div>
+                <button class="btn-gris" disabled>Descarga no disponible</button>
+            `;
+        }
+    }
 </script>
 </body>
 </html>

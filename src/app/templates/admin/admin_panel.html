@@ -2,147 +2,413 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administración - TFG</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consola de Administración - IA Explorer</title>
     <style>
-        :root { --admin-dark: #2c3e50; --admin-blue: #34495e; --accent: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; }
-        .sidebar { width: 250px; height: 100vh; background: var(--admin-dark); color: white; padding: 20px; position: fixed; }
-        .sidebar h2 { text-align: center; font-size: 1.2rem; border-bottom: 1px solid #555; padding-bottom: 15px; }
-        .nav-links { list-style: none; padding: 0; margin-top: 30px; }
-        .nav-links li { padding: 15px; border-bottom: 1px solid #3e4f5f; cursor: pointer; }
-        .nav-links li:hover { background: var(--accent); }
-        .main-content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-        .badge { padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .badge-user { background: #d1ecf1; color: #0c5460; }
-        .badge-admin { background: #f8d7da; color: #721c24; }
-        .btn-logout { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        /* Variables globales y paleta técnica */
+        :root { 
+            --admin-dark: #2c3e50; 
+            --admin-blue: #34495e; 
+            --accent: #3498db; 
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --text-muted: #7f8c8d;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            background: #f4f7f6; 
+            display: flex; 
+            color: #333; 
+        }
+        
+        /* Sidebar navegable y persistente */
+        .sidebar { 
+            width: 260px; 
+            height: 100vh; 
+            background: var(--admin-dark); 
+            color: white; 
+            padding: 20px; 
+            position: fixed; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h2 { 
+            text-align: center; 
+            font-size: 1.1rem; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            padding-bottom: 15px; 
+            margin-bottom: 25px; 
+            letter-spacing: 1px;
+        }
+
+        .nav-links { list-style: none; padding: 0; }
+        .nav-links li { 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            margin-bottom: 8px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+
+        .nav-links li:hover { background: var(--admin-blue); }
+        .nav-links li.active { background: var(--accent); font-weight: 600; }
+
+        /* Contenedor principal */
+        .main-content { 
+            margin-left: 260px; 
+            padding: 40px; 
+            width: calc(100% - 260px); 
+            min-height: 100vh;
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            margin-bottom: 30px; 
+        }
+
+        /* Buscador dinámico */
+        .search-box { margin-bottom: 25px; position: relative; }
+        .search-box input { 
+            width: 100%; 
+            padding: 12px 18px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 10px; 
+            font-size: 0.95rem; 
+            box-sizing: border-box; 
+            transition: border-color 0.2s; 
+        }
+        .search-box input:focus { border-color: var(--accent); outline: none; }
+
+        /* Tablas y elementos visuales de estado */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { 
+            background: #f8f9fa; 
+            text-align: left; 
+            padding: 15px; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            font-size: 0.7rem; 
+            letter-spacing: 1px; 
+            border-bottom: 2px solid #eee;
+        }
+        td { padding: 15px; border-bottom: 1px solid #f1f1f1; font-size: 0.9rem; }
+        
+        .badge { 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+        }
+        .badge-user { background: #e1f5fe; color: #0288d1; }
+        .badge-admin { background: #ffebee; color: #c62828; }
+        .badge-success { background: #e8f5e9; color: #2e7d32; }
+        .badge-error { background: #fff3e0; color: #ef6c00; }
+
+        /* Botones de acción técnica */
+        .btn-action {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.75rem;
+            transition: background 0.2s;
+        }
+        .btn-danger { background: #fff5f5; color: var(--danger); border: 1px solid #feb2b2; }
+        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-success { background: #f0fff4; color: var(--success); border: 1px solid #9ae6b4; }
+        .btn-success:hover { background: var(--success); color: white; }
+
+        .btn-logout { 
+            background: var(--danger); 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.2s;
+        }
+        .btn-logout:hover { opacity: 0.9; }
+
+        /* Transiciones de sección */
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h2>Admin Console</h2>
+    <nav class="sidebar">
+        <h2>IA EXPLORER ADMIN</h2>
         <ul class="nav-links">
-            <li onclick="location.reload()">Gestión de Usuarios</li>
-            <li onclick="alert('Próximamente...')">Logs de Pipelines</li>
+            <li id="li-usuarios" class="active" onclick="switchView('usuarios')">👥 Gestión de Usuarios</li>
+            <li id="li-ejecuciones" onclick="switchView('ejecuciones')">📊 Historial Global</li>
+            <li id="li-inventario" onclick="switchView('inventario')">🛠️ Inventario Pipelines</li>
         </ul>
-    </div>
+    </nav>
 
-    <div class="main-content">
-        <div class="header">
-            <h1>Gestión de Usuarios</h1>
+    <main class="main-content">
+        <header class="header">
+            <h1 id="section-title">Gestión de Usuarios</h1>
             <div>
-                <span id="adminName" style="margin-right: 15px; font-weight: bold;"></span>
+                <span id="adminName" style="margin-right: 20px; font-weight: 600; color: var(--admin-dark);"></span>
                 <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
             </div>
-        </div>
+        </header>
 
-        <div class="card">
-            <h3>Usuarios en Base de Datos</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Roles</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyUsuarios"></tbody>
-            </table>
-        </div>
-        <div class="card" style="margin-top: 30px;">
-            <h3>Inventario de Pipelines y Etapas</h3>
-            <div id="listaPipelinesAdmin">
-        </div>
-</div>
-    </div>
+        <section id="view-usuarios" class="view-section active">
+            <div class="card">
+                <h3>Cuentas en el Sistema</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Estado</th>
+                            <th>Roles</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyUsuarios"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-ejecuciones" class="view-section">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">Monitor de Actividad en Tiempo Real</h3>
+                    <button class="btn-action btn-success" style="padding: 10px 20px;" onclick="cargarEjecuciones()">Refrescar Datos</button>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="inputBusquedaUser" placeholder="🔍 Filtrar historial por nombre de usuario..." oninput="filtrarEjecuciones()">
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Pipeline</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Duración</th>
+                            <th>Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyEjecuciones">
+                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Iniciando carga de logs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-inventario" class="view-section">
+            <div class="card">
+                <h3>Mapeo de Pipelines e IA</h3>
+                <div id="listaPipelinesAdmin"></div>
+            </div>
+        </section>
+    </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Memoria volátil para optimizar búsquedas locales
+        let cacheEjecuciones = [];
+
+        /**
+         * Inicialización de la consola y validación de privilegios
+         */
+        document.addEventListener('DOMContentLoaded', () => {
             const token = sessionStorage.getItem('jwt_token');
             const roles = JSON.parse(sessionStorage.getItem('roles') || "[]");
 
-            // SEGURIDAD: Si no hay token o no es admin, fuera.
-            if (!token) {
+            // Redirección si no es administrador
+            if (!token || !roles.includes('admin')) {
                 window.location.replace('/login');
-                return;
-            }
-            if (!roles.includes('admin')) {
-                window.location.replace('/dashboard');
                 return;
             }
 
             document.getElementById('adminName').innerText = `Admin: ${sessionStorage.getItem('nombre_usuario')}`;
+            
+            // Carga inicial de datos
             cargarUsuarios();
+            cargarEjecuciones();
             cargarInventarioPipelines();
         });
 
+        /**
+         * Manejador de navegación entre secciones (SPA Style)
+         */
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            document.getElementById(`li-${viewId}`).classList.add('active');
+            
+            const titles = { 
+                'usuarios': 'Gestión de Usuarios', 
+                'ejecuciones': 'Historial de Ejecuciones', 
+                'inventario': 'Inventario Técnico' 
+            };
+            document.getElementById('section-title').innerText = titles[viewId];
+        }
+
+        /**
+         * Obtención y renderizado de la lista de usuarios con controles de estado
+         */
         async function cargarUsuarios() {
-            const token = sessionStorage.getItem('jwt_token');
             try {
                 const response = await fetch('/api/v1/auth/usuarios', {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
                 });
                 const usuarios = await response.json();
                 const tbody = document.getElementById('tbodyUsuarios');
-                tbody.innerHTML = '';
-
-                usuarios.forEach(u => {
-                    const rolesHtml = u.roles.map(r => 
-                        `<span class="badge ${r === 'admin' ? 'badge-admin' : 'badge-user'}">${r}</span>`
-                    ).join(' ');
-                    tbody.innerHTML += `<tr><td>${u.id}</td><td>${u.nombre}</td><td>${u.email}</td><td>${rolesHtml}</td></tr>`;
-                });
-            } catch (err) { console.error("Error:", err); }
+                
+                tbody.innerHTML = usuarios.map(u => `
+                    <tr>
+                        <td>#${u.id}</td>
+                        <td><b>${u.nombre}</b><br><small class="text-muted">@${u.username}</small></td>
+                        <td>${u.email}</td>
+                        <td><span class="badge ${u.estado === 'activa' ? 'badge-success' : 'badge-error'}">${u.estado}</span></td>
+                        <td>${u.roles.map(r => `<span class="badge ${r === 'admin' ? 'badge-admin' : 'badge-user'}">${r}</span>`).join(' ')}</td>
+                        <td>
+                            ${u.estado === 'activa' 
+                                ? `<button class="btn-action btn-danger" onclick="cambiarEstadoUsuario(${u.id}, 'borrada')">Baneado Lógico</button>`
+                                : `<button class="btn-action btn-success" onclick="cambiarEstadoUsuario(${u.id}, 'activa')">Reactivar</button>`
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error("Error crítico en fetch usuarios:", err); }
         }
 
-        // funcion para cargar el inventario de pipelines y sus etapas
-        async function cargarInventarioPipelines() {
-            const token = sessionStorage.getItem('jwt_token');
-            const contenedor = document.getElementById('listaPipelinesAdmin');
-
+        /**
+         * Cambio de estado administrativo (Baneo/Activación)
+         */
+        async function cambiarEstadoUsuario(id, nuevoEstado) {
+            const msj = nuevoEstado === 'borrada' ? '¿Desactivar esta cuenta? El usuario perderá acceso inmediato.' : '¿Reactivar acceso para este usuario?';
+            if (!confirm(msj)) return;
+            
             try {
-                const response = await fetch('/api/v1/detalles_completos', {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                const response = await fetch(`/api/v1/auth/admin/cambiar_estado/${id}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: nuevoEstado })
                 });
-                const pipelines = await response.json();
 
-                contenedor.innerHTML = '';
+                if (response.ok) {
+                    alert("Estado de cuenta actualizado con éxito.");
+                    cargarUsuarios(); // Refresco reactivo
+                } else {
+                    const error = await response.json();
+                    alert("Error: " + error.mensaje);
+                }
+            } catch (err) { alert("Fallo de comunicación con el servidor."); }
+        }
 
-                pipelines.forEach(p => {
-                    const badgePublico = p.publico === 1 
-                        ? '<span style="color: green;">[Público]</span>' 
-                        : '<span style="color: orange;">[Privado]</span>';
-
-                    let htmlEtapas = '<ul>';
-                    p.etapas.forEach(e => {
-                        htmlEtapas += `<li>Etapa ${e.orden}: <b>${e.nombre_etapa}</b> (IA: ${e.ia} - Modo: ${e.modo})</li>`;
-                    });
-                    htmlEtapas += '</ul>';
-
-                    contenedor.innerHTML += `
-                        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
-                            <h4>${p.nombre} ${badgePublico}</h4>
-                            <p>${p.descripcion || 'Sin descripción'}</p>
-                            <h5>Configuración técnica:</h5>
-                            ${htmlEtapas}
-                        </div>
-                    `;
+        /**
+         * Monitor de ejecuciones globales
+         */
+        async function cargarEjecuciones() {
+            try {
+                const response = await fetch('/api/v1/ejecuciones_totales', {
+                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
                 });
-            } catch (error) {
-                contenedor.innerHTML = '<p>Error al cargar el inventario.</p>';
+                cacheEjecuciones = await response.json();
+                renderizarTablaEjecuciones(cacheEjecuciones);
+            } catch (err) { 
+                document.getElementById('tbodyEjecuciones').innerHTML = '<tr><td colspan="7" style="color:var(--danger); text-align:center;">Fallo en enlace con la API de auditoría</td></tr>';
             }
         }
 
-        function cerrarSesion() {
-            sessionStorage.clear();
-            localStorage.clear();
-            window.location.replace('/');
+        function renderizarTablaEjecuciones(lista) {
+            const tbody = document.getElementById('tbodyEjecuciones');
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Sin registros de actividad recientes.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = lista.map(e => `
+                <tr>
+                    <td>#${e.id}</td>
+                    <td><b>${e.usuario}</b></td>
+                    <td>${e.pipeline}</td>
+                    <td><small>${e.fecha}</small></td>
+                    <td><span class="badge ${e.estado === 'completado' ? 'badge-success' : 'badge-error'}">${e.estado}</span></td>
+                    <td>${e.duracion}</td>
+                    <td>${e.error ? `<span style="color:var(--danger); font-weight:600;">${e.error}</span>` : `<small style="color:var(--success);">Ok</small>`}</td>
+                </tr>
+            `).join('');
+        }
+
+        /**
+         * Búsqueda reactiva en caché local para evitar latencia de red
+         */
+        function filtrarEjecuciones() {
+            const busqueda = document.getElementById('inputBusquedaUser').value.toLowerCase();
+            const resultadosFiltrados = cacheEjecuciones.filter(e => 
+                e.usuario.toLowerCase().includes(busqueda) || e.pipeline.toLowerCase().includes(busqueda)
+            );
+            renderizarTablaEjecuciones(resultadosFiltrados);
+        }
+
+        /**
+         * Gestión de catálogo de Pipelines e IAs
+         */
+        async function cargarInventarioPipelines() {
+            try {
+                const response = await fetch('/api/v1/detalles_completos', {
+                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+                });
+                const pipelines = await response.json();
+                const contenedor = document.getElementById('listaPipelinesAdmin');
+                contenedor.innerHTML = pipelines.map(p => `
+                    <div style="border: 1px solid #eee; padding: 20px; margin-bottom: 15px; border-radius: 12px; background: #fafafa;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h4 style="margin:0; color:var(--admin-dark);">${p.nombre}</h4>
+                            <span class="badge ${p.publico ? 'badge-success' : 'badge-error'}">${p.publico ? 'Público' : 'Privado'}</span>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:10px;">${p.descripcion || 'Sin descripción técnica disponible.'}</p>
+                        <div style="margin-top:15px;">
+                            <strong style="font-size:0.75rem; text-transform:uppercase; color:var(--accent);">Secuencia de Etapas:</strong>
+                            <ul style="margin-top:10px; font-size:0.85rem; padding-left:20px;">
+                                ${p.etapas.map(e => `<li>Etapa ${e.orden}: <b>${e.nombre_etapa}</b> (Motor: ${e.ia} / Config: ${e.modo})</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) { console.error("Error cargando inventario:", error); }
+        }
+
+        function cerrarSesion() { 
+            sessionStorage.clear(); 
+            window.location.replace('/'); 
         }
     </script>
 </body>

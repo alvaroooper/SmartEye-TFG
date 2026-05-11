@@ -1,60 +1,82 @@
-import json
 import os
 from app.models import PipelineEtapa 
 from app.services.ai_factory import AIFactory 
 
 class PipelineRunner:
+    """
+    Motor de ejecución secuencial de pipelines. 
+    Gestiona la lógica de encadenamiento entre distintas etapas de IA, permitiendo
+    la ramificación de resultados (ej. una imagen que genera múltiples recortes).
+    """
+
     @staticmethod
     def ejecutar_pipeline(id_pipeline: int, imagen_inicial: str, config_completa: dict, prefijo: str):
         """
-        Recupera las etapas del pipeline y las ejecuta secuencialmente.
-        Soporta ramificación y el uso de un prefijo único para el guardado de archivos.
+        Orquesta la ejecución de las etapas de un pipeline sobre una imagen de entrada.
+        
+        Args:
+            id_pipeline: Identificador único del flujo.
+            imagen_inicial: Ruta absoluta al archivo original.
+            config_completa: Diccionario con parámetros personalizados por etapa.
+            prefijo: Identificador único para la nomenclatura de archivos generados.
+            
+        Returns:
+            tuple: (Lista de rutas finales, Lista de resultados detallados por etapa).
         """
-        # 1. Obtener las etapas ordenadas por su campo 'orden'
+        # Recuperación de la secuencia lógica de etapas configurada en la BD
         etapas = PipelineEtapa.query.filter_by(id_pipeline=id_pipeline).order_by(PipelineEtapa.orden).all()
         
         if not etapas:
-            raise ValueError(f"El pipeline con ID {id_pipeline} no tiene etapas o no existe.")
+            raise ValueError(f"Configuración inválida: El pipeline {id_pipeline} no contiene etapas definidas.")
 
-        # Iniciamos con una lista que contiene solo la imagen original
+        # El flujo comienza siempre con el archivo original proporcionado por el usuario
         rutas_actuales = [imagen_inicial]
         resultados = []
 
-        # 2. Iterar sobre la secuencia de etapas
+        # Procesamiento secuencial del pipeline
         for etapa in etapas:
             nombre_modelo = etapa.modelo.nombre 
             nombre_modo = etapa.modo.nombre_modo
             
-            print(f"--- Ejecutando etapa {etapa.orden}: {etapa.nombre} (Modelo={nombre_modelo}, Modo={nombre_modo}) ---")
-            
-            # --- CONFIGURACIÓN DINÁMICA ---
-            # Extraemos la sub-configuración correspondiente a esta etapa
+            # Recuperación de la configuración específica para esta etapa o uso de valores por defecto
             config_etapa = config_completa.get(f"etapa_{etapa.orden}", {})
             
-            # 3. Pedir el lanzador correspondiente al Factory 
+            # Instanciación del launcher mediante el Factory Pattern
             launcher = AIFactory.get_launcher(nombre_modelo) 
             
             nuevas_rutas = []
             datos_etapa = []
 
-            # 4. EJECUCIÓN RAMIFICADA
+            # 4. EJECUCIÓN RAMIFICADA: Se procesa cada imagen resultante de la etapa anterior
             for ruta in rutas_actuales:
-                # Pasamos el 'prefijo' al launcher para que las IAs lo usen al guardar ---
                 res_rutas, json_res = launcher.ejecutar_modo(nombre_modo, ruta, config_etapa, prefijo)
                 
+                # Gestión de salidas múltiples (listas) o simples (rutas únicas)
                 if isinstance(res_rutas, list):
                     nuevas_rutas.extend(res_rutas)
                 else:
-                    nuevas_rutas.append(res_rutas)
+                    if res_rutas: 
+                        nuevas_rutas.append(res_rutas)
                 
+                # Agregación de metadatos técnicos generados por la IA para auditoría
                 datos_etapa.append({
                     "origen": os.path.basename(ruta), 
                     "datos": json_res
                 })
 
+            # COMPROBACIÓN CRÍTICA DE FLUJO: Validación de existencia de detecciones
+            # Si una etapa de detección (como YOLO) no localiza elementos, se detiene el pipeline
+            # para evitar el procesamiento de datos nulos en etapas posteriores.
+            if not nuevas_rutas:
+                raise ValueError(
+                    f"Análisis interrumpido: No se detectaron elementos (objetos/personas) "
+                    f"procesables en la etapa '{etapa.nombre}'."
+                )
+
+            # Actualización del set de imágenes para la siguiente iteración
             rutas_actuales = nuevas_rutas
             
-            # 5. Acumular el resultado detallado para el frontend 
+            # Compilación del objeto de resultado detallado para persistencia y frontend
             resultados.append({
                 "etapa": etapa.orden,
                 "nombre_etapa": etapa.nombre,

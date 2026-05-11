@@ -1,16 +1,44 @@
+import os
+from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_jwt_identity
-from app.models import Usuario, Rol, Ejecucion, TemporalArchivo, SuscripcionPlan, Alquila, TipoPlan
+
 from app import db
-import os
+from app.models import Usuario, Rol, Ejecucion, TemporalArchivo, SuscripcionPlan, Alquila, TipoPlan
 
 auth_bp = Blueprint('auth', __name__)
+
+# ==============================================================================
+# FUNCIONES AUXILIARES DE SEGURIDAD
+# ==============================================================================
+
+def validar_password_segura(password):
+    """
+    Evalúa la robustez de una contraseña según los estándares de seguridad actuales.
+    Retorna una tupla: (Es_Valida: bool, Mensaje_Error: str)
+    """
+    if len(password) < 8:
+        return False, "La contraseña debe tener al menos 8 caracteres."
+    if not any(c.islower() for c in password):
+        return False, "La contraseña debe contener al menos una letra minúscula."
+    if not any(c.isupper() for c in password):
+        return False, "La contraseña debe contener al menos una letra mayúscula."
+    if not any(c.isdigit() for c in password):
+        return False, "La contraseña debe contener al menos un número."
+        
+    return True, ""
+
+
+# ==============================================================================
+# GESTIÓN DE AUTENTICACIÓN (LOGIN Y REGISTRO)
+# ==============================================================================
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """
-    Registra un nuevo usuario y le asigna el rol de 'usuario' por defecto.
+    Registra un nuevo usuario en el sistema, aplica el hash de seguridad a la contraseña,
+    le asigna el rol base ('usuario') y le otorga el Plan Básico gratuito por defecto.
     """
     datos = request.get_json()
     username = datos.get('username')
@@ -19,30 +47,34 @@ def register():
     nombre_visible = datos.get('nombre_visible', username)
 
     if Usuario.query.filter_by(email=email).first():
-        return jsonify({"status": "error", "mensaje": "El email ya está registrado"}), 400
+        return jsonify({"status": "error", "mensaje": "El email ya se encuentra registrado."}), 400
 
-    # 1. Creamos la instancia del modelo 
+    # --- NUEVA VALIDACIÓN DE CONTRASEÑA ROBUSTA ---
+    es_valida, msg_error = validar_password_segura(password_plana)
+    if not es_valida:
+        return jsonify({"status": "error", "mensaje": msg_error}), 400
+    # ----------------------------------------------
+
     nuevo_usuario = Usuario(
         username=username,
         email=email,
-        nombre_visible=nombre_visible
+        nombre_visible=nombre_visible,
+        estado='activa' # Estado inicial por defecto
     )
     
-    # 2. USAMOS EL HASH: Llamamos al método definido en models.py 
-    # Esto ejecuta internamente generate_password_hash 
+    # Encriptación de contraseña a través del modelo
     nuevo_usuario.set_password(password_plana)
 
-    # 3. Asignamos el rol 'usuario' (nombre en la BD según schema.sql)
+    # Asignación de permisos base
     rol_estandar = Rol.query.filter_by(nombre='usuario').first()
     if rol_estandar:
         nuevo_usuario.roles.append(rol_estandar)
 
     try:
-        # 1. Añadimos el usuario y hacemos flush para obtener su ID asignada por la base de datos
         db.session.add(nuevo_usuario)
-        db.session.flush() 
+        db.session.flush() # Sincroniza temporalmente para obtener el id_usuario autogenerado
 
-        # 2. Buscamos el plan básico y se lo asignamos por defecto
+        # Asignación de plan de suscripción inicial
         plan_basico = TipoPlan.query.filter_by(nombre='Basico').first()
         if plan_basico:
             nueva_sub = SuscripcionPlan(
@@ -51,13 +83,13 @@ def register():
                 activo=1,
                 renovacion_auto=0,
                 importe=0.00,
-                fecha_fin=None # Acceso de por vida
+                fecha_fin=None # Acceso permanente al nivel básico
             )
             db.session.add(nueva_sub)
 
-        # 3. Guardamos todo definitivamente
         db.session.commit()
         
+        # Generación de token JWT para acceso inmediato tras registro
         lista_roles = [rol.nombre for rol in nuevo_usuario.roles]
         token = create_access_token(
             identity=str(nuevo_usuario.id_usuario),
@@ -66,34 +98,39 @@ def register():
 
         return jsonify({
             "status": "success",
-            "mensaje": "Usuario creado correctamente",
+            "mensaje": "Usuario creado correctamente.",
             "token": token,
             "usuario": nuevo_usuario.nombre_visible,
             "roles": lista_roles
         }), 201
 
     except Exception as e:
-        db.session.rollback() # Limpiar la transacción en caso de error
-        return jsonify({"status": "error", "mensaje": str(e)}), 500
+        db.session.rollback()
+        return jsonify({"status": "error", "mensaje": f"Error interno en el registro: {str(e)}"}), 500
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """
-    Autentica al usuario y devuelve el token junto con sus roles.
+    Valida credenciales de acceso. Incorpora verificación de estado de cuenta
+    para bloquear accesos a usuarios eliminados lógicamente o anonimizados.
     """
     datos = request.get_json()
-    email = datos.get('email')
+    # Ahora recibimos un identificador único (puede ser email o username)
+    identificador = datos.get('identificador')
     password_plana = datos.get('password')
 
-    usuario = Usuario.query.filter_by(email=email).first()
+    # Buscamos al usuario que coincida con el email O con el username
+    usuario = Usuario.query.filter(
+        (Usuario.email == identificador) | (Usuario.username == identificador)
+    ).first()
 
-    # USAMOS EL HASH: Llamamos al método check_password de models.py 
-    # Esto ejecuta internamente check_password_hash 
+    # Verificamos si existe el usuario y si la contraseña es correcta
     if usuario and usuario.check_password(password_plana):
-        # Extraemos nombres de roles (el campo se llama 'nombre' en models.py) [cite: 21]
+        # Bloqueo de seguridad para cuentas no activas
+        if getattr(usuario, 'estado', 'activa') != 'activa':
+            return jsonify({"status": "error", "mensaje": "Esta cuenta está desactivada."}), 403
+
         lista_roles = [rol.nombre for rol in usuario.roles]
-        
-        # Generamos el token con roles para que el frontend redirija [cite: 38]
         token = create_access_token(
             identity=str(usuario.id_usuario),
             additional_claims={"roles": lista_roles}
@@ -106,15 +143,20 @@ def login():
             "roles": lista_roles
         }), 200
 
-    return jsonify({"status": "error", "mensaje": "Email o contraseña incorrectos"}), 401
+    return jsonify({"status": "error", "mensaje": "Credenciales incorrectas."}), 401
+# ==============================================================================
+# GESTIÓN DE PERFILES Y ADMINISTRACIÓN
+# ==============================================================================
 
 @auth_bp.route('/usuarios', methods=['GET'])
 @jwt_required()
 def listar_usuarios():
-    # Verificamos si el usuario es admin desde los claims del token
+    """
+    Endpoint administrativo para obtener el listado completo de usuarios registrados.
+    """
     claims = get_jwt()
     if 'admin' not in claims.get('roles', []):
-        return jsonify({"mensaje": "Acceso restringido a administradores"}), 403
+        return jsonify({"mensaje": "Acceso restringido. Se requieren privilegios de administrador."}), 403
 
     usuarios = Usuario.query.all()
     resultado = []
@@ -123,94 +165,159 @@ def listar_usuarios():
             "id": u.id_usuario,
             "nombre": u.nombre_visible,
             "email": u.email,
+            "estado": getattr(u, 'estado', 'activa'),
             "roles": [rol.nombre for rol in u.roles]
         })
     
     return jsonify(resultado), 200
 
+@auth_bp.route('/perfil', methods=['GET'])
+@jwt_required()
+def obtener_perfil():
+    """
+    Recupera los datos actuales del perfil del usuario autenticado.
+    """
+    usuario_id = get_jwt_identity()
+    usuario = Usuario.query.get(usuario_id)
+    
+    if not usuario:
+        return jsonify({"status": "error", "mensaje": "Usuario no encontrado."}), 404
+        
+    return jsonify({
+        "status": "success",
+        "datos": {
+            "username": usuario.username,
+            "email": usuario.email,
+            "nombre_visible": usuario.nombre_visible,
+            "fecha_registro": usuario.creado_en.strftime("%d/%m/%Y")
+        }
+    }), 200
+
 @auth_bp.route('/perfil', methods=['PUT'])
 @jwt_required()
 def actualizar_perfil():
+    """
+    Permite a un usuario modificar su nombre mostrado y sus credenciales.
+    Valida la integridad de la contraseña actual antes de aplicar cambios.
+    """
     usuario_id = get_jwt_identity()
     usuario = Usuario.query.get(usuario_id)
     
     if not usuario:
-        return jsonify({"status": "error", "mensaje": "Usuario no encontrado"}), 404
+        return jsonify({"status": "error", "mensaje": "Usuario no encontrado."}), 404
         
     data = request.json
-    nuevo_nombre = data.get('username')
+    nuevo_nombre_pantalla = data.get('nombre_visible')
     nueva_password = data.get('password')
-    old_password = data.get('old_password') # <-- Recogemos la contraseña antigua
+    old_password = data.get('old_password')
     
-    # 1. Actualizamos el nombre si nos lo han enviado
-    if nuevo_nombre:
-        usuario.username = nuevo_nombre
+    if nuevo_nombre_pantalla:
+        usuario.nombre_visible = nuevo_nombre_pantalla # Se actualiza el campo correcto
         
-    # 2. Lógica para cambiar la contraseña
     if nueva_password:
-        # Validar que han enviado la antigua
         if not old_password:
-            return jsonify({"status": "error", "mensaje": "Debes introducir tu contraseña actual para poder cambiarla"}), 400
+            return jsonify({"status": "error", "mensaje": "Se requiere la contraseña actual para autorizar el cambio."}), 400
             
-        # Comprobar que la antigua es correcta
-        if not check_password_hash(usuario.password_hash, old_password):
-            return jsonify({"status": "error", "mensaje": "La contraseña actual es incorrecta"}), 401
+        if not usuario.check_password(old_password):
+            return jsonify({"status": "error", "mensaje": "La contraseña actual introducida no es válida."}), 401
             
-        # Comprobar la longitud de la nueva
-        if len(nueva_password) < 6:
-             return jsonify({"status": "error", "mensaje": "La nueva contraseña debe tener al menos 6 caracteres"}), 400
+        # Validación de robustez de la nueva contraseña
+        es_valida, msg_error = validar_password_segura(nueva_password)
+        if not es_valida:
+            return jsonify({"status": "error", "mensaje": msg_error}), 400
              
-        # Si todo es correcto, la encriptamos y la guardamos
-        usuario.password_hash = generate_password_hash(nueva_password)
+        usuario.set_password(nueva_password)
         
     try:
         db.session.commit()
-        return jsonify({"status": "success", "mensaje": "Perfil actualizado", "nuevo_nombre": usuario.username}), 200
+        return jsonify({
+            "status": "success", 
+            "mensaje": "Perfil actualizado correctamente.", 
+            "nuevo_nombre": usuario.nombre_visible
+        }), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "mensaje": f"Error al actualizar: {str(e)}"}), 500
-        
+        return jsonify({"status": "error", "mensaje": f"Error en la actualización: {str(e)}"}), 500
+
+# ==============================================================================
+# BORRADO LÓGICO Y CUMPLIMIENTO LEGAL (RGPD)
+# ==============================================================================
+
 @auth_bp.route('/cuenta', methods=['DELETE'])
 @jwt_required()
 def eliminar_cuenta():
+    """
+    Implementa un Borrado Lógico (Soft Delete) de la cuenta de usuario.
+    """
     usuario_id = get_jwt_identity()
     usuario = Usuario.query.get(usuario_id)
     
     if not usuario:
-        return jsonify({"status": "error", "mensaje": "Usuario no encontrado"}), 404
+        return jsonify({"status": "error", "mensaje": "Usuario no encontrado en el sistema."}), 404
         
     try:
-        # 1. Borrar todas las ejecuciones (y sus archivos temporales) por el Restrict
-        ejecuciones = Ejecucion.query.filter_by(id_usuario=usuario_id).all()
-        for ejecucion in ejecuciones:
-            # Borrar los archivos temporales asociados a esta ejecución
-            archivos = TemporalArchivo.query.filter_by(id_ejecucion=ejecucion.id_ejecucion).all()
-            for archivo in archivos:
-                # Borrar el archivo físico si aún existe
-                if archivo.ruta_servidor and os.path.exists(archivo.ruta_servidor):
-                    try:
-                        os.remove(archivo.ruta_servidor)
-                    except:
-                        pass
-                # Borrar el registro del archivo
-                db.session.delete(archivo)
-            
-            # Borrar la ejecución
-            db.session.delete(ejecucion)
+        usuario.estado = 'borrada'
+        usuario.borrado_en = datetime.now()
+        
+        SuscripcionPlan.query.filter_by(id_usuario=usuario_id, activo=1).update({
+            "activo": 0, 
+            "renovacion_auto": 0
+        })
+        
+        Alquila.query.filter_by(id_usuario=usuario_id, activo=1).update({
+            "activo": 0, 
+            "renovacion_auto": 0
+        })
 
-        # 2. Borrar alquileres y suscripciones por el Restrict
-        Alquila.query.filter_by(id_usuario=usuario_id).delete()
-        SuscripcionPlan.query.filter_by(id_usuario=usuario_id).delete()
-        
-        # 3. Finalmente, borramos el usuario. 
-        # (USUARIO_ROL se borrará solo por el Cascade, y los PIPELINE se pondrán a NULL automáticamente)
-        db.session.delete(usuario)
-        
         db.session.commit()
         
-        return jsonify({"status": "success", "mensaje": "Cuenta y datos asociados eliminados correctamente"}), 200
+        return jsonify({
+            "status": "success", 
+            "mensaje": "Su cuenta ha sido desactivada correctamente. Los datos personales serán eliminados de forma definitiva tras finalizar el periodo de retención legal."
+        }), 200
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "mensaje": f"Error al eliminar la cuenta: {str(e)}"}), 500
+        return jsonify({"status": "error", "mensaje": f"Fallo al procesar la baja de la cuenta: {str(e)}"}), 500
     
+
+@auth_bp.route('/admin/cambiar_estado/<int:id_usuario>', methods=['POST'])
+@jwt_required()
+def admin_cambiar_estado(id_usuario):
+    """
+    Permite a un administrador modificar el estado operativo de una cuenta.
+    Gestiona el bloqueo (borrado lógico) y la reactivación de usuarios.
+    """
+    # 1. Verificación de privilegios de administrador
+    claims = get_jwt()
+    if 'admin' not in claims.get('roles', []):
+        return jsonify({"mensaje": "Acceso denegado: Privilegios insuficientes"}), 403
+    
+    # 2. Localización del sujeto en la base de datos
+    usuario = Usuario.query.get(id_usuario)
+    if not usuario:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+        
+    # 3. Restricción de seguridad: Un admin no puede desactivarse a sí mismo
+    if usuario.id_usuario == int(get_jwt_identity()):
+        return jsonify({"mensaje": "Error de integridad: No puedes modificar tu propio estado"}), 400
+
+    # 4. Procesamiento del cambio de estado
+    datos = request.get_json()
+    nuevo_estado = datos.get('estado') # Valores esperados: 'activa' o 'borrada'
+    
+    usuario.estado = nuevo_estado
+    
+    # Si el estado es 'borrada', registramos la fecha para el proceso de anonimización legal (RGPD)
+    # Usamos timezone.utc para mantener la consistencia con el resto del sistema
+    usuario.borrado_en = datetime.now(timezone.utc) if nuevo_estado == 'borrada' else None
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            "status": "success", 
+            "mensaje": f"El estado de '{usuario.username}' se ha actualizado a '{nuevo_estado}' correctamente."
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"mensaje": "Error interno al actualizar la base de datos"}), 500

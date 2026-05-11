@@ -2,21 +2,32 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Crear Cuenta - TFG</title>
+    <title>Crear Cuenta - IA Explorer</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .register-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        h2 { color: #1c1e21; text-align: center; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.4rem; color: #4b4f56; font-size: 0.9rem; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 1rem; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .register-card { background: white; padding: 2.5rem 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { color: #1c1e21; text-align: center; margin-top: 0; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.4rem; color: #4b4f56; font-size: 0.95rem; font-weight: 500; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; transition: border-color 0.2s; }
+        input:focus { border-color: #0056b3; outline: none; }
+        
+        .password-hint { color: #666; font-size: 0.8rem; margin-top: 6px; display: block; line-height: 1.4; }
+        
+        button { width: 100%; padding: 14px; background-color: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 1rem; transition: background-color 0.2s; }
         button:hover { background-color: #218838; }
-        .error-msg { color: #dc3545; background: #f8d7da; padding: 10px; border-radius: 4px; display: none; margin-bottom: 1rem; text-align: center; font-size: 0.9rem; }
-        .success-msg { color: #155724; background: #d4edda; padding: 10px; border-radius: 4px; display: none; margin-bottom: 1rem; text-align: center; font-size: 0.9rem; }
-        .footer-link { text-align: center; margin-top: 1rem; font-size: 0.9rem; }
-        .back-link a { color: #888; text-decoration: none; font-weight: 500; transition: color 0.2s; }
-        .back-link a:hover { color: #28a745; text-decoration: underline; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        .error-msg { color: #dc3545; background: #f8d7da; padding: 12px; border-radius: 6px; display: none; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem; border: 1px solid #f5c6cb; }
+        .success-msg { color: #155724; background: #d4edda; padding: 12px; border-radius: 6px; display: none; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem; border: 1px solid #c3e6cb; }
+        
+        .footer-link { text-align: center; margin-top: 1.5rem; font-size: 0.95rem; color: #555; }
+        .footer-link a { color: #0056b3; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        .footer-link a:hover { text-decoration: underline; color: #004494; }
+        
+        .back-link { margin-top: 2rem; }
+        .back-link a { color: #888; font-weight: 500; }
+        .back-link a:hover { color: #333; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -41,7 +52,12 @@
         </div>
         <div class="form-group">
             <label>Contraseña</label>
-            <input type="password" id="password" minlength="6" required>
+            <input type="password" id="password" 
+                   pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
+                   title="Debe contener al menos 8 caracteres, incluyendo una letra mayúscula, una minúscula y un número." 
+                   placeholder="Crea una contraseña segura" 
+                   required>
+            <span class="password-hint">🛡️ Mínimo 8 caracteres. Debe incluir al menos una mayúscula, una minúscula y un número.</span>
         </div>
         <button type="submit" id="btnRegistrar">Crear Cuenta</button>
     </form>
@@ -50,7 +66,7 @@
         ¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a>
     </div>
 
-    <div class="footer-link back-link" style="margin-top: 1.5rem;">
+    <div class="footer-link back-link">
         <a href="/">← Volver al inicio</a>
     </div>
 </div>
@@ -58,6 +74,7 @@
 <script>
     document.getElementById('formRegistro').onsubmit = async function(e) {
         e.preventDefault();
+        
         const errorBox = document.getElementById('errorBox');
         const successBox = document.getElementById('successBox');
         const btn = document.getElementById('btnRegistrar');
@@ -65,6 +82,7 @@
         errorBox.style.display = 'none';
         successBox.style.display = 'none';
         btn.disabled = true;
+        btn.innerText = "Procesando...";
 
         const payload = {
             nombre_visible: document.getElementById('nombre_visible').value,
@@ -79,7 +97,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
+            
             const data = await response.json();
 
             if (response.ok) {
@@ -89,7 +107,7 @@
                 
                 successBox.innerText = "¡Cuenta creada con éxito! Entrando...";
                 successBox.style.display = 'block';
-
+                
                 setTimeout(() => {
                     if (data.roles.includes('admin')) {
                         window.location.href = '/admin';
@@ -101,11 +119,13 @@
                 errorBox.innerText = data.mensaje || "Error en el registro";
                 errorBox.style.display = 'block';
                 btn.disabled = false;
+                btn.innerText = "Crear Cuenta";
             }
         } catch (err) {
-            errorBox.innerText = "Error de conexión";
+            errorBox.innerText = "Error de conexión con el servidor.";
             errorBox.style.display = 'block';
             btn.disabled = false;
+            btn.innerText = "Crear Cuenta";
         }
     };
 </script>
