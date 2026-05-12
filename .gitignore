@@ -242,9 +242,10 @@ __pycache
 .coverage
 coverage.xml
 htmlcov/
-
-# === EXPERIMENTOS IA ===
+# === MODELOS ===
 *.pt
+*.task
+# === EXPERIMENTOS IA ===
 experiments/**/outputs/
 runs/
 

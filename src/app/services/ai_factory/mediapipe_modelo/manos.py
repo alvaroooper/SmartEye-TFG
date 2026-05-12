@@ -1,67 +1,96 @@
 import os
 import cv2
+import urllib.request
+from typing import Tuple, Dict, Any
 import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
+# ==============================================================================
+# GESTOR DE APROVISIONAMIENTO Y CARGA DEL MODELO (EDGE COMPUTING)
+# ==============================================================================
 
-def procesar_manos(imagen_path, config=None, prefijo=""):
-    if config is None: config = {}
-    print(f"[MediaPipe] Ejecutando manos en: {imagen_path} con config: {config}")    
-    # 1. Leer imagen con OpenCV
+# 1. Definimos las rutas absolutas
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
+MODEL_DIR = os.path.join(BASE_DIR, 'models', 'mp')
+MODEL_PATH = os.path.join(MODEL_DIR, 'hand_landmarker.task')
+
+# URL oficial de Google para el modelo de manos
+MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
+
+# 2. Rutina de Autodescarga (Aprovisionamiento Dinámico)
+os.makedirs(MODEL_DIR, exist_ok=True)
+if not os.path.exists(MODEL_PATH):
+    print(f"--- [INFO] Descargando pesos de MediaPipe Manos en: {MODEL_PATH} ---")
+    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+
+# 3. Inicialización del motor local (Tasks API)
+base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
+
+
+def procesar_manos(imagen_path: str, config: Dict[str, Any] = None, prefijo: str = "") -> Tuple[str, Dict[str, Any]]:
+    """
+    Detección de landmarks palmares utilizando MediaPipe Tasks API en modo local (Edge Computing).
+    """
+    if config is None: 
+        config = {}
+
     imagen = cv2.imread(imagen_path)
     if imagen is None:
-        raise ValueError(f"No se pudo leer la imagen: {imagen_path}")
-    # MediaPipe necesita la imagen en formato RGB, pero OpenCV la lee en BGR
+        raise ValueError(f"Fallo en la lectura del activo: {imagen_path}")
+
+    # MediaPipe Tasks API requiere su propio objeto de imagen
     imagen_rgb = cv2.cvtColor(imagen, cv2.COLOR_BGR2RGB)
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=imagen_rgb)
     
     datos_json = {"manos_detectadas": 0, "detalles": []}
-
-    #Obtener valores de configuración por json, con valores por defecto si no se proporcionan
     max_hands = config.get("max_num_hands", 2)
-    min_conf = config.get("min_detection_confidence", 0.5)
+    min_conf = float(config.get("min_detection_confidence", 0.5))
 
-    # 2. Configurar y ejecutar el modelo
-    with mp_hands.Hands(
-        static_image_mode=True, 
-        max_num_hands=max_hands, 
-        min_detection_confidence=min_conf
-    ) as hands:
+    # Configuración de las opciones del motor
+    options = vision.HandLandmarkerOptions(
+        base_options=base_options,
+        num_hands=max_hands,
+        min_hand_detection_confidence=min_conf
+    )
+    
+    # Ejecución de la inferencia
+    with vision.HandLandmarker.create_from_options(options) as detector:
+        resultados = detector.detect(mp_image)
         
-        resultados = hands.process(imagen_rgb)
-        
-        # 3. Procesar resultados si se encontró alguna mano
-        if resultados.multi_hand_landmarks:
-            datos_json["manos_detectadas"] = len(resultados.multi_hand_landmarks)
+        # Extracción de metadatos
+        if resultados.handedness:
+            datos_json["manos_detectadas"] = len(resultados.handedness)
             
-            for idx, hand_landmarks in enumerate(resultados.multi_hand_landmarks):
-                # Extraer si es mano izquierda o derecha 
-                if resultados.multi_handedness:
-                    mano_info = resultados.multi_handedness[idx].classification[0]
-                    etiqueta = mano_info.label
-                    confianza = round(mano_info.score, 2)
-                else:
-                    etiqueta = "Desconocida"
-                    confianza = 0.0
-                    
+            for idx, hand in enumerate(resultados.handedness):
+                categoria = hand[0]
                 datos_json["detalles"].append({
-                    "tipo": etiqueta, 
-                    "confianza": confianza
+                    "tipo": categoria.category_name, # Left / Right
+                    "confianza": round(categoria.score, 4)
                 })
-                
-                # 4. Dibujar los puntos sobre la imagen original (en BGR)
-                mp_drawing.draw_landmarks(
-                    imagen, 
-                    hand_landmarks, 
-                    mp_hands.HAND_CONNECTIONS
+            
+            # (Post-procesamiento) Dibujar los puntos
+            # Nota: La Tasks API requiere mapear los landmarks de vuelta para dibujarlos
+            from mediapipe.framework.formats import landmark_pb2
+            for hand_landmarks in resultados.hand_landmarks:
+                hand_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
+                hand_landmarks_proto.landmark.extend([
+                    landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) 
+                    for landmark in hand_landmarks
+                ])
+                mp.solutions.drawing_utils.draw_landmarks(
+                    imagen,
+                    hand_landmarks_proto,
+                    mp.solutions.hands.HAND_CONNECTIONS,
+                    mp.solutions.drawing_utils.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+                    mp.solutions.drawing_utils.DrawingSpec(color=(0, 0, 255), thickness=2)
                 )
 
-    # 5. Guardar la nueva imagen procesada
+    # Persistencia
     directorio = os.path.dirname(imagen_path)
     nombre_archivo = os.path.basename(imagen_path)
     str_prefijo = f"{prefijo}_" if prefijo else ""
     ruta_salida = os.path.join(directorio, f"{str_prefijo}mp_{nombre_archivo}")
     
     cv2.imwrite(ruta_salida, imagen)
-    
     return ruta_salida, datos_json

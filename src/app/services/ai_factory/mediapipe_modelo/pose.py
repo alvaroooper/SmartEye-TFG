@@ -1,77 +1,100 @@
+import os
 import cv2
 import mediapipe as mp
-import os
+from typing import Tuple, Dict, Any
 
+# ==============================================================================
+# CONFIGURACIÓN DE COMPONENTES MEDIAPIPE
+# ==============================================================================
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 
-def procesar_pose(imagen_path, config=None, prefijo=""):
-    # Si no llega ninguna configuración, usamos un diccionario vacío
+def procesar_pose(imagen_path: str, config: Dict[str, Any] = None, prefijo: str = "") -> Tuple[str, Dict[str, Any]]:
+    """
+    Ejecuta la estimación de la estructura esquelética humana mediante MediaPipe Pose.
+    
+    El algoritmo realiza una inferencia tridimensional (X, Y, Z) de 33 puntos clave
+    basada en un modelo de regresión de landmarks, permitiendo el análisis de 
+    orientación y postura espacial del sujeto.
+
+    Args:
+        imagen_path (str): Ruta absoluta al activo físico de entrada.
+        config (Dict, opcional): Hiperparámetros (model_complexity, min_detection_confidence).
+        prefijo (str, opcional): Identificador de trazabilidad para la nomenclatura de salida.
+
+    Returns:
+        Tuple[str, Dict]: Ruta del activo renderizado y esquema de metadatos espaciales.
+    """
     if config is None:
         config = {}
         
-    print(f"[MediaPipe] Ejecutando pose en: {imagen_path} con config: {config}")
-    
+    # 1. INGESTA Y PREPROCESAMIENTO
     imagen = cv2.imread(imagen_path)
     if imagen is None:
-        raise ValueError(f"No se pudo leer la imagen: {imagen_path}")
+        raise ValueError(f"Fallo de integridad: No se pudo leer el activo en {imagen_path}")
         
+    # Conversión al espacio de color RGB para compatibilidad con el motor de inferencia
     imagen_rgb = cv2.cvtColor(imagen, cv2.COLOR_BGR2RGB)
     
-    # Extraer valores del JSON (con valores por defecto)
-    complexidad = config.get("model_complexity", 1)
-    min_conf = config.get("min_detection_confidence", 0.5)
-    
-    # --- NUEVO: Estructura del JSON mejorada ---
+    # Inicialización del esquema de telemetría de salida
     datos_json = {
         "pose_detectada": False, 
         "total_puntos": 0,
         "detalles": []
     }
     
+    # Inyección de configuración técnica
+    complejidad = config.get("model_complexity", 1) # 0: Lite, 1: Full, 2: Heavy
+    min_conf = config.get("min_detection_confidence", 0.5)
+    
+    # 2. EJECUCIÓN DEL MOTOR DE INFERENCIA
     with mp_pose.Pose(
         static_image_mode=True,
-        model_complexity=complexidad,
+        model_complexity=complejidad,
         min_detection_confidence=min_conf
     ) as pose:
         
         resultados = pose.process(imagen_rgb)
         
+        # 3. EXTRACCIÓN Y SERIALIZACIÓN DE METADATOS ESPACIALES
         if resultados.pose_landmarks:
             datos_json["pose_detectada"] = True
             
-            # Extraer los 33 puntos clave (landmarks) y su información
+            # Procesamiento de la topología esquelética (33 landmarks estándar)
             puntos = resultados.pose_landmarks.landmark
             datos_json["total_puntos"] = len(puntos)
             
             for idx, landmark in enumerate(puntos):
-                # mp_pose.PoseLandmark(idx).name da el nombre real (ej: 'LEFT_SHOULDER')
+                # Resolución del identificador anatómico del punto clave
                 nombre_parte = mp_pose.PoseLandmark(idx).name
                 
-                # Añadimos la info de cada punto redondeando los decimales para no saturar el JSON
+                # Serialización de coordenadas normalizadas y métricas de visibilidad
                 datos_json["detalles"].append({
                     "id": idx,
                     "parte_cuerpo": nombre_parte,
                     "coordenadas": {
-                        "x": round(landmark.x, 4), # Posición horizontal (0 a 1)
-                        "y": round(landmark.y, 4), # Posición vertical (0 a 1)
-                        "z": round(landmark.z, 4)  # Profundidad respecto a la cámara
+                        "x": round(landmark.x, 4),      # Posición relativa horizontal
+                        "y": round(landmark.y, 4),      # Posición relativa vertical
+                        "z": round(landmark.z, 4)       # Profundidad relativa (Z-depth)
                     },
-                    "visibilidad": round(landmark.visibility, 2) # Nivel de certeza de que el punto se ve
+                    "visibilidad": round(landmark.visibility, 2) # Umbral de certeza del landmark
                 })
             
-            # Dibujar los puntos y las conexiones sobre la imagen
+            # 4. RENDERIZADO DE LA RED ESQUELÉTICA (POST-PROCESAMIENTO)
+            # Proyecta las conexiones y landmarks sobre la imagen original.
             mp_drawing.draw_landmarks(
                 imagen, 
                 resultados.pose_landmarks, 
-                mp_pose.POSE_CONNECTIONS
+                mp_pose.POSE_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2, circle_radius=2), # Puntos en azul
+                mp_drawing.DrawingSpec(color=(0, 255, 255), thickness=2)                  # Conexiones en cian
             )
             
-    # Guardar la imagen
+    # 5. PERSISTENCIA DEL ACTIVO RESULTANTE
     directorio = os.path.dirname(imagen_path)
     nombre_archivo = os.path.basename(imagen_path)
     str_prefijo = f"{prefijo}_" if prefijo else ""
-    ruta_salida = os.path.join(directorio, f"{str_prefijo}pose_{nombre_archivo}")
+    ruta_salida = os.path.join(directorio, f"{str_prefijo}mp_pose_{nombre_archivo}")
     
     cv2.imwrite(ruta_salida, imagen)
     

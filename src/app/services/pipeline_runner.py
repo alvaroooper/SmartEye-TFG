@@ -4,79 +4,83 @@ from app.services.ai_factory import AIFactory
 
 class PipelineRunner:
     """
-    Motor de ejecución secuencial de pipelines. 
-    Gestiona la lógica de encadenamiento entre distintas etapas de IA, permitiendo
-    la ramificación de resultados (ej. una imagen que genera múltiples recortes).
+    Motor de orquestación de inferencia (Inference Engine Orchestrator).
+    Gestiona la ejecución secuencial de arquitecturas de IA, resolviendo dependencias 
+    entre etapas, encadenamiento de activos físicos y ramificación topológica de 
+    resultados (ej. segmentación 1:N de sujetos en una escena).
     """
 
     @staticmethod
-    def ejecutar_pipeline(id_pipeline: int, imagen_inicial: str, config_completa: dict, prefijo: str):
+    def ejecutar_pipeline(id_pipeline: int, imagen_inicial: str, config_completa: dict, prefijo: str) -> tuple[list[str], list[dict]]:
         """
-        Orquesta la ejecución de las etapas de un pipeline sobre una imagen de entrada.
+        Controlador principal del ciclo de vida del flujo de trabajo (Workflow Lifecycle).
         
         Args:
-            id_pipeline: Identificador único del flujo.
-            imagen_inicial: Ruta absoluta al archivo original.
-            config_completa: Diccionario con parámetros personalizados por etapa.
-            prefijo: Identificador único para la nomenclatura de archivos generados.
+            id_pipeline (int): Identificador unívoco del esquema de procesamiento.
+            imagen_inicial (str): Ruta absoluta al activo físico de origen.
+            config_completa (dict): Matriz de hiperparámetros inyectados por el cliente.
+            prefijo (str): Hash o identificador de trazabilidad para serialización de artefactos.
             
         Returns:
-            tuple: (Lista de rutas finales, Lista de resultados detallados por etapa).
+            tuple[list[str], list[dict]]: Vector de activos terminales y telemetría de auditoría por etapa.
+            
+        Raises:
+            ValueError: Excepción de integridad ante una configuración nula o interrupción por falta de ROI.
         """
-        # Recuperación de la secuencia lógica de etapas configurada en la BD
+        # 1. Extracción del esquema lógico de procesamiento desde la capa de persistencia
         etapas = PipelineEtapa.query.filter_by(id_pipeline=id_pipeline).order_by(PipelineEtapa.orden).all()
         
         if not etapas:
-            raise ValueError(f"Configuración inválida: El pipeline {id_pipeline} no contiene etapas definidas.")
+            raise ValueError(f"Excepción de integridad: La definición del pipeline {id_pipeline} carece de nodos operativos.")
 
-        # El flujo comienza siempre con el archivo original proporcionado por el usuario
+        # 2. Inicialización del vector de activos (Asset Vector) de la capa base
         rutas_actuales = [imagen_inicial]
         resultados = []
 
-        # Procesamiento secuencial del pipeline
+        # 3. Evaluación secuencial de la cadena de inferencia
         for etapa in etapas:
             nombre_modelo = etapa.modelo.nombre 
             nombre_modo = etapa.modo.nombre_modo
             
-            # Recuperación de la configuración específica para esta etapa o uso de valores por defecto
+            # Inyección de parámetros específicos del nodo en curso
             config_etapa = config_completa.get(f"etapa_{etapa.orden}", {})
             
-            # Instanciación del launcher mediante el Factory Pattern
+            # Resolución del motor subyacente mediante el patrón Abstract Factory
             launcher = AIFactory.get_launcher(nombre_modelo) 
             
             nuevas_rutas = []
             datos_etapa = []
 
-            # 4. EJECUCIÓN RAMIFICADA: Se procesa cada imagen resultante de la etapa anterior
+            # 4. Procesamiento ramificado (Branching Execution)
+            # Iteración sobre cada activo generado en la capa computacional previa
             for ruta in rutas_actuales:
                 res_rutas, json_res = launcher.ejecutar_modo(nombre_modo, ruta, config_etapa, prefijo)
                 
-                # Gestión de salidas múltiples (listas) o simples (rutas únicas)
+                # Normalización de salidas (Manejo dinámico de respuestas 1:1 o 1:N)
                 if isinstance(res_rutas, list):
                     nuevas_rutas.extend(res_rutas)
-                else:
-                    if res_rutas: 
-                        nuevas_rutas.append(res_rutas)
+                elif res_rutas: 
+                    nuevas_rutas.append(res_rutas)
                 
-                # Agregación de metadatos técnicos generados por la IA para auditoría
+                # Consolidación de telemetría y metadatos JSON para el log de la etapa
                 datos_etapa.append({
                     "origen": os.path.basename(ruta), 
                     "datos": json_res
                 })
 
-            # COMPROBACIÓN CRÍTICA DE FLUJO: Validación de existencia de detecciones
-            # Si una etapa de detección (como YOLO) no localiza elementos, se detiene el pipeline
-            # para evitar el procesamiento de datos nulos en etapas posteriores.
+            # 5. Regla de parada temprana (Early Stopping Criteria)
+            # Interrumpe el pipeline completo si un modelo de detección (ej. YOLO) 
+            # no localiza Regiones de Interés (ROI), mitigando ciclos computacionales nulos.
             if not nuevas_rutas:
                 raise ValueError(
-                    f"Análisis interrumpido: No se detectaron elementos (objetos/personas) "
-                    f"procesables en la etapa '{etapa.nombre}'."
+                    f"Análisis interrumpido: Ausencia de elementos procesables (ROI) "
+                    f"en la salida de la etapa '{etapa.nombre}'."
                 )
 
-            # Actualización del set de imágenes para la siguiente iteración
+            # 6. Propagación de estado hacia la subsecuente capa de inferencia
             rutas_actuales = nuevas_rutas
             
-            # Compilación del objeto de resultado detallado para persistencia y frontend
+            # 7. Empaquetado estructurado para serialización de respuesta final
             resultados.append({
                 "etapa": etapa.orden,
                 "nombre_etapa": etapa.nombre,
