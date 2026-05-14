@@ -25,6 +25,8 @@ class AIFactory:
         Raises:
             ValueError: Excepción de resolución si el identificador no está catalogado.
         """
+        if not nombre_modelo or not isinstance(nombre_modelo, str):
+            raise ValueError("Excepción de resolución: El nombre del modelo debe ser una cadena válida.")
         # Sanitización de la entrada para evitar fallos por espacios o capitalización
         modelo = nombre_modelo.lower().strip()
         

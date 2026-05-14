@@ -39,9 +39,12 @@ def procesar_deteccion(imagen_path: str, config: Dict[str, Any] = None, prefijo:
     # conf: Umbral mínimo de confianza para considerar válida una predicción.
     # iou: Intersection Over Union; umbral para el filtrado de solapamiento (NMS).
     # imgsz: Resolución de entrada para el redimensionamiento del tensor.
-    confianza = config.get("conf", 0.25)
-    iou_val = config.get("iou", 0.45)
-    img_size = config.get("imgsz", 640)
+    try:
+        confianza = float(config.get("conf", 0.25))
+        iou_val = float(config.get("iou", 0.45))
+        img_size = int(config.get("imgsz", 640))
+    except (ValueError, TypeError):
+        raise ValueError("Excepción de tipo: Los hiperparámetros de YOLO (conf, iou, imgsz) deben ser numéricos.")
     
     # 3. EJECUCIÓN DEL MOTOR DE INFERENCIA
     # El motor procesa la imagen y genera un objeto Results de Ultralytics.
@@ -64,6 +67,8 @@ def procesar_deteccion(imagen_path: str, config: Dict[str, Any] = None, prefijo:
     # Renderizado automático de Bounding Boxes y etiquetas sobre el activo resultante
     resultado.save(filename=ruta_salida)
     
+    if not os.path.exists(ruta_salida):
+        raise IOError(f"Fallo crítico de sistema: Imposible persistir el activo de detección en disco: {ruta_salida}")
     # 5. SERIALIZACIÓN DE METADATOS PARA AUDITORÍA
     objetos_detectados = []
     for caja in resultado.boxes:

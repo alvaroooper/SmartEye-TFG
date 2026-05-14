@@ -29,16 +29,19 @@ def procesar_recortes_personas(imagen_path: str, config: Dict[str, Any] = None, 
     if config is None: 
         config = {}
     
-    # 1. INGESTA Y VALIDACIÓN DE INTEGRIDAD
+    # 1. CONFIGURACIÓN DE PARÁMETROS DE SEGMENTACIÓN
+    try:
+        confianza = float(config.get("conf", 0.30))
+        # Factor de escalado para compensar la pérdida de resolución en recortes pequeños
+        factor_escala = float(config.get("scale_factor", 3.0))
+    except (ValueError, TypeError):
+        raise ValueError("Excepción de tipo: Los hiperparámetros de recorte (conf, scale_factor) deben ser numéricos.")
+    
+    # 2. INGESTA Y VALIDACIÓN DE INTEGRIDAD
     imagen = cv2.imread(imagen_path)
     if imagen is None:
         raise ValueError(f"Fallo de integridad: Imposible leer el activo en {imagen_path}")
 
-    # 2. CONFIGURACIÓN DE PARÁMETROS DE SEGMENTACIÓN
-    confianza = config.get("conf", 0.30)
-    # Factor de escalado para compensar la pérdida de resolución en recortes pequeños
-    factor_escala = config.get("scale_factor", 3.0)
-    
     # 3. INFERENCIA SELECTIVA (FILTRADO POR CLASE 'PERSON')
     # Se restringe la detección exclusivamente a la clase 0 (Humanos)
     resultados = _MODELO_YOLO_INSTANCE(imagen, conf=confianza, classes=[0])

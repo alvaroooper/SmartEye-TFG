@@ -41,6 +41,8 @@ class MediaPipeLauncher(IALauncherBase):
         Raises:
             ValueError: Si el modo solicitado no se encuentra registrado en el despachador.
         """
+        if not modo_nombre or not isinstance(modo_nombre, str):
+            raise ValueError("Excepción de protocolo: El nombre del modo es obligatorio y debe ser texto.")
         # Resolución dinámica de la rutina de procesamiento
         ejecutor = self._estrategias.get(modo_nombre.lower())
         

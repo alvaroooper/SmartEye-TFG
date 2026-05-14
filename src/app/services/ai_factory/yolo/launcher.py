@@ -43,6 +43,8 @@ class YoloLauncher(IALauncherBase):
         Raises:
             ValueError: Ante una solicitud de un modo operativo no registrado.
         """
+        if not modo_nombre or not isinstance(modo_nombre, str):
+            raise ValueError("Excepción de protocolo: El identificador del modo operativo es obligatorio y debe ser una cadena de texto válida.")
         # Resolución dinámica de la rutina de inferencia
         ejecutor = self._task_map.get(modo_nombre.lower().strip())
         

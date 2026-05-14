@@ -11,7 +11,7 @@ class PipelineRunner:
     """
 
     @staticmethod
-    def ejecutar_pipeline(id_pipeline: int, imagen_inicial: str, config_completa: dict, prefijo: str) -> tuple[list[str], list[dict]]:
+    def ejecutar_pipeline(id_pipeline: int, imagen_inicial: str, config_completa: dict = None, prefijo: str = "") -> tuple[list[str], list[dict]]:
         """
         Controlador principal del ciclo de vida del flujo de trabajo (Workflow Lifecycle).
         
@@ -27,6 +27,12 @@ class PipelineRunner:
         Raises:
             ValueError: Excepción de integridad ante una configuración nula o interrupción por falta de ROI.
         """
+        if config_completa is None:
+            config_completa = {}
+            
+        # Validación de integridad del activo físico inicial
+        if not imagen_inicial or not os.path.exists(imagen_inicial):
+            raise ValueError(f"Excepción de integridad: El activo inicial '{imagen_inicial}' no existe o es inaccesible.")
         # 1. Extracción del esquema lógico de procesamiento desde la capa de persistencia
         etapas = PipelineEtapa.query.filter_by(id_pipeline=id_pipeline).order_by(PipelineEtapa.orden).all()
         

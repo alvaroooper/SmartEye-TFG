@@ -174,7 +174,7 @@ def obtener_configuracion_completa(id_pipeline):
         etapas = PipelineEtapa.query.filter_by(id_pipeline=id_pipeline).order_by(PipelineEtapa.orden).all()
         config_completa = {}
         for e in etapas:
-            modo = IAModo.query.get(e.id_modo)
+            modo = db.session.get(IAModo, e.id_modo)
             config_etapa = {}
             if modo and modo.config_predeterminada and os.path.exists(modo.config_predeterminada):
                 with open(modo.config_predeterminada, 'r') as f:
@@ -193,33 +193,69 @@ def obtener_configuracion_completa(id_pipeline):
 @jwt_required()
 def analizar_imagen():
     """
-    Orquestador principal de inferencia.
-    Valida las entradas, instancia el Runner de IA, controla el aislamiento del workspace
-    por ejecución y aplica las políticas de ofuscación de descargas.
+    Orquestador principal de inferencia de visión artificial.
+    
+    Aplica una estrategia de 'API Hardening' mediante la validación estricta de 
+    payloads, gestión de aislamiento de workspace por ejecución y políticas 
+    dinámicas de expiración de activos (TTL) según el nivel de suscripción.
     """
     usuario_id = get_jwt_identity()
     ahora_utc = datetime.now(timezone.utc)
     ahora_naive = ahora_utc.replace(tzinfo=None)
     
-    # Validación de Payload
-    if 'imagen' not in request.files or not request.form.get('id_pipeline'):
-        return jsonify({"status": "error", "mensaje": "Payload incompleto: Se requiere imagen e identificador de flujo."}), 400
-        
-    imagen_file = request.files['imagen']
+    # --------------------------------------------------------------------------
+    # 1. VALIDACIÓN PRELIMINAR Y CAPTURA DE INPUTS
+    # --------------------------------------------------------------------------
     id_pipeline = request.form.get('id_pipeline')
     config_usuario_str = request.form.get('config_personalizada')
+    
+    # Guardia de seguridad: Validación de presencia de binario y metadatos
+    if 'imagen' not in request.files or not id_pipeline:
+        return jsonify({
+            "status": "error", 
+            "mensaje": "Payload incompleto: Se requiere el binario de la imagen e identificador de flujo."
+        }), 400
+        
+    imagen_file = request.files.get('imagen')
 
-    # Validación de seguridad (Sanitization)
-    if imagen_file.filename == '' or not archivo_permitido(imagen_file.filename):
-        return jsonify({"status": "error", "mensaje": "Formato de archivo no soportado o potencialmente inseguro."}), 400
+    # Validación de integridad del objeto FileStorage
+    if not imagen_file or imagen_file.filename == '':
+        return jsonify({"status": "error", "mensaje": "No se ha detectado ningún archivo válido."}), 400
 
-    # Determinación de Time-To-Live (TTL) basado en suscripción
-    es_pro = SuscripcionPlan.query.join(TipoPlan).filter(
-        SuscripcionPlan.id_usuario == usuario_id, SuscripcionPlan.activo == 1, TipoPlan.nombre == 'Pro'
+    # Auditoría de extensión para prevención de inyección de archivos maliciosos
+    if not archivo_permitido(imagen_file.filename):
+        return jsonify({
+            "status": "error", 
+            "mensaje": "Formato de archivo no soportado o potencialmente inseguro."
+        }), 400
+
+    # --------------------------------------------------------------------------
+    # 2. BASTIONADO DE CONFIGURACIÓN (JSON SANITIZATION)
+    # --------------------------------------------------------------------------
+    # Bloque aislado para evitar que errores de formato en el cliente disparen un 500
+    try:
+        config_dict = json.loads(config_usuario_str) if config_usuario_str else {}
+    except (json.JSONDecodeError, TypeError):
+        return jsonify({
+            "status": "error", 
+            "mensaje": "La configuración personalizada tiene un formato JSON inválido."
+        }), 400
+
+    # --------------------------------------------------------------------------
+    # 3. DETERMINACIÓN DE POLÍTICAS DE RETENCIÓN (TTL)
+    # --------------------------------------------------------------------------
+    # Lógica de negocio: Los usuarios Pro disponen de una ventana de persistencia mayor
+    es_pro = db.session.query(SuscripcionPlan).join(TipoPlan).filter(
+        SuscripcionPlan.id_usuario == usuario_id, 
+        SuscripcionPlan.activo == 1, 
+        TipoPlan.nombre == 'Pro'
     ).first() is not None
+    
     fecha_expiracion = ahora_naive + (timedelta(days=7) if es_pro else timedelta(minutes=5))
 
-    # Registro de inicio de auditoría
+    # --------------------------------------------------------------------------
+    # 4. REGISTRO DE AUDITORÍA Y PREPARACIÓN DE WORKSPACE
+    # --------------------------------------------------------------------------
     nueva_ejecucion = Ejecucion(
         id_usuario=usuario_id, 
         id_pipeline=id_pipeline, 
@@ -230,8 +266,9 @@ def analizar_imagen():
     db.session.commit()
 
     start_time = datetime.now()
+    
     try:
-        # Aislamiento de Workspace
+        # Aislamiento físico de la ejecución en disco para evitar colisiones de assets
         folder_path = os.path.join(CARPETA_EJECUCIONES, f"exec_{nueva_ejecucion.id_ejecucion}")
         os.makedirs(folder_path, exist_ok=True)
         
@@ -240,37 +277,59 @@ def analizar_imagen():
         ruta_input = os.path.join(folder_path, filename)
         imagen_file.save(ruta_input)
 
-        # Registro del asset original
-        db.session.add(TemporalArchivo(id_ejecucion=nueva_ejecucion.id_ejecucion, tipo="imagen_original", 
-                                      ruta_servidor=ruta_input, token_descarga=str(uuid.uuid4()), expira_en=fecha_expiracion))
+        # Registro del asset original en la tabla de activos temporales
+        db.session.add(TemporalArchivo(
+            id_ejecucion=nueva_ejecucion.id_ejecucion, 
+            tipo="imagen_original", 
+            ruta_servidor=ruta_input, 
+            token_descarga=str(uuid.uuid4()), 
+            expira_en=fecha_expiracion
+        ))
 
-        config_dict = json.loads(config_usuario_str) if config_usuario_str else {}
-        
-        # Invocación sincrónica del motor de inferencia (Pipeline Runner)
+        # --------------------------------------------------------------------------
+        # 5. EJECUCIÓN DEL MOTOR DE INFERENCIA (PIPELINE RUNNER)
+        # --------------------------------------------------------------------------
+        # Invocación sincrónica de la lógica de procesamiento secuencial
         _, analisis = PipelineRunner.ejecutar_pipeline(int(id_pipeline), ruta_input, config_dict, prefijo)
         
-        # Procesamiento y persistencia de artefactos de salida (Tokens de Ofuscación)
+        # --------------------------------------------------------------------------
+        # 6. OFUSCACIÓN DE RESULTADOS Y PERSISTENCIA DE ARTEFACTOS
+        # --------------------------------------------------------------------------
         for etapa in analisis:
             tokens_img = []
             for img_name in etapa["imagenes"]:
                 token = str(uuid.uuid4())
                 ruta_full = os.path.join(folder_path, img_name)
-                db.session.add(TemporalArchivo(id_ejecucion=nueva_ejecucion.id_ejecucion, tipo="resultado_imagen", 
-                                              ruta_servidor=ruta_full, token_descarga=token, expira_en=fecha_expiracion))
+                
+                db.session.add(TemporalArchivo(
+                    id_ejecucion=nueva_ejecucion.id_ejecucion, 
+                    tipo="resultado_imagen", 
+                    ruta_servidor=ruta_full, 
+                    token_descarga=token, 
+                    expira_en=fecha_expiracion
+                ))
                 tokens_img.append(token)
-            etapa["imagenes"] = tokens_img # Reemplazo de ruta real por token seguro
+            
+            # Abstracción de seguridad: El cliente recibe tokens únicos, no rutas del servidor
+            etapa["imagenes"] = tokens_img 
 
+            # Persistencia de metadatos de inferencia en formato JSON
             json_name = f"{prefijo}_data_e{etapa['etapa']}.json"
             ruta_json = os.path.join(folder_path, json_name)
             with open(ruta_json, 'w', encoding='utf-8') as f:
                 json.dump(etapa["datos"], f, indent=4, ensure_ascii=False)
             
             token_json = str(uuid.uuid4())
-            db.session.add(TemporalArchivo(id_ejecucion=nueva_ejecucion.id_ejecucion, tipo="resultado_json", 
-                                          ruta_servidor=ruta_json, token_descarga=token_json, expira_en=fecha_expiracion))
+            db.session.add(TemporalArchivo(
+                id_ejecucion=nueva_ejecucion.id_ejecucion, 
+                tipo="resultado_json", 
+                ruta_servidor=ruta_json, 
+                token_descarga=token_json, 
+                expira_en=fecha_expiracion
+            ))
             etapa["token_json_descarga"] = token_json
 
-        # Cierre de métricas y persistencia
+        # Finalización exitosa: Cierre de métricas de rendimiento
         nueva_ejecucion.estado = 'completado'
         nueva_ejecucion.duracion_ms = int((datetime.now() - start_time).total_seconds() * 1000)
         db.session.commit()
@@ -278,11 +337,15 @@ def analizar_imagen():
         return jsonify({"status": "success", "resultados_etapas": analisis}), 200
 
     except Exception as e:
+        # Gestión de fallos críticos: Rollback de transacciones y registro del error
         db.session.rollback()
         nueva_ejecucion.estado = 'error'
         nueva_ejecucion.mensaje_error_user = str(e)
         db.session.commit()
-        return jsonify({"status": "error", "mensaje": f"Fallo crítico durante el procesamiento: {str(e)}"}), 500
+        return jsonify({
+            "status": "error", 
+            "mensaje": f"Fallo crítico durante el procesamiento: {str(e)}"
+        }), 500
 
 # ==============================================================================
 # AUDITORÍA Y DISTRIBUCIÓN DE ACTIVOS (OUTPUTS)
@@ -298,6 +361,8 @@ def serve_output(token):
     
     if not archivo or (archivo.expira_en and archivo.expira_en <= ahora_naive):
         return jsonify({"error": "Excepción de seguridad: El recurso solicitado ya no está disponible o ha expirado"}), 404
+    if not archivo.ruta_servidor or not os.path.exists(archivo.ruta_servidor):
+        return jsonify({"error": "Excepción de Integridad: El activo físico ha sido corrompido o purgado del almacenamiento."}), 404
         
     return send_file(archivo.ruta_servidor)
 
@@ -311,7 +376,7 @@ def historial_ejecuciones():
     
     resultado = []
     for ej in ejecuciones:
-        pipe = Pipeline.query.get(ej.id_pipeline)
+        pipe = db.session.get(Pipeline, ej.id_pipeline)
         # Validación optimizada: Se comprueba si existe al menos un archivo activo asociado a la ejecución
         activos = TemporalArchivo.query.filter(TemporalArchivo.id_ejecucion == ej.id_ejecucion, 
                                                TemporalArchivo.expira_en > ahora_naive).first()

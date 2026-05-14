@@ -49,6 +49,15 @@ def register():
     if Usuario.query.filter_by(email=email).first():
         return jsonify({"status": "error", "mensaje": "La dirección de correo ya consta en el sistema."}), 400
 
+    if Usuario.query.filter_by(username=username).first():
+        return jsonify({"status": "error", "mensaje": "El nombre de usuario ya está en uso."}), 400         
+    
+    if not username or not email or not password_plana:
+        return jsonify({
+            "status": "error", 
+            "mensaje": "Payload incompleto. Los campos 'username', 'email' y 'password' son obligatorios."
+        }), 400
+    
     es_valida, msg_error = validar_password_segura(password_plana)
     if not es_valida:
         return jsonify({"status": "error", "mensaje": msg_error}), 400
@@ -169,7 +178,7 @@ def listar_usuarios():
 def obtener_perfil():
     """Recuperación de los metadatos de perfil vinculados al token activo."""
     usuario_id = get_jwt_identity()
-    usuario = Usuario.query.get(usuario_id)
+    usuario = db.session.get(Usuario, usuario_id)
     
     if not usuario:
         return jsonify({"status": "error", "mensaje": "Identidad no localizada en el sistema."}), 404
@@ -192,7 +201,7 @@ def actualizar_perfil():
     Exige validación de la credencial vigente para autorizar la mutación del hash.
     """
     usuario_id = get_jwt_identity()
-    usuario = Usuario.query.get(usuario_id)
+    usuario = db.session.get(Usuario, usuario_id)
     
     if not usuario:
         return jsonify({"status": "error", "mensaje": "Identidad no localizada."}), 404
@@ -229,6 +238,7 @@ def actualizar_perfil():
         db.session.rollback()
         return jsonify({"status": "error", "mensaje": f"Fallo de persistencia: {str(e)}"}), 500
 
+
 # ==============================================================================
 # AUDITORÍA LEGAL, RETENCIÓN DE DATOS Y CUMPLIMIENTO (RGPD)
 # ==============================================================================
@@ -242,7 +252,7 @@ def eliminar_cuenta():
     para la posterior anonimización exigida por el RGPD.
     """
     usuario_id = get_jwt_identity()
-    usuario = Usuario.query.get(usuario_id)
+    usuario = db.session.get(Usuario, usuario_id)
     
     if not usuario:
         return jsonify({"status": "error", "mensaje": "Identidad no localizada."}), 404
@@ -284,7 +294,7 @@ def admin_cambiar_estado(id_usuario):
     if 'admin' not in claims.get('roles', []):
         return jsonify({"mensaje": "Violación de acceso: Acción reservada a administradores."}), 403
     
-    usuario = Usuario.query.get(id_usuario)
+    usuario = db.session.get(Usuario, id_usuario)
     if not usuario:
         return jsonify({"mensaje": "Identidad objetivo no localizada."}), 404
         
@@ -307,3 +317,4 @@ def admin_cambiar_estado(id_usuario):
     except Exception as e:
         db.session.rollback()
         return jsonify({"mensaje": "Fallo de actualización en la base de datos."}), 500
+    

@@ -27,7 +27,13 @@ def procesar_pose(imagen_path: str, config: Dict[str, Any] = None, prefijo: str 
     """
     if config is None:
         config = {}
-        
+    
+    try:
+        complejidad = int(config.get("model_complexity", 1)) 
+        min_conf = float(config.get("min_detection_confidence", 0.5))
+    except (ValueError, TypeError):
+        raise ValueError("Excepción de tipo: Los hiperparámetros de Pose deben ser numéricos.")
+    
     # 1. INGESTA Y PREPROCESAMIENTO
     imagen = cv2.imread(imagen_path)
     if imagen is None:
@@ -42,10 +48,6 @@ def procesar_pose(imagen_path: str, config: Dict[str, Any] = None, prefijo: str 
         "total_puntos": 0,
         "detalles": []
     }
-    
-    # Inyección de configuración técnica
-    complejidad = config.get("model_complexity", 1) # 0: Lite, 1: Full, 2: Heavy
-    min_conf = config.get("min_detection_confidence", 0.5)
     
     # 2. EJECUCIÓN DEL MOTOR DE INFERENCIA
     with mp_pose.Pose(
@@ -96,6 +98,8 @@ def procesar_pose(imagen_path: str, config: Dict[str, Any] = None, prefijo: str 
     str_prefijo = f"{prefijo}_" if prefijo else ""
     ruta_salida = os.path.join(directorio, f"{str_prefijo}mp_pose_{nombre_archivo}")
     
-    cv2.imwrite(ruta_salida, imagen)
+    exito_escritura = cv2.imwrite(ruta_salida, imagen)
+    if not exito_escritura:
+        raise IOError(f"Fallo crítico de sistema: Imposible persistir el activo esquelético en disco: {ruta_salida}")
     
     return ruta_salida, datos_json
