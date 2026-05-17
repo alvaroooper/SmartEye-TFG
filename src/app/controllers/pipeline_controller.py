@@ -348,7 +348,7 @@ def analizar_imagen():
         }), 500
 
 # ==============================================================================
-# AUDITORÍA Y DISTRIBUCIÓN DE ACTIVOS (OUTPUTS)
+# AUDITORÍA Y DISTRIBUCIÓN DE ACTIVOS
 # ==============================================================================
 @pipeline_bp.route('/outputs/<token>')
 def serve_output(token):
@@ -391,6 +391,43 @@ def historial_ejecuciones():
         })
         
     return jsonify(resultado), 200
+
+@pipeline_bp.route('/ejecuciones_totales', methods=['GET'])
+@jwt_required()
+def ejecuciones_totales_admin():
+    """
+    Retorna el historial global de ejecuciones para el panel administrativo.
+    Solo es accesible por usuarios con rol admin.
+    """
+    if "admin" not in get_jwt().get("roles", []):
+        return jsonify({"mensaje": "Violación de acceso: Privilegios insuficientes"}), 403
+
+    try:
+        ejecuciones = Ejecucion.query.order_by(Ejecucion.creado_en.desc()).all()
+
+        resultado = []
+
+        for ej in ejecuciones:
+            usuario = db.session.get(Usuario, ej.id_usuario)
+            pipeline = db.session.get(Pipeline, ej.id_pipeline)
+
+            resultado.append({
+                "id": ej.id_ejecucion,
+                "usuario": usuario.username if usuario else "Usuario eliminado",
+                "pipeline": pipeline.nombre if pipeline else "Pipeline eliminado",
+                "fecha": ej.creado_en.strftime("%d/%m/%Y %H:%M") if ej.creado_en else "-",
+                "estado": ej.estado,
+                "duracion": f"{ej.duracion_ms} ms" if ej.duracion_ms else "-",
+                "error": ej.mensaje_error_user
+            })
+
+        return jsonify(resultado), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "mensaje": f"Error al obtener auditoría global: {str(e)}"
+        }), 500
 
 @pipeline_bp.route('/ejecucion/<int:id_ejecucion>/archivos', methods=['GET'])
 @jwt_required()

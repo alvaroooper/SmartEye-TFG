@@ -18,12 +18,42 @@ MODEL_PATH = os.path.join(MODEL_DIR, 'hand_landmarker.task')
 # URL oficial del repositorio de Google para el modelo de detección palmar
 MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
 
-# 2. Rutina de Autodescarga (Aprovisionamiento Dinámico de Pesos)
-os.makedirs(MODEL_DIR, exist_ok=True)
-if not os.path.exists(MODEL_PATH):
-    print(f"--- [INFO] Descargando pesos de MediaPipe Manos en: {MODEL_PATH} ---")
-    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+# 2. Rutina de Autodescarga
+def _asegurar_modelo_manos() -> str:
+    """
+    Garantiza que el modelo de manos esté disponible en local.
 
+    Si el archivo no existe en models/mp, se descarga la primera vez.
+    En las siguientes ejecuciones se reutiliza el archivo local.
+    """
+    os.makedirs(MODEL_DIR, exist_ok=True)
+
+    if os.path.isfile(MODEL_PATH):
+        return MODEL_PATH
+
+    print(f"--- [INFO] Descargando pesos de MediaPipe Manos en: {MODEL_PATH} ---")
+
+    ruta_temporal = MODEL_PATH + ".tmp"
+
+    try:
+        urllib.request.urlretrieve(MODEL_URL, ruta_temporal)
+
+        if not os.path.isfile(ruta_temporal) or os.path.getsize(ruta_temporal) == 0:
+            raise RuntimeError("El modelo descargado está vacío o no se ha creado correctamente.")
+
+        os.replace(ruta_temporal, MODEL_PATH)
+
+    except Exception as exc:
+        if os.path.exists(ruta_temporal):
+            os.remove(ruta_temporal)
+
+        raise RuntimeError(
+            "No se pudo descargar el modelo hand_landmarker.task. "
+            "Comprueba la conexión a Internet o coloca manualmente el archivo "
+            f"en la ruta: {MODEL_PATH}"
+        ) from exc
+
+    return MODEL_PATH
 # 3. Inicialización estática del motor local (Tasks API)
 base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
 
@@ -61,6 +91,9 @@ def procesar_manos(imagen_path: str, config: Dict[str, Any] = None, prefijo: str
     # ==========================================================================
     # 3. EJECUCIÓN DEL MOTOR DE INFERENCIA
     # ==========================================================================
+    modelo_path = _asegurar_modelo_manos()
+    base_options = python.BaseOptions(model_asset_path=modelo_path)
+
     options = vision.HandLandmarkerOptions(
         base_options=base_options,
         num_hands=max_hands,
