@@ -148,21 +148,9 @@ def listar_detalles_admin():
 
     try:
         pipelines = Pipeline.query.all()
-        resultado = [{
-            "id": p.id_pipeline,
-            "nombre": p.nombre,
-            "publico": p.publico,
-            "descripcion": p.descripcion,
-            "etapas": [{
-                "orden": e.orden,
-                "nombre_etapa": e.nombre,
-                "ia": e.modelo.nombre if e.modelo else "N/A",
-                "modo": e.modo.nombre_modo if e.modo else "N/A"
-            } for e in p.etapas]
-        } for p in pipelines]
-        
+        resultado = [serializar_pipeline_admin(p) for p in pipelines]
         return jsonify(resultado), 200
-        
+
     except Exception as e:
         return jsonify({"error": f"Error en introspección de base de datos: {str(e)}"}), 500
 
@@ -185,6 +173,273 @@ def obtener_configuracion_completa(id_pipeline):
         
     except Exception as e:
         return jsonify({"error": f"Fallo en la lectura de esquemas: {str(e)}"}), 500
+# ==============================================================================
+# GESTIÓN ADMINISTRATIVA DE PIPELINES
+# ==============================================================================
+
+def es_admin_actual() -> bool:
+    """Comprueba si el JWT actual pertenece a un usuario administrador."""
+    return "admin" in get_jwt().get("roles", [])
+
+
+def serializar_pipeline_admin(pipeline):
+    """Convierte un pipeline completo a JSON para la consola administrativa."""
+    etapas_ordenadas = sorted(pipeline.etapas, key=lambda e: e.orden)
+
+    return {
+        "id": pipeline.id_pipeline,
+        "nombre": pipeline.nombre,
+        "descripcion": pipeline.descripcion,
+        "publico": bool(pipeline.publico),
+        "habilitado": bool(pipeline.habilitado),
+        "etapas": [
+            {
+                "id_etapa": e.id_etapa,
+                "orden": e.orden,
+                "nombre_etapa": e.nombre,
+                "descripcion": e.descripcion,
+                "id_ia": e.id_ia,
+                "id_modo": e.id_modo,
+                "ia": e.modelo.nombre if e.modelo else "N/A",
+                "modo": e.modo.nombre_modo if e.modo else "N/A"
+            }
+            for e in etapas_ordenadas
+        ]
+    }
+
+
+def validar_etapas_pipeline(etapas):
+    """
+    Valida que las etapas recibidas sean correctas y que cada modo pertenezca
+    realmente al modelo de IA indicado.
+    """
+    if not isinstance(etapas, list) or len(etapas) == 0:
+        return False, "El pipeline debe contener al menos una etapa."
+
+    etapas_validadas = []
+
+    for indice, etapa in enumerate(etapas, start=1):
+        try:
+            id_ia = int(etapa.get("id_ia"))
+            id_modo = int(etapa.get("id_modo"))
+        except (TypeError, ValueError):
+            return False, "Cada etapa debe incluir un modelo de IA y un modo válidos."
+
+        modo = IAModo.query.filter_by(id_modo=id_modo, id_ia=id_ia).first()
+
+        if not modo:
+            return False, f"El modo indicado en la etapa {indice} no pertenece al modelo seleccionado."
+
+        if not modo.habilitado:
+            return False, f"El modo '{modo.nombre_modo}' está deshabilitado."
+
+        modelo = db.session.get(IAModelo, id_ia)
+
+        if not modelo or not modelo.habilitada:
+            return False, f"El modelo de IA indicado en la etapa {indice} no existe o está deshabilitado."
+
+        etapas_validadas.append({
+            "id_ia": id_ia,
+            "id_modo": id_modo,
+            "orden": indice,
+            "nombre": etapa.get("nombre") or f"Etapa {indice}: {modelo.nombre} - {modo.nombre_modo}",
+            "descripcion": etapa.get("descripcion")
+        })
+
+    return True, etapas_validadas
+
+
+@pipeline_bp.route('/admin/catalogo_ia', methods=['GET'])
+@jwt_required()
+def obtener_catalogo_ia_admin():
+    """
+    Devuelve los modelos de IA y modos ya creados para construir pipelines
+    desde la interfaz del administrador.
+    """
+    if not es_admin_actual():
+        return jsonify({"mensaje": "Privilegios insuficientes"}), 403
+
+    try:
+        modelos = IAModelo.query.order_by(IAModelo.nombre).all()
+
+        resultado = [
+            {
+                "id_ia": modelo.id_ia,
+                "nombre": modelo.nombre,
+                "descripcion": modelo.descripcion,
+                "habilitada": bool(modelo.habilitada),
+                "modos": [
+                    {
+                        "id_modo": modo.id_modo,
+                        "nombre_modo": modo.nombre_modo,
+                        "descripcion": modo.descripcion,
+                        "habilitado": bool(modo.habilitado)
+                    }
+                    for modo in modelo.modos
+                ]
+            }
+            for modelo in modelos
+        ]
+
+        return jsonify(resultado), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error al cargar catálogo IA: {str(e)}"}), 500
+
+
+@pipeline_bp.route('/admin/pipelines', methods=['POST'])
+@jwt_required()
+def crear_pipeline_admin():
+    """
+    Crea un nuevo pipeline con sus etapas desde la consola administrativa.
+    """
+    if not es_admin_actual():
+        return jsonify({"mensaje": "Privilegios insuficientes"}), 403
+
+    try:
+        data = request.get_json() or {}
+
+        nombre = (data.get("nombre") or "").strip()
+        descripcion = data.get("descripcion")
+        publico = bool(data.get("publico", True))
+        habilitado = bool(data.get("habilitado", True))
+        etapas = data.get("etapas", [])
+
+        if not nombre:
+            return jsonify({"mensaje": "El nombre del pipeline es obligatorio."}), 400
+
+        valido, resultado_etapas = validar_etapas_pipeline(etapas)
+
+        if not valido:
+            return jsonify({"mensaje": resultado_etapas}), 400
+
+        nuevo_pipeline = Pipeline(
+            id_usuario=int(get_jwt_identity()),
+            nombre=nombre,
+            descripcion=descripcion,
+            publico=1 if publico else 0,
+            habilitado=1 if habilitado else 0
+        )
+
+        db.session.add(nuevo_pipeline)
+        db.session.flush()
+
+        for etapa in resultado_etapas:
+            db.session.add(PipelineEtapa(
+                id_pipeline=nuevo_pipeline.id_pipeline,
+                id_ia=etapa["id_ia"],
+                id_modo=etapa["id_modo"],
+                orden=etapa["orden"],
+                nombre=etapa["nombre"],
+                descripcion=etapa["descripcion"]
+            ))
+
+        db.session.commit()
+
+        return jsonify({
+            "mensaje": "Pipeline creado correctamente.",
+            "pipeline": serializar_pipeline_admin(nuevo_pipeline)
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error al crear pipeline: {str(e)}"}), 500
+
+
+@pipeline_bp.route('/admin/pipelines/<int:id_pipeline>', methods=['PUT'])
+@jwt_required()
+def actualizar_pipeline_admin(id_pipeline):
+    """
+    Actualiza los datos generales y las etapas de un pipeline existente.
+    """
+    if not es_admin_actual():
+        return jsonify({"mensaje": "Privilegios insuficientes"}), 403
+
+    try:
+        pipeline = db.session.get(Pipeline, id_pipeline)
+
+        if not pipeline:
+            return jsonify({"mensaje": "Pipeline no encontrado."}), 404
+
+        data = request.get_json() or {}
+
+        nombre = (data.get("nombre") or "").strip()
+
+        if not nombre:
+            return jsonify({"mensaje": "El nombre del pipeline es obligatorio."}), 400
+
+        etapas = data.get("etapas", [])
+        valido, resultado_etapas = validar_etapas_pipeline(etapas)
+
+        if not valido:
+            return jsonify({"mensaje": resultado_etapas}), 400
+
+        pipeline.nombre = nombre
+        pipeline.descripcion = data.get("descripcion")
+        pipeline.publico = 1 if bool(data.get("publico", True)) else 0
+        pipeline.habilitado = 1 if bool(data.get("habilitado", True)) else 0
+
+        # Reemplazo completo de etapas.
+        # Gracias a cascade="all, delete-orphan", SQLAlchemy eliminará las antiguas.
+        pipeline.etapas.clear()
+        db.session.flush()
+
+        for etapa in resultado_etapas:
+            db.session.add(PipelineEtapa(
+                id_pipeline=pipeline.id_pipeline,
+                id_ia=etapa["id_ia"],
+                id_modo=etapa["id_modo"],
+                orden=etapa["orden"],
+                nombre=etapa["nombre"],
+                descripcion=etapa["descripcion"]
+            ))
+
+        db.session.commit()
+
+        return jsonify({
+            "mensaje": "Pipeline actualizado correctamente.",
+            "pipeline": serializar_pipeline_admin(pipeline)
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error al actualizar pipeline: {str(e)}"}), 500
+
+
+@pipeline_bp.route('/admin/pipelines/<int:id_pipeline>', methods=['DELETE'])
+@jwt_required()
+def eliminar_pipeline_admin(id_pipeline):
+    """
+    Elimina un pipeline si no tiene ejecuciones asociadas.
+    Si tiene historial, se deshabilita para no romper la integridad referencial.
+    """
+    if not es_admin_actual():
+        return jsonify({"mensaje": "Privilegios insuficientes"}), 403
+
+    try:
+        pipeline = db.session.get(Pipeline, id_pipeline)
+
+        if not pipeline:
+            return jsonify({"mensaje": "Pipeline no encontrado."}), 404
+
+        ejecuciones_asociadas = Ejecucion.query.filter_by(id_pipeline=id_pipeline).first()
+
+        if ejecuciones_asociadas:
+            pipeline.habilitado = 0
+            db.session.commit()
+
+            return jsonify({
+                "mensaje": "El pipeline tenía ejecuciones asociadas, por lo que se ha deshabilitado en lugar de eliminarse físicamente."
+            }), 200
+
+        db.session.delete(pipeline)
+        db.session.commit()
+
+        return jsonify({"mensaje": "Pipeline eliminado correctamente."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error al eliminar pipeline: {str(e)}"}), 500
 
 # ==============================================================================
 # MOTOR CENTRAL DE PROCESAMIENTO E INFERENCIA (CORE)
