@@ -98,7 +98,7 @@ def create_app(config_class=Config):
         """Vista detallada de los resultados de un proceso específico."""
         return render_template('dashboard/resultados_ejecucion.html', id_ejecucion=id_ejecucion)
 
-    # Aseguramos el mapeo de los modelos de datos en el contexto de la aplicación
+    # Asegurar el mapeo de los modelos de datos en el contexto de la aplicación
     with app.app_context():
         from app import models
 
