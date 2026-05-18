@@ -283,3 +283,539 @@ def test_excepciones_globales_bd(mock_query_pipeline, mock_query_etapa, client, 
     assert client.get('/api/v1/listado', headers={'Authorization': f'Bearer {t_admin}'}).status_code == 500
     assert client.get('/api/v1/detalles_completos', headers={'Authorization': f'Bearer {t_admin}'}).status_code == 500
     assert client.get(f"/api/v1/configuracion_pipeline/{env['p_pub']}", headers={'Authorization': f'Bearer {t_admin}'}).status_code == 500
+
+
+# ==============================================================================
+# 6. CONSOLA ADMINISTRATIVA DE PIPELINES
+# ==============================================================================
+def test_admin_catalogo_ia_rbac_y_contrato_respuesta(client, app, db_session):
+    """Verifica que el catálogo técnico solo sea accesible por administradores."""
+    env = setup_pipeline_env(app, db_session)
+
+    t_admin = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+    t_user = create_access_token(
+        identity=str(env["u_pro"]),
+        additional_claims={"roles": ["usuario"]}
+    )
+
+    res_user = client.get(
+        "/api/v1/admin/catalogo_ia",
+        headers={"Authorization": f"Bearer {t_user}"}
+    )
+    assert res_user.status_code == 403
+
+    res_admin = client.get(
+        "/api/v1/admin/catalogo_ia",
+        headers={"Authorization": f"Bearer {t_admin}"}
+    )
+
+    assert res_admin.status_code == 200
+    assert isinstance(res_admin.json, list)
+
+    yolo = next((m for m in res_admin.json if m["id_ia"] == env["ia_yolo"]), None)
+
+    assert yolo is not None
+    assert "modos" in yolo
+    assert any(m["nombre_modo"] == "deteccion" for m in yolo["modos"])
+
+
+def test_admin_crear_pipeline_persistencia_integral(client, app, db_session):
+    """Comprueba la creación completa de un pipeline con varias etapas ordenadas."""
+    env = setup_pipeline_env(app, db_session)
+
+    with app.app_context():
+        modo_det = IAModo.query.filter_by(
+            id_ia=env["ia_yolo"],
+            nombre_modo="deteccion"
+        ).first()
+
+        modo_pose = IAModo.query.filter_by(
+            id_ia=env["ia_mp"],
+            nombre_modo="pose"
+        ).first()
+
+        assert modo_det is not None
+        assert modo_pose is not None
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    payload = {
+        "nombre": "  Pipeline auditoría admin  ",
+        "descripcion": "Flujo creado desde la consola administrativa.",
+        "publico": False,
+        "habilitado": True,
+        "etapas": [
+            {
+                "id_ia": env["ia_yolo"],
+                "id_modo": modo_det.id_modo,
+                "nombre": "Detección inicial",
+                "descripcion": "Primera fase del flujo."
+            },
+            {
+                "id_ia": env["ia_mp"],
+                "id_modo": modo_pose.id_modo,
+                "nombre": "",
+                "descripcion": "Segunda fase del flujo."
+            }
+        ]
+    }
+
+    res = client.post(
+        "/api/v1/admin/pipelines",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 201
+    assert res.json["pipeline"]["nombre"] == "Pipeline auditoría admin"
+    assert res.json["pipeline"]["publico"] is False
+    assert len(res.json["pipeline"]["etapas"]) == 2
+
+    id_pipeline = res.json["pipeline"]["id"]
+
+    with app.app_context():
+        pipeline = db_session.get(Pipeline, id_pipeline)
+        etapas = PipelineEtapa.query.filter_by(
+            id_pipeline=id_pipeline
+        ).order_by(PipelineEtapa.orden).all()
+
+        assert pipeline is not None
+        assert pipeline.id_usuario == env["u_admin"]
+        assert pipeline.publico == 0
+        assert pipeline.habilitado == 1
+
+        assert len(etapas) == 2
+        assert [e.orden for e in etapas] == [1, 2]
+        assert etapas[0].nombre == "Detección inicial"
+        assert etapas[1].nombre.startswith("Etapa 2:")
+
+
+def test_admin_crear_pipeline_rechaza_etapas_incoherentes(client, app, db_session):
+    """Valida que no se puedan crear flujos con combinaciones IA-modo inválidas."""
+    env = setup_pipeline_env(app, db_session)
+
+    with app.app_context():
+        modo_pose = IAModo.query.filter_by(
+            id_ia=env["ia_mp"],
+            nombre_modo="pose"
+        ).first()
+
+        modo_det = IAModo.query.filter_by(
+            id_ia=env["ia_yolo"],
+            nombre_modo="deteccion"
+        ).first()
+
+        assert modo_pose is not None
+        assert modo_det is not None
+
+        id_modo_pose = modo_pose.id_modo
+        id_modo_det = modo_det.id_modo
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    payload_modo_cruzado = {
+        "nombre": "Modo cruzado",
+        "etapas": [
+            {
+                "id_ia": env["ia_yolo"],
+                "id_modo": id_modo_pose
+            }
+        ]
+    }
+
+    res_modo_cruzado = client.post(
+        "/api/v1/admin/pipelines",
+        json=payload_modo_cruzado,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_modo_cruzado.status_code == 400
+    assert "no pertenece" in res_modo_cruzado.json["mensaje"]
+
+    with app.app_context():
+        modo_det_bd = db_session.get(IAModo, id_modo_det)
+        modo_det_bd.habilitado = 0
+        db_session.commit()
+
+    payload_modo_deshabilitado = {
+        "nombre": "Modo deshabilitado",
+        "etapas": [
+            {
+                "id_ia": env["ia_yolo"],
+                "id_modo": id_modo_det
+            }
+        ]
+    }
+
+    res_modo_deshabilitado = client.post(
+        "/api/v1/admin/pipelines",
+        json=payload_modo_deshabilitado,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_modo_deshabilitado.status_code == 400
+    assert "deshabilitado" in res_modo_deshabilitado.json["mensaje"].lower()
+
+    with app.app_context():
+        ia_mp = db_session.get(IAModelo, env["ia_mp"])
+        ia_mp.habilitada = 0
+        db_session.commit()
+
+    payload_modelo_deshabilitado = {
+        "nombre": "Modelo deshabilitado",
+        "etapas": [
+            {
+                "id_ia": env["ia_mp"],
+                "id_modo": id_modo_pose
+            }
+        ]
+    }
+
+    res_modelo_deshabilitado = client.post(
+        "/api/v1/admin/pipelines",
+        json=payload_modelo_deshabilitado,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_modelo_deshabilitado.status_code == 400
+    assert "deshabilitado" in res_modelo_deshabilitado.json["mensaje"].lower()
+
+
+def test_admin_crear_pipeline_payload_etapa_corrupto_devuelve_400(client, app, db_session):
+    """
+    Un payload malformado debe tratarse como error del cliente.
+    Este caso evita que una etapa que no sea objeto provoque un 500 interno.
+    """
+    env = setup_pipeline_env(app, db_session)
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    payload = {
+        "nombre": "Payload corrupto",
+        "etapas": ["valor-no-es-diccionario"]
+    }
+
+    res = client.post(
+        "/api/v1/admin/pipelines",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 400
+    assert "etapa" in res.json["mensaje"].lower()
+
+
+def test_admin_actualizar_pipeline_reemplaza_etapas_sin_dejar_huerfanas(client, app, db_session):
+    """Comprueba que editar un pipeline sustituye sus etapas de forma limpia."""
+    env = setup_pipeline_env(app, db_session)
+
+    with app.app_context():
+        modo_pose = IAModo.query.filter_by(
+            id_ia=env["ia_mp"],
+            nombre_modo="pose"
+        ).first()
+
+        assert modo_pose is not None
+        assert PipelineEtapa.query.filter_by(id_pipeline=env["p_pub"]).count() == 1
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    payload = {
+        "nombre": "Pipeline actualizado",
+        "descripcion": "Nueva definición funcional del flujo.",
+        "publico": False,
+        "habilitado": False,
+        "etapas": [
+            {
+                "id_ia": env["ia_mp"],
+                "id_modo": modo_pose.id_modo,
+                "nombre": "Pose final",
+                "descripcion": "Etapa única tras la edición."
+            }
+        ]
+    }
+
+    res_404 = client.put(
+        "/api/v1/admin/pipelines/999999",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert res_404.status_code == 404
+
+    res = client.put(
+        f"/api/v1/admin/pipelines/{env['p_pub']}",
+        json=payload,
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 200
+    assert res.json["pipeline"]["nombre"] == "Pipeline actualizado"
+    assert res.json["pipeline"]["publico"] is False
+    assert res.json["pipeline"]["habilitado"] is False
+    assert len(res.json["pipeline"]["etapas"]) == 1
+
+    with app.app_context():
+        pipeline = db_session.get(Pipeline, env["p_pub"])
+        etapas = PipelineEtapa.query.filter_by(id_pipeline=env["p_pub"]).all()
+
+        assert pipeline.nombre == "Pipeline actualizado"
+        assert pipeline.publico == 0
+        assert pipeline.habilitado == 0
+
+        assert len(etapas) == 1
+        assert etapas[0].nombre == "Pose final"
+        assert etapas[0].id_ia == env["ia_mp"]
+        assert etapas[0].id_modo == modo_pose.id_modo
+        assert etapas[0].orden == 1
+
+
+def test_admin_eliminar_pipeline_elimina_o_deshabilita_segun_historial(client, app, db_session):
+    """Valida el borrado físico solo cuando no existe historial asociado."""
+    env = setup_pipeline_env(app, db_session)
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    res_delete_sin_historial = client.delete(
+        f"/api/v1/admin/pipelines/{env['p_priv']}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_delete_sin_historial.status_code == 200
+
+    with app.app_context():
+        assert db_session.get(Pipeline, env["p_priv"]) is None
+        assert PipelineEtapa.query.filter_by(id_pipeline=env["p_priv"]).count() == 0
+
+        ejecucion = Ejecucion(
+            id_usuario=env["u_pro"],
+            id_pipeline=env["p_pub"],
+            estado="completado"
+        )
+        db_session.add(ejecucion)
+        db_session.commit()
+
+    res_delete_con_historial = client.delete(
+        f"/api/v1/admin/pipelines/{env['p_pub']}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_delete_con_historial.status_code == 200
+    assert "deshabilitado" in res_delete_con_historial.json["mensaje"].lower()
+
+    with app.app_context():
+        pipeline = db_session.get(Pipeline, env["p_pub"])
+
+        assert pipeline is not None
+        assert pipeline.habilitado == 0
+        assert PipelineEtapa.query.filter_by(id_pipeline=env["p_pub"]).count() == 1
+
+
+def test_ejecuciones_totales_admin_rbac_y_contenido_global(client, app, db_session):
+    """Verifica que el histórico global solo sea visible para administración."""
+    env = setup_pipeline_env(app, db_session)
+
+    t_admin = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+    t_user = create_access_token(
+        identity=str(env["u_pro"]),
+        additional_claims={"roles": ["usuario"]}
+    )
+
+    with app.app_context():
+        ej_pro = Ejecucion(
+            id_usuario=env["u_pro"],
+            id_pipeline=env["p_pub"],
+            estado="completado",
+            duracion_ms=120
+        )
+        ej_basic = Ejecucion(
+            id_usuario=env["u_basic"],
+            id_pipeline=env["p_pub"],
+            estado="error",
+            mensaje_error_user="Error controlado"
+        )
+
+        db_session.add_all([ej_pro, ej_basic])
+        db_session.commit()
+
+        ids_creadas = {ej_pro.id_ejecucion, ej_basic.id_ejecucion}
+
+    res_user = client.get(
+        "/api/v1/ejecuciones_totales",
+        headers={"Authorization": f"Bearer {t_user}"}
+    )
+    assert res_user.status_code == 403
+
+    res_admin = client.get(
+        "/api/v1/ejecuciones_totales",
+        headers={"Authorization": f"Bearer {t_admin}"}
+    )
+
+    assert res_admin.status_code == 200
+
+    ids_respuesta = {e["id"] for e in res_admin.json}
+
+    assert ids_creadas.issubset(ids_respuesta)
+    assert any(e["estado"] == "completado" for e in res_admin.json)
+    assert any(e["estado"] == "error" for e in res_admin.json)
+
+
+# ==============================================================================
+# 7. PRUEBAS DE AUTORIZACIÓN SOBRE PIPELINES EJECUTABLES
+# ==============================================================================
+@patch("app.controllers.pipeline_controller.PipelineRunner.ejecutar_pipeline")
+def test_analizar_no_ejecuta_pipeline_no_contratado(mock_runner, client, app, db_session):
+    """
+    Un usuario básico sin licencias no debe poder ejecutar un pipeline
+    aunque conozca manualmente su identificador.
+    """
+    env = setup_pipeline_env(app, db_session)
+
+    mock_runner.return_value = (
+        [],
+        [
+            {
+                "etapa": 1,
+                "nombre_etapa": "No debería ejecutarse",
+                "ia": "yolo",
+                "modo": "deteccion",
+                "imagenes": [],
+                "datos": []
+            }
+        ]
+    )
+
+    token = create_access_token(
+        identity=str(env["u_basic"]),
+        additional_claims={"roles": ["usuario"]}
+    )
+
+    data = {
+        "id_pipeline": str(env["p_pub"]),
+        "config_personalizada": "{}",
+        "imagen": (io.BytesIO(b"imagen falsa"), "entrada.jpg")
+    }
+
+    res = client.post(
+        "/api/v1/analizar",
+        data=data,
+        content_type="multipart/form-data",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 403
+    mock_runner.assert_not_called()
+
+
+@patch("app.controllers.pipeline_controller.PipelineRunner.ejecutar_pipeline")
+def test_analizar_no_ejecuta_pipeline_privado_para_usuario_no_admin(mock_runner, client, app, db_session):
+    """Un pipeline privado no debe ejecutarse desde una cuenta de usuario estándar."""
+    env = setup_pipeline_env(app, db_session)
+
+    mock_runner.return_value = (
+        [],
+        [
+            {
+                "etapa": 1,
+                "nombre_etapa": "No debería ejecutarse",
+                "ia": "mediapipe",
+                "modo": "pose",
+                "imagenes": [],
+                "datos": []
+            }
+        ]
+    )
+
+    token = create_access_token(
+        identity=str(env["u_pro"]),
+        additional_claims={"roles": ["usuario"]}
+    )
+
+    data = {
+        "id_pipeline": str(env["p_priv"]),
+        "config_personalizada": "{}",
+        "imagen": (io.BytesIO(b"imagen falsa"), "entrada.jpg")
+    }
+
+    res = client.post(
+        "/api/v1/analizar",
+        data=data,
+        content_type="multipart/form-data",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 403
+    mock_runner.assert_not_called()
+
+
+@patch("os.path.exists", return_value=True)
+@patch("builtins.open", new_callable=mock_open, read_data='{"conf": 0.5}')
+def test_configuracion_pipeline_no_expone_pipeline_privado(mock_file, mock_exists, client, app, db_session):
+    """La configuración de un pipeline privado no debe exponerse a usuarios normales."""
+    env = setup_pipeline_env(app, db_session)
+
+    token = create_access_token(
+        identity=str(env["u_pro"]),
+        additional_claims={"roles": ["usuario"]}
+    )
+
+    res = client.get(
+        f"/api/v1/configuracion_pipeline/{env['p_priv']}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code in (403, 404)
+    mock_file.assert_not_called()
+
+
+def test_listar_pipelines_no_concede_acceso_con_alquiler_programado(client, app, db_session):
+    """
+    Un alquiler activo pero con inicio futuro no debe habilitar pipelines todavía.
+    Evita que una compra programada se trate como licencia vigente.
+    """
+    env = setup_pipeline_env(app, db_session)
+    ahora = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    with app.app_context():
+        compra_programada = Alquila(
+            id_usuario=env["u_basic"],
+            id_ia=env["ia_yolo"],
+            activo=1,
+            periodo_inicio=ahora + timedelta(days=7),
+            periodo_fin=ahora + timedelta(days=37)
+        )
+        db_session.add(compra_programada)
+        db_session.commit()
+
+    token = create_access_token(
+        identity=str(env["u_basic"]),
+        additional_claims={"roles": ["usuario"]}
+    )
+
+    res = client.get(
+        "/api/v1/listado",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 200
+    assert all(p["id"] != env["p_pub"] for p in res.json)

@@ -3,183 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consola de Administración - IA Explorer</title>
+    <title>Panel de Administración</title>
+
     <style>
-        /* Variables globales y paleta técnica */
-        :root { 
-            --admin-dark: #2c3e50; 
-            --admin-blue: #34495e; 
-            --accent: #3498db; 
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --warning: #f1c40f;
-            --text-muted: #7f8c8d;
+        :root {
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --dark: #14213d;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --soft: #f8fafc;
+            --radius: 14px;
         }
 
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            margin: 0; 
-            background: #f4f7f6; 
-            display: flex; 
-            color: #333; 
-        }
-        
-        /* Sidebar navegable y persistente */
-        .sidebar { 
-            width: 260px; 
-            height: 100vh; 
-            background: var(--admin-dark); 
-            color: white; 
-            padding: 20px; 
-            position: fixed; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        }
+        * { box-sizing: border-box; }
 
-        .sidebar h2 { 
-            text-align: center; 
-            font-size: 1.1rem; 
-            border-bottom: 1px solid rgba(255,255,255,0.1); 
-            padding-bottom: 15px; 
-            margin-bottom: 25px; 
-            letter-spacing: 1px;
-        }
-
-        .nav-links { list-style: none; padding: 0; }
-        .nav-links li { 
-            padding: 12px 15px; 
-            border-radius: 8px; 
-            margin-bottom: 8px; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px;
-            font-size: 0.95rem;
-        }
-
-        .nav-links li:hover { background: var(--admin-blue); }
-        .nav-links li.active { background: var(--accent); font-weight: 600; }
-
-        /* Contenedor principal */
-        .main-content { 
-            margin-left: 260px; 
-            padding: 40px; 
-            width: calc(100% - 260px); 
+        body {
+            margin: 0;
             min-height: 100vh;
+            display: flex;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            color: var(--text);
+            background: var(--bg);
         }
 
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 30px; 
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
-        }
-        
-        .card { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            margin-bottom: 30px; 
+        button, input, select, textarea { font: inherit; }
+        button { cursor: pointer; }
+
+        aside {
+            width: 250px;
+            min-height: 100vh;
+            padding: 24px 18px;
+            color: white;
+            background: var(--dark);
         }
 
-        /* Buscador dinámico */
-        .search-box { margin-bottom: 25px; position: relative; }
-        .search-box input { 
-            width: 100%; 
-            padding: 12px 18px; 
-            border: 2px solid #e2e8f0; 
-            border-radius: 10px; 
-            font-size: 0.95rem; 
-            box-sizing: border-box; 
-            transition: border-color 0.2s; 
+        aside h2 {
+            margin: 0 0 6px;
+            font-size: 1.1rem;
         }
-        .search-box input:focus { border-color: var(--accent); outline: none; }
 
-        /* Tablas y elementos visuales de estado */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { 
-            background: #f8f9fa; 
-            text-align: left; 
-            padding: 15px; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            font-size: 0.7rem; 
-            letter-spacing: 1px; 
-            border-bottom: 2px solid #eee;
+        aside p {
+            margin: 0 0 24px;
+            color: #cbd5e1;
+            font-size: 0.85rem;
         }
-        td { padding: 15px; border-bottom: 1px solid #f1f1f1; font-size: 0.9rem; }
-        
-        .badge { 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            font-size: 0.7rem; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-        }
-        .badge-user { background: #e1f5fe; color: #0288d1; }
-        .badge-admin { background: #ffebee; color: #c62828; }
-        .badge-success { background: #e8f5e9; color: #2e7d32; }
-        .badge-error { background: #fff3e0; color: #ef6c00; }
 
-        /* Botones de acción técnica */
-        .btn-action {
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
+        .menu button {
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 12px;
+            border: 0;
+            border-radius: 10px;
+            color: #e2e8f0;
+            background: transparent;
+            text-align: left;
             font-weight: 700;
+        }
+
+        .menu button:hover,
+        .menu button.active {
+            color: white;
+            background: var(--primary);
+        }
+
+        main {
+            width: calc(100% - 250px);
+            padding: 30px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.7rem;
+        }
+
+        .card {
+            padding: 22px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--card);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .card-title h3 { margin: 0; }
+        .card-title p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 9px 13px;
+            font-weight: 800;
+            background: #e2e8f0;
+            color: var(--text);
+        }
+
+        .btn-primary { color: white; background: var(--primary); }
+        .btn-danger { color: white; background: var(--danger); }
+        .btn-success { color: white; background: var(--success); }
+        .btn-light { color: var(--primary); background: #e0ecff; }
+        .btn-small { padding: 6px 9px; font-size: 0.8rem; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            color: var(--muted);
+            background: var(--soft);
             font-size: 0.75rem;
-            transition: background 0.2s;
+            text-transform: uppercase;
         }
-        .btn-danger { background: #fff5f5; color: var(--danger); border: 1px solid #feb2b2; }
-        .btn-danger:hover { background: var(--danger); color: white; }
-        .btn-success { background: #f0fff4; color: var(--success); border: 1px solid #9ae6b4; }
-        .btn-success:hover { background: var(--success); color: white; }
 
-        .btn-logout { 
-            background: var(--danger); 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            transition: 0.2s;
+        tr:last-child td { border-bottom: 0; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            white-space: nowrap;
         }
-        .btn-logout:hover { opacity: 0.9; }
 
-        /* Transiciones de sección */
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .ok { color: var(--success); background: #dcfce7; }
+        .bad { color: var(--danger); background: #fee2e2; }
+        .warn { color: var(--warning); background: #fef3c7; }
+        .muted { color: var(--muted); }
+
+        .pipeline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        .pipeline-card {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--soft);
+        }
+
+        .pipeline-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .pipeline-head h4 { margin: 0; }
+
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .pipeline-card p {
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+
+        .pipeline-card ul {
+            padding-left: 18px;
+            font-size: 0.86rem;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .form {
+            display: none;
+            padding: 18px;
+            margin-bottom: 18px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--soft);
+        }
+
+        .form.active { display: block; }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: white;
+        }
+
+        textarea {
+            min-height: 70px;
+            resize: vertical;
+        }
+
+        .field { margin-bottom: 12px; }
+
+        .checks {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 10px 0 14px;
+        }
+
+        .checks label {
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: none;
+        }
+
+        .checks input { width: auto; }
+
+        .stage {
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: white;
+        }
+
+        .stage-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .empty {
+            padding: 20px;
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            color: var(--muted);
+            text-align: center;
+            background: var(--soft);
+        }
+
+        @media (max-width: 800px) {
+            body { display: block; }
+            aside { width: 100%; min-height: auto; }
+            main { width: 100%; padding: 18px; }
+            header, .card-title, .row, .pipeline-head { display: block; }
+            .badges { justify-content: flex-start; margin-top: 8px; }
+        }
     </style>
 </head>
+
 <body>
+    <aside>
+        <h2>IA Explorer</h2>
+        <p>Panel de administración</p>
 
-    <nav class="sidebar">
-        <h2>IA EXPLORER ADMIN</h2>
-        <ul class="nav-links">
-            <li id="li-usuarios" class="active" onclick="switchView('usuarios')">👥 Gestión de Usuarios</li>
-            <li id="li-ejecuciones" onclick="switchView('ejecuciones')">📊 Historial Global</li>
-            <li id="li-inventario" onclick="switchView('inventario')">🛠️ Inventario Pipelines</li>
-        </ul>
-    </nav>
+        <div class="menu">
+            <button id="btn-usuarios" class="active" onclick="mostrarVista('usuarios')">Usuarios</button>
+            <button id="btn-ejecuciones" onclick="mostrarVista('ejecuciones')">Actividad</button>
+            <button id="btn-pipelines" onclick="mostrarVista('pipelines')">Pipelines</button>
+        </div>
+    </aside>
 
-    <main class="main-content">
-        <header class="header">
-            <h1 id="section-title">Gestión de Usuarios</h1>
+    <main>
+        <header>
             <div>
-                <span id="adminName" style="margin-right: 20px; font-weight: 600; color: var(--admin-dark);"></span>
-                <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+                <h1 id="titulo">Usuarios</h1>
+                <span class="muted">Administración básica de la plataforma</span>
             </div>
+            <button class="btn btn-danger" onclick="cerrarSesion()">Cerrar sesión</button>
         </header>
 
-        <section id="view-usuarios" class="view-section active">
+        <section id="vista-usuarios" class="view active">
             <div class="card">
-                <h3>Cuentas en el Sistema</h3>
+                <div class="card-title">
+                    <div>
+                        <h3>Usuarios registrados</h3>
+                        <p>Consulta y cambia el estado de las cuentas.</p>
+                    </div>
+                    <button class="btn btn-light" onclick="cargarUsuarios()">Refrescar</button>
+                </div>
+
                 <table>
                     <thead>
                         <tr>
@@ -188,23 +348,28 @@
                             <th>Email</th>
                             <th>Estado</th>
                             <th>Roles</th>
-                            <th>Acciones</th>
+                            <th>Acción</th>
                         </tr>
                     </thead>
-                    <tbody id="tbodyUsuarios"></tbody>
+                    <tbody id="tablaUsuarios">
+                        <tr><td colspan="6">Cargando...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </section>
 
-        <section id="view-ejecuciones" class="view-section">
+        <section id="vista-ejecuciones" class="view">
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0;">Monitor de Actividad en Tiempo Real</h3>
-                    <button class="btn-action btn-success" style="padding: 10px 20px;" onclick="cargarEjecuciones()">Refrescar Datos</button>
+                <div class="card-title">
+                    <div>
+                        <h3>Actividad reciente</h3>
+                        <p>Historial global de ejecuciones.</p>
+                    </div>
+                    <button class="btn btn-light" onclick="cargarEjecuciones()">Refrescar</button>
                 </div>
 
-                <div class="search-box">
-                    <input type="text" id="inputBusquedaUser" placeholder="🔍 Filtrar historial por nombre de usuario..." oninput="filtrarEjecuciones()">
+                <div class="field">
+                    <input id="filtroEjecuciones" placeholder="Filtrar por usuario o pipeline..." oninput="filtrarEjecuciones()">
                 </div>
 
                 <table>
@@ -216,199 +381,436 @@
                             <th>Fecha</th>
                             <th>Estado</th>
                             <th>Duración</th>
-                            <th>Feedback</th>
                         </tr>
                     </thead>
-                    <tbody id="tbodyEjecuciones">
-                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Iniciando carga de logs...</td></tr>
+                    <tbody id="tablaEjecuciones">
+                        <tr><td colspan="6">Cargando...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <section id="view-inventario" class="view-section">
+        <section id="vista-pipelines" class="view">
             <div class="card">
-                <h3>Mapeo de Pipelines e IA</h3>
-                <div id="listaPipelinesAdmin"></div>
+                <div class="card-title">
+                    <div>
+                        <h3>Pipelines</h3>
+                        <p>Gestiona flujos usando modelos y modos ya existentes.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="nuevoPipeline()">Nuevo pipeline</button>
+                </div>
+
+                <div id="formPipeline" class="form">
+                    <input type="hidden" id="pipelineId">
+
+                    <div class="row">
+                        <div class="field">
+                            <label>Nombre</label>
+                            <input id="pipelineNombre" placeholder="Ej: Detección + Pose">
+                        </div>
+
+                        <div class="field">
+                            <label>Visibilidad</label>
+                            <div class="checks">
+                                <label><input id="pipelinePublico" type="checkbox" checked> Público</label>
+                                <label><input id="pipelineActivo" type="checkbox" checked> Activo</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Descripción</label>
+                        <textarea id="pipelineDescripcion" placeholder="Descripción breve del pipeline"></textarea>
+                    </div>
+
+                    <div class="card-title">
+                        <div>
+                            <h3>Etapas</h3>
+                            <p>Añade los modelos y modos en el orden de ejecución.</p>
+                        </div>
+                        <button class="btn btn-light" onclick="agregarEtapa()">Añadir etapa</button>
+                    </div>
+
+                    <div id="listaEtapas"></div>
+
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="guardarPipeline()">Guardar</button>
+                        <button class="btn" onclick="cerrarFormulario()">Cancelar</button>
+                    </div>
+                </div>
+
+                <div id="listaPipelines" class="pipeline-grid">
+                    <div class="empty">Cargando pipelines...</div>
+                </div>
             </div>
         </section>
     </main>
 
     <script>
-        // Memoria volátil para optimizar búsquedas locales
-        let cacheEjecuciones = [];
+        let ejecuciones = [];
+        let pipelines = [];
+        let catalogoIA = [];
 
-        /**
-         * Inicialización de la consola y validación de privilegios
-         */
         document.addEventListener('DOMContentLoaded', () => {
             const token = sessionStorage.getItem('jwt_token');
-            const roles = JSON.parse(sessionStorage.getItem('roles') || "[]");
+            const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
 
-            // Redirección si no es administrador
             if (!token || !roles.includes('admin')) {
                 window.location.replace('/login');
                 return;
             }
 
-            document.getElementById('adminName').innerText = `Admin: ${sessionStorage.getItem('nombre_usuario')}`;
-            
-            // Carga inicial de datos
             cargarUsuarios();
             cargarEjecuciones();
-            cargarInventarioPipelines();
+            cargarPipelines();
         });
 
-        /**
-         * Manejador de navegación entre secciones (SPA Style)
-         */
-        function switchView(viewId) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-            
-            document.getElementById(`view-${viewId}`).classList.add('active');
-            document.getElementById(`li-${viewId}`).classList.add('active');
-            
-            const titles = { 
-                'usuarios': 'Gestión de Usuarios', 
-                'ejecuciones': 'Historial de Ejecuciones', 
-                'inventario': 'Inventario Técnico' 
+        function auth(extra = {}) {
+            return {
+                'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                ...extra
             };
-            document.getElementById('section-title').innerText = titles[viewId];
         }
 
-        /**
-         * Obtención y renderizado de la lista de usuarios con controles de estado
-         */
+        function html(valor) {
+            return String(valor ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function cerrarSesion() {
+            sessionStorage.clear();
+            window.location.replace('/');
+        }
+
+        function mostrarVista(nombre) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.menu button').forEach(b => b.classList.remove('active'));
+
+            document.getElementById('vista-' + nombre).classList.add('active');
+            document.getElementById('btn-' + nombre).classList.add('active');
+
+            const titulos = {
+                usuarios: 'Usuarios',
+                ejecuciones: 'Actividad',
+                pipelines: 'Pipelines'
+            };
+
+            document.getElementById('titulo').innerText = titulos[nombre];
+        }
+
         async function cargarUsuarios() {
+            const tabla = document.getElementById('tablaUsuarios');
+            tabla.innerHTML = '<tr><td colspan="6">Cargando usuarios...</td></tr>';
+
             try {
-                const response = await fetch('/api/v1/auth/usuarios', {
-                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
-                });
-                const usuarios = await response.json();
-                const tbody = document.getElementById('tbodyUsuarios');
-                
-                tbody.innerHTML = usuarios.map(u => `
+                const res = await fetch('/api/v1/auth/usuarios', { headers: auth() });
+                if (!res.ok) throw new Error();
+
+                const usuarios = await res.json();
+
+                tabla.innerHTML = usuarios.map(u => `
                     <tr>
                         <td>#${u.id}</td>
-                        <td><b>${u.nombre}</b><br><small class="text-muted">@${u.username}</small></td>
-                        <td>${u.email}</td>
-                        <td><span class="badge ${u.estado === 'activa' ? 'badge-success' : 'badge-error'}">${u.estado}</span></td>
-                        <td>${u.roles.map(r => `<span class="badge ${r === 'admin' ? 'badge-admin' : 'badge-user'}">${r}</span>`).join(' ')}</td>
+                        <td><b>${html(u.nombre || u.username)}</b><br><span class="muted">@${html(u.username)}</span></td>
+                        <td>${html(u.email)}</td>
+                        <td><span class="badge ${u.estado === 'activa' ? 'ok' : 'bad'}">${html(u.estado)}</span></td>
+                        <td>${(u.roles || []).map(r => `<span class="badge warn">${html(r)}</span>`).join(' ')}</td>
                         <td>
-                            ${u.estado === 'activa' 
-                                ? `<button class="btn-action btn-danger" onclick="cambiarEstadoUsuario(${u.id}, 'borrada')">Baneado Lógico</button>`
-                                : `<button class="btn-action btn-success" onclick="cambiarEstadoUsuario(${u.id}, 'activa')">Reactivar</button>`
+                            ${u.estado === 'activa'
+                                ? `<button class="btn btn-danger btn-small" onclick="cambiarEstado(${u.id}, 'borrada')">Desactivar</button>`
+                                : `<button class="btn btn-success btn-small" onclick="cambiarEstado(${u.id}, 'activa')">Activar</button>`
                             }
                         </td>
                     </tr>
-                `).join('');
-            } catch (err) { console.error("Error crítico en fetch usuarios:", err); }
-        }
+                `).join('') || '<tr><td colspan="6">No hay usuarios.</td></tr>';
 
-        /**
-         * Cambio de estado administrativo (Baneo/Activación)
-         */
-        async function cambiarEstadoUsuario(id, nuevoEstado) {
-            const msj = nuevoEstado === 'borrada' ? '¿Desactivar esta cuenta? El usuario perderá acceso inmediato.' : '¿Reactivar acceso para este usuario?';
-            if (!confirm(msj)) return;
-            
-            try {
-                const response = await fetch(`/api/v1/auth/admin/cambiar_estado/${id}`, {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ estado: nuevoEstado })
-                });
-
-                if (response.ok) {
-                    alert("Estado de cuenta actualizado con éxito.");
-                    cargarUsuarios(); // Refresco reactivo
-                } else {
-                    const error = await response.json();
-                    alert("Error: " + error.mensaje);
-                }
-            } catch (err) { alert("Fallo de comunicación con el servidor."); }
-        }
-
-        /**
-         * Monitor de ejecuciones globales
-         */
-        async function cargarEjecuciones() {
-            try {
-                const response = await fetch('/api/v1/ejecuciones_totales', {
-                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
-                });
-                cacheEjecuciones = await response.json();
-                renderizarTablaEjecuciones(cacheEjecuciones);
-            } catch (err) { 
-                document.getElementById('tbodyEjecuciones').innerHTML = '<tr><td colspan="7" style="color:var(--danger); text-align:center;">Fallo en enlace con la API de auditoría</td></tr>';
+            } catch {
+                tabla.innerHTML = '<tr><td colspan="6">No se pudieron cargar los usuarios.</td></tr>';
             }
         }
 
-        function renderizarTablaEjecuciones(lista) {
-            const tbody = document.getElementById('tbodyEjecuciones');
-            if (lista.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Sin registros de actividad recientes.</td></tr>';
+        async function cambiarEstado(id, estado) {
+            if (!confirm('¿Confirmas el cambio de estado?')) return;
+
+            const res = await fetch(`/api/v1/auth/admin/cambiar_estado/${id}`, {
+                method: 'POST',
+                headers: auth({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ estado })
+            });
+
+            if (!res.ok) {
+                alert('No se pudo cambiar el estado.');
                 return;
             }
-            tbody.innerHTML = lista.map(e => `
+
+            cargarUsuarios();
+        }
+
+        async function cargarEjecuciones() {
+            const tabla = document.getElementById('tablaEjecuciones');
+            tabla.innerHTML = '<tr><td colspan="6">Cargando actividad...</td></tr>';
+
+            try {
+                const res = await fetch('/api/v1/ejecuciones_totales', { headers: auth() });
+                if (!res.ok) throw new Error();
+
+                ejecuciones = await res.json();
+                pintarEjecuciones(ejecuciones);
+
+            } catch {
+                tabla.innerHTML = '<tr><td colspan="6">Fallo en enlace con la API de auditoría.</td></tr>';
+            }
+        }
+
+        function pintarEjecuciones(lista) {
+            const tabla = document.getElementById('tablaEjecuciones');
+
+            tabla.innerHTML = lista.map(e => `
                 <tr>
                     <td>#${e.id}</td>
-                    <td><b>${e.usuario}</b></td>
-                    <td>${e.pipeline}</td>
-                    <td><small>${e.fecha}</small></td>
-                    <td><span class="badge ${e.estado === 'completado' ? 'badge-success' : 'badge-error'}">${e.estado}</span></td>
-                    <td>${e.duracion}</td>
-                    <td>${e.error ? `<span style="color:var(--danger); font-weight:600;">${e.error}</span>` : `<small style="color:var(--success);">Ok</small>`}</td>
+                    <td>${html(e.usuario)}</td>
+                    <td>${html(e.pipeline)}</td>
+                    <td>${html(e.fecha)}</td>
+                    <td><span class="badge ${e.estado === 'completado' ? 'ok' : 'bad'}">${html(e.estado)}</span></td>
+                    <td>${html(e.duracion || '-')}</td>
                 </tr>
+            `).join('') || '<tr><td colspan="6">No hay ejecuciones.</td></tr>';
+        }
+
+        function filtrarEjecuciones() {
+            const texto = document.getElementById('filtroEjecuciones').value.toLowerCase();
+
+            const filtradas = ejecuciones.filter(e =>
+                String(e.usuario || '').toLowerCase().includes(texto) ||
+                String(e.pipeline || '').toLowerCase().includes(texto)
+            );
+
+            pintarEjecuciones(filtradas);
+        }
+
+        async function cargarPipelines() {
+            const lista = document.getElementById('listaPipelines');
+            lista.innerHTML = '<div class="empty">Cargando pipelines...</div>';
+
+            try {
+                const [resPipelines, resCatalogo] = await Promise.all([
+                    fetch('/api/v1/detalles_completos', { headers: auth() }),
+                    fetch('/api/v1/admin/catalogo_ia', { headers: auth() })
+                ]);
+
+                if (!resPipelines.ok || !resCatalogo.ok) throw new Error();
+
+                pipelines = await resPipelines.json();
+                catalogoIA = await resCatalogo.json();
+
+                pintarPipelines();
+
+            } catch {
+                lista.innerHTML = '<div class="empty">No se pudo cargar el inventario técnico.</div>';
+            }
+        }
+
+        function pintarPipelines() {
+            const lista = document.getElementById('listaPipelines');
+
+            lista.innerHTML = pipelines.map(p => `
+                <article class="pipeline-card">
+                    <div class="pipeline-head">
+                        <div>
+                            <h4>${html(p.nombre)}</h4>
+                            <span class="muted">ID #${p.id}</span>
+                        </div>
+                        <div class="badges">
+                            <span class="badge ${p.publico ? 'ok' : 'warn'}">${p.publico ? 'Público' : 'Privado'}</span>
+                            <span class="badge ${p.habilitado ? 'ok' : 'bad'}">${p.habilitado ? 'Activo' : 'Inactivo'}</span>
+                        </div>
+                    </div>
+
+                    <p>${html(p.descripcion || 'Sin descripción.')}</p>
+
+                    <ul>
+                        ${(p.etapas || []).map(e => `
+                            <li><b>${html(e.nombre_etapa)}</b> — ${html(e.ia)} / ${html(e.modo)}</li>
+                        `).join('')}
+                    </ul>
+
+                    <div class="actions">
+                        <button class="btn btn-light btn-small" onclick="editarPipeline(${p.id})">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="eliminarPipeline(${p.id})">Eliminar</button>
+                    </div>
+                </article>
+            `).join('') || '<div class="empty">No hay pipelines configurados.</div>';
+        }
+
+        function nuevoPipeline() {
+            document.getElementById('pipelineId').value = '';
+            document.getElementById('pipelineNombre').value = '';
+            document.getElementById('pipelineDescripcion').value = '';
+            document.getElementById('pipelinePublico').checked = true;
+            document.getElementById('pipelineActivo').checked = true;
+            document.getElementById('listaEtapas').innerHTML = '';
+
+            agregarEtapa();
+            document.getElementById('formPipeline').classList.add('active');
+        }
+
+        function editarPipeline(id) {
+            const p = pipelines.find(x => Number(x.id) === Number(id));
+            if (!p) return;
+
+            document.getElementById('pipelineId').value = p.id;
+            document.getElementById('pipelineNombre').value = p.nombre || '';
+            document.getElementById('pipelineDescripcion').value = p.descripcion || '';
+            document.getElementById('pipelinePublico').checked = !!p.publico;
+            document.getElementById('pipelineActivo').checked = !!p.habilitado;
+            document.getElementById('listaEtapas').innerHTML = '';
+
+            (p.etapas || []).forEach(e => agregarEtapa(e));
+            if (!(p.etapas || []).length) agregarEtapa();
+
+            document.getElementById('formPipeline').classList.add('active');
+        }
+
+        function cerrarFormulario() {
+            document.getElementById('formPipeline').classList.remove('active');
+        }
+
+        function agregarEtapa(etapa = null) {
+            const contenedor = document.getElementById('listaEtapas');
+            const numero = contenedor.children.length + 1;
+
+            const div = document.createElement('div');
+            div.className = 'stage';
+
+            div.innerHTML = `
+                <div class="stage-title">
+                    <span>Etapa ${numero}</span>
+                    <button class="btn btn-danger btn-small" onclick="this.closest('.stage').remove()">Quitar</button>
+                </div>
+
+                <div class="row">
+                    <div class="field">
+                        <label>Nombre</label>
+                        <input class="etapaNombre" value="${html(etapa?.nombre_etapa || '')}" placeholder="Nombre de etapa">
+                    </div>
+
+                    <div class="field">
+                        <label>Modelo</label>
+                        <select class="etapaIA" onchange="actualizarModos(this)">
+                            <option value="">Selecciona modelo</option>
+                            ${catalogoIA.map(ia => `
+                                <option value="${ia.id_ia}" ${Number(etapa?.id_ia) === Number(ia.id_ia) ? 'selected' : ''}>
+                                    ${html(ia.nombre)}
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field">
+                        <label>Modo</label>
+                        <select class="etapaModo">
+                            <option value="">Selecciona modo</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>Descripción</label>
+                        <input class="etapaDescripcion" value="${html(etapa?.descripcion || '')}" placeholder="Descripción breve">
+                    </div>
+                </div>
+            `;
+
+            contenedor.appendChild(div);
+            actualizarModos(div.querySelector('.etapaIA'), etapa?.id_modo);
+        }
+
+        function actualizarModos(selectIA, idModo = null) {
+            const idIA = Number(selectIA.value);
+            const etapa = selectIA.closest('.stage');
+            const selectModo = etapa.querySelector('.etapaModo');
+            const ia = catalogoIA.find(x => Number(x.id_ia) === idIA);
+
+            selectModo.innerHTML = '<option value="">Selecciona modo</option>';
+
+            if (!ia) return;
+
+            selectModo.innerHTML += (ia.modos || []).map(m => `
+                <option value="${m.id_modo}" ${Number(idModo) === Number(m.id_modo) ? 'selected' : ''}>
+                    ${html(m.nombre_modo)}
+                </option>
             `).join('');
         }
 
-        /**
-         * Búsqueda reactiva en caché local para evitar latencia de red
-         */
-        function filtrarEjecuciones() {
-            const busqueda = document.getElementById('inputBusquedaUser').value.toLowerCase();
-            const resultadosFiltrados = cacheEjecuciones.filter(e => 
-                e.usuario.toLowerCase().includes(busqueda) || e.pipeline.toLowerCase().includes(busqueda)
-            );
-            renderizarTablaEjecuciones(resultadosFiltrados);
+        function payloadPipeline() {
+            const etapas = [...document.querySelectorAll('.stage')].map(e => ({
+                nombre: e.querySelector('.etapaNombre').value.trim(),
+                descripcion: e.querySelector('.etapaDescripcion').value.trim(),
+                id_ia: Number(e.querySelector('.etapaIA').value),
+                id_modo: Number(e.querySelector('.etapaModo').value)
+            }));
+
+            return {
+                nombre: document.getElementById('pipelineNombre').value.trim(),
+                descripcion: document.getElementById('pipelineDescripcion').value.trim(),
+                publico: document.getElementById('pipelinePublico').checked,
+                habilitado: document.getElementById('pipelineActivo').checked,
+                etapas
+            };
         }
 
-        /**
-         * Gestión de catálogo de Pipelines e IAs
-         */
-        async function cargarInventarioPipelines() {
-            try {
-                const response = await fetch('/api/v1/detalles_completos', {
-                    headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
-                });
-                const pipelines = await response.json();
-                const contenedor = document.getElementById('listaPipelinesAdmin');
-                contenedor.innerHTML = pipelines.map(p => `
-                    <div style="border: 1px solid #eee; padding: 20px; margin-bottom: 15px; border-radius: 12px; background: #fafafa;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h4 style="margin:0; color:var(--admin-dark);">${p.nombre}</h4>
-                            <span class="badge ${p.publico ? 'badge-success' : 'badge-error'}">${p.publico ? 'Público' : 'Privado'}</span>
-                        </div>
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:10px;">${p.descripcion || 'Sin descripción técnica disponible.'}</p>
-                        <div style="margin-top:15px;">
-                            <strong style="font-size:0.75rem; text-transform:uppercase; color:var(--accent);">Secuencia de Etapas:</strong>
-                            <ul style="margin-top:10px; font-size:0.85rem; padding-left:20px;">
-                                ${p.etapas.map(e => `<li>Etapa ${e.orden}: <b>${e.nombre_etapa}</b> (Motor: ${e.ia} / Config: ${e.modo})</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) { console.error("Error cargando inventario:", error); }
+        async function guardarPipeline() {
+            const id = document.getElementById('pipelineId').value;
+            const data = payloadPipeline();
+
+            if (!data.nombre) {
+                alert('El nombre es obligatorio.');
+                return;
+            }
+
+            if (!data.etapas.length || data.etapas.some(e => !e.id_ia || !e.id_modo)) {
+                alert('Cada etapa debe tener modelo y modo.');
+                return;
+            }
+
+            const url = id ? `/api/v1/admin/pipelines/${id}` : '/api/v1/admin/pipelines';
+            const method = id ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: auth({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                alert(error.mensaje || error.error || 'No se pudo guardar.');
+                return;
+            }
+
+            cerrarFormulario();
+            cargarPipelines();
         }
 
-        function cerrarSesion() { 
-            sessionStorage.clear(); 
-            window.location.replace('/'); 
+        async function eliminarPipeline(id) {
+            if (!confirm('¿Eliminar este pipeline?')) return;
+
+            const res = await fetch(`/api/v1/admin/pipelines/${id}`, {
+                method: 'DELETE',
+                headers: auth()
+            });
+
+            if (!res.ok) {
+                alert('No se pudo eliminar.');
+                return;
+            }
+
+            cargarPipelines();
         }
     </script>
 </body>
