@@ -101,38 +101,45 @@ def tareas_mantenimiento_automaticas():
 def listar_pipelines():
     """
     Filtra dinámicamente los flujos de análisis disponibles basándose en 
-    el perfil de suscripción (RBAC) o en licencias temporales adquiridas.
+    el perfil de suscripción o en licencias temporales vigentes.
     """
     try:
-        claims = get_jwt()
-        usuario_id = get_jwt_identity()
+        usuario_id = obtener_usuario_id_actual()
         ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
 
-        # Bypass de validación comercial para administradores
-        if "admin" in claims.get("roles", []):
+        if usuario_id is None:
+            return jsonify({"mensaje": "Identidad de usuario inválida."}), 401
+
+        if es_admin_actual():
             pipelines = Pipeline.query.filter_by(habilitado=1).all()
-            return jsonify([{"id": p.id_pipeline, "nombre": p.nombre} for p in pipelines]), 200
+            return jsonify([
+                {
+                    "id": p.id_pipeline,
+                    "nombre": p.nombre
+                }
+                for p in pipelines
+            ]), 200
 
-        # Verificación de suscripción Tier 'Pro'
-        es_pro = SuscripcionPlan.query.join(TipoPlan).filter(
-            SuscripcionPlan.id_usuario == usuario_id,
-            SuscripcionPlan.activo == 1,
-            TipoPlan.nombre == 'Pro',
-            SuscripcionPlan.fecha_inicio <= ahora_naive,
-            (SuscripcionPlan.fecha_fin >= ahora_naive) | (SuscripcionPlan.fecha_fin.is_(None))
-        ).first() is not None
-
-        if es_pro:
+        if usuario_tiene_pro_vigente(usuario_id, ahora_naive):
             pipelines = Pipeline.query.filter_by(publico=1, habilitado=1).all()
         else:
-            # Resolución de dependencias granulares por licencia
-            alquileres = Alquila.query.filter(Alquila.id_usuario == usuario_id, Alquila.activo == 1).all()
-            ias_contratadas = {a.id_ia for a in alquileres}
+            ias_contratadas = obtener_ias_alquiladas_vigentes(usuario_id, ahora_naive)
             pipelines_disponibles = Pipeline.query.filter_by(publico=1, habilitado=1).all()
-            pipelines = [p for p in pipelines_disponibles if {e.id_ia for e in p.etapas}.issubset(ias_contratadas)]
 
-        return jsonify([{"id": p.id_pipeline, "nombre": p.nombre} for p in pipelines]), 200
-        
+            pipelines = [
+                pipeline
+                for pipeline in pipelines_disponibles
+                if {etapa.id_ia for etapa in pipeline.etapas}.issubset(ias_contratadas)
+            ]
+
+        return jsonify([
+            {
+                "id": p.id_pipeline,
+                "nombre": p.nombre
+            }
+            for p in pipelines
+        ]), 200
+
     except Exception as e:
         return jsonify({"error": f"Fallo en la resolución de dependencias: {str(e)}"}), 500
 
@@ -159,20 +166,42 @@ def listar_detalles_admin():
 def obtener_configuracion_completa(id_pipeline):
     """Lectura y ensamblado de los esquemas JSON de configuración por cada etapa del flujo."""
     try:
-        etapas = PipelineEtapa.query.filter_by(id_pipeline=id_pipeline).order_by(PipelineEtapa.orden).all()
+        usuario_id = obtener_usuario_id_actual()
+        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+
+        if usuario_id is None:
+            return jsonify({"mensaje": "Identidad de usuario inválida."}), 401
+
+        autorizado, mensaje, codigo_estado, _ = comprobar_acceso_pipeline(
+            id_pipeline,
+            usuario_id,
+            ahora_naive
+        )
+
+        if not autorizado:
+            return jsonify({"mensaje": mensaje}), codigo_estado
+
+        etapas = PipelineEtapa.query.filter_by(
+            id_pipeline=id_pipeline
+        ).order_by(PipelineEtapa.orden).all()
+
         config_completa = {}
-        for e in etapas:
-            modo = db.session.get(IAModo, e.id_modo)
+
+        for etapa in etapas:
+            modo = db.session.get(IAModo, etapa.id_modo)
             config_etapa = {}
+
             if modo and modo.config_predeterminada and os.path.exists(modo.config_predeterminada):
                 with open(modo.config_predeterminada, 'r') as f:
                     config_etapa = json.load(f)
-            config_completa[f"etapa_{e.orden}"] = config_etapa
-            
+
+            config_completa[f"etapa_{etapa.orden}"] = config_etapa
+
         return jsonify(config_completa), 200
-        
+
     except Exception as e:
         return jsonify({"error": f"Fallo en la lectura de esquemas: {str(e)}"}), 500
+    
 # ==============================================================================
 # GESTIÓN ADMINISTRATIVA DE PIPELINES
 # ==============================================================================
@@ -181,6 +210,73 @@ def es_admin_actual() -> bool:
     """Comprueba si el JWT actual pertenece a un usuario administrador."""
     return "admin" in get_jwt().get("roles", [])
 
+def obtener_usuario_id_actual():
+    """Devuelve el identificador numérico del usuario autenticado."""
+    try:
+        return int(get_jwt_identity())
+    except (TypeError, ValueError):
+        return None
+
+
+def usuario_tiene_pro_vigente(usuario_id, ahora_naive):
+    """Comprueba si el usuario tiene una suscripción Pro activa en este momento."""
+    return db.session.query(SuscripcionPlan).join(TipoPlan).filter(
+        SuscripcionPlan.id_usuario == usuario_id,
+        SuscripcionPlan.activo == 1,
+        TipoPlan.nombre == 'Pro',
+        SuscripcionPlan.fecha_inicio <= ahora_naive,
+        (SuscripcionPlan.fecha_fin >= ahora_naive) | (SuscripcionPlan.fecha_fin.is_(None))
+    ).first() is not None
+
+
+def obtener_ias_alquiladas_vigentes(usuario_id, ahora_naive):
+    """Devuelve las IA contratadas cuyo periodo de uso ya está vigente."""
+    alquileres = Alquila.query.filter(
+        Alquila.id_usuario == usuario_id,
+        Alquila.activo == 1,
+        (Alquila.periodo_inicio <= ahora_naive) | (Alquila.periodo_inicio.is_(None)),
+        (Alquila.periodo_fin >= ahora_naive) | (Alquila.periodo_fin.is_(None))
+    ).all()
+
+    return {alquiler.id_ia for alquiler in alquileres}
+
+
+def comprobar_acceso_pipeline(id_pipeline, usuario_id, ahora_naive):
+    """
+    Comprueba si el usuario puede acceder a un pipeline concreto.
+    Admin: acceso total.
+    Pro: acceso a pipelines públicos.
+    Básico: acceso solo si tiene vigentes todas las IA requeridas.
+    """
+    pipeline = db.session.get(Pipeline, id_pipeline)
+
+    if not pipeline:
+        return False, "Pipeline no encontrado.", 404, None
+
+    if not pipeline.habilitado:
+        return False, "Pipeline no disponible.", 404, pipeline
+
+    if es_admin_actual():
+        return True, None, 200, pipeline
+
+    if not pipeline.publico:
+        return False, "No tienes permisos para acceder a este pipeline.", 403, pipeline
+
+    etapas = PipelineEtapa.query.filter_by(id_pipeline=id_pipeline).all()
+
+    if not etapas:
+        return False, "El pipeline no tiene etapas configuradas.", 400, pipeline
+
+    if usuario_tiene_pro_vigente(usuario_id, ahora_naive):
+        return True, None, 200, pipeline
+
+    ias_requeridas = {etapa.id_ia for etapa in etapas}
+    ias_alquiladas = obtener_ias_alquiladas_vigentes(usuario_id, ahora_naive)
+
+    if ias_requeridas.issubset(ias_alquiladas):
+        return True, None, 200, pipeline
+
+    return False, "No tienes acceso a todas las IA requeridas por este pipeline.", 403, pipeline
 
 def serializar_pipeline_admin(pipeline):
     """Convierte un pipeline completo a JSON para la consola administrativa."""
@@ -219,11 +315,19 @@ def validar_etapas_pipeline(etapas):
     etapas_validadas = []
 
     for indice, etapa in enumerate(etapas, start=1):
+        if not isinstance(etapa, dict):
+            return False, f"La etapa {indice} debe ser un objeto JSON válido."
+
         try:
             id_ia = int(etapa.get("id_ia"))
             id_modo = int(etapa.get("id_modo"))
         except (TypeError, ValueError):
             return False, "Cada etapa debe incluir un modelo de IA y un modo válidos."
+
+        modelo = db.session.get(IAModelo, id_ia)
+
+        if not modelo or not modelo.habilitada:
+            return False, f"El modelo de IA indicado en la etapa {indice} no existe o está deshabilitado."
 
         modo = IAModo.query.filter_by(id_modo=id_modo, id_ia=id_ia).first()
 
@@ -232,11 +336,6 @@ def validar_etapas_pipeline(etapas):
 
         if not modo.habilitado:
             return False, f"El modo '{modo.nombre_modo}' está deshabilitado."
-
-        modelo = db.session.get(IAModelo, id_ia)
-
-        if not modelo or not modelo.habilitada:
-            return False, f"El modelo de IA indicado en la etapa {indice} no existe o está deshabilitado."
 
         etapas_validadas.append({
             "id_ia": id_ia,
@@ -458,6 +557,11 @@ def analizar_imagen():
     ahora_utc = datetime.now(timezone.utc)
     ahora_naive = ahora_utc.replace(tzinfo=None)
     
+    if usuario_id is None:
+        return jsonify({
+            "status": "error",
+            "mensaje": "Identidad de usuario inválida."
+        }), 401
     # --------------------------------------------------------------------------
     # 1. VALIDACIÓN PRELIMINAR Y CAPTURA DE INPUTS
     # --------------------------------------------------------------------------
@@ -495,16 +599,30 @@ def analizar_imagen():
             "status": "error", 
             "mensaje": "La configuración personalizada tiene un formato JSON inválido."
         }), 400
+    try:
+        id_pipeline_int = int(id_pipeline)
+    except (TypeError, ValueError):
+        return jsonify({
+            "status": "error",
+            "mensaje": "El identificador del pipeline no es válido."
+        }), 400
 
+    autorizado, mensaje, codigo_estado, _ = comprobar_acceso_pipeline(
+        id_pipeline_int,
+        usuario_id,
+        ahora_naive
+    )
+
+    if not autorizado:
+        return jsonify({
+            "status": "error",
+            "mensaje": mensaje
+        }), codigo_estado
     # --------------------------------------------------------------------------
     # 3. DETERMINACIÓN DE POLÍTICAS DE RETENCIÓN (TTL)
     # --------------------------------------------------------------------------
     # Lógica de negocio: Los usuarios Pro disponen de una ventana de persistencia mayor
-    es_pro = db.session.query(SuscripcionPlan).join(TipoPlan).filter(
-        SuscripcionPlan.id_usuario == usuario_id, 
-        SuscripcionPlan.activo == 1, 
-        TipoPlan.nombre == 'Pro'
-    ).first() is not None
+    es_pro = usuario_tiene_pro_vigente(usuario_id, ahora_naive)
     
     fecha_expiracion = ahora_naive + (timedelta(days=7) if es_pro else timedelta(minutes=5))
 
@@ -513,7 +631,7 @@ def analizar_imagen():
     # --------------------------------------------------------------------------
     nueva_ejecucion = Ejecucion(
         id_usuario=usuario_id, 
-        id_pipeline=id_pipeline, 
+        id_pipeline=id_pipeline_int,
         estado='procesando', 
         config_aplicada=config_usuario_str
     )
@@ -544,8 +662,7 @@ def analizar_imagen():
         # --------------------------------------------------------------------------
         # 5. EJECUCIÓN DEL MOTOR DE INFERENCIA (PIPELINE RUNNER)
         # --------------------------------------------------------------------------
-        # Invocación sincrónica de la lógica de procesamiento secuencial
-        _, analisis = PipelineRunner.ejecutar_pipeline(int(id_pipeline), ruta_input, config_dict, prefijo)
+        _, analisis = PipelineRunner.ejecutar_pipeline(id_pipeline_int, ruta_input, config_dict, prefijo)
         
         # --------------------------------------------------------------------------
         # 6. OFUSCACIÓN DE RESULTADOS Y PERSISTENCIA DE ARTEFACTOS
