@@ -1,3 +1,45 @@
 \capitulo{6}{Trabajos relacionados}
 
-Este apartado sería parecido a un estado del arte de una tesis o tesina. En un trabajo final grado no parece obligada su presencia, aunque se puede dejar a juicio del tutor el incluir un pequeño resumen comentado de los trabajos y proyectos ya realizados en el campo del proyecto en curso. 
+Este capítulo sitúa el proyecto desarrollado frente a otras herramientas y plataformas relacionadas con la ejecución de modelos de inteligencia artificial y la construcción de flujos de procesamiento de imágenes.
+
+No se pretende realizar un estado del arte exhaustivo, sino comparar el TFG con tres referencias representativas: Gradio, Roboflow y Kubeflow Pipelines. Estas soluciones permiten ubicar el proyecto entre una demo sencilla de inteligencia artificial y una plataforma industrial de orquestación de modelos.
+
+\section{Herramientas y plataformas relacionadas}
+
+Gradio es una biblioteca orientada a construir interfaces web rápidas para modelos de aprendizaje automático \cite{gradio_docs}. Se relaciona con la primera fase del proyecto, en la que se buscaba validar el flujo básico de subir una imagen, ejecutar un modelo y mostrar un resultado visual. Sin embargo, Gradio está más orientado al prototipado rápido, mientras que este TFG desarrolla una aplicación web completa con autenticación, persistencia, permisos, pipelines, historial y administración.
+
+Roboflow es una plataforma centrada en visión por computador. Roboflow Inference permite ejecutar modelos mediante una API HTTP, mientras que Roboflow Workflows permite construir flujos de procesamiento visual formados por varios bloques \cite{roboflow_inference_docs,roboflow_workflows_docs}. Es la referencia más cercana al proyecto por la idea de workflows de visión por computador. La diferencia principal es que este TFG implementa una solución propia, en la que los pipelines se modelan en una base de datos relacional y pueden gestionarse desde la zona de administración, sin modificar directamente el código fuente cuando se trabaja con modelos y modos ya disponibles.
+
+Kubeflow Pipelines es una plataforma orientada a definir y ejecutar workflows de aprendizaje automático sobre infraestructuras basadas en contenedores y Kubernetes \cite{kubeflow_pipelines_docs}. Comparte con este proyecto la idea de dividir un proceso complejo en etapas, pero su alcance es distinto. Kubeflow está pensado para entornos MLOps de mayor escala, mientras que este TFG adapta el concepto de pipeline a una aplicación web más ligera, basada en Flask y en una base de datos relacional.
+
+\section{Comparación con el proyecto desarrollado}
+
+La Tabla~\ref{tabla:trabajos-relacionados} resume la comparación entre las soluciones revisadas y el proyecto desarrollado.
+
+\begin{table}[htbp]
+	\centering
+	\small
+	\begin{tabular}{p{0.22\textwidth} p{0.30\textwidth} p{0.36\textwidth}}
+		\toprule
+		\textbf{Solución} & \textbf{Relación con el TFG} & \textbf{Diferencia principal} \\
+		\midrule
+		Gradio & Creación rápida de demos web para modelos de IA. & El TFG no se limita a una demo: incorpora usuarios, permisos, persistencia, pipelines, historial y administración. \\
+		\midrule
+		Roboflow & Flujos de visión por computador e inferencia mediante servicios. & El TFG implementa una solución propia con pipelines administrables, YOLO, MediaPipe, planes, licencias y tokens temporales. \\
+		\midrule
+		Kubeflow Pipelines & Orquestación de procesos de aprendizaje automático por etapas. & Kubeflow está orientado a MLOps y Kubernetes; el TFG adapta esa idea a una aplicación web más ligera. \\
+		\bottomrule
+	\end{tabular}
+	\caption{Comparación entre trabajos relacionados y el proyecto desarrollado.}
+	\label{tabla:trabajos-relacionados}
+\end{table}
+
+\section{Posicionamiento del TFG}
+
+A partir de esta comparación, el proyecto puede situarse en un punto intermedio entre una demo de inteligencia artificial y una plataforma industrial de orquestación. Frente a herramientas como Gradio, aporta una aplicación más completa. Frente a plataformas como Roboflow, implementa una solución propia y adaptada al alcance del TFG. Frente a Kubeflow Pipelines, toma la idea de procesamiento por etapas, pero sin introducir la complejidad de una infraestructura cloud-native.
+
+La aportación principal del proyecto no está en crear un nuevo modelo de inteligencia artificial, sino en integrar modelos existentes dentro de una aplicación web modular. El sistema permite ejecutar modelos como YOLO y MediaPipe, organizar flujos mediante pipelines, controlar qué usuarios pueden acceder a ellos, registrar ejecuciones y gestionar resultados temporales mediante tokens.
+
+Uno de los aspectos más diferenciadores es que los pipelines no quedan fijados como código cerrado. La aplicación permite que un administrador cree, modifique o elimine pipelines desde la propia interfaz, siempre que trabaje con modelos y modos ya registrados. Esta característica refuerza la escalabilidad funcional del sistema y lo diferencia de una simple demo de procesamiento de imágenes.
+
+En síntesis, este TFG une varios elementos que suelen aparecer por separado: visión por computador, aplicación web, factoría de modelos, pipelines administrables, control de acceso, persistencia, resultados temporales y administración. Esa integración constituye el valor principal del trabajo desarrollado.

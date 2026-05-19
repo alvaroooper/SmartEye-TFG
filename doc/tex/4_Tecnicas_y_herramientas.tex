@@ -1,98 +1,107 @@
 \capitulo{4}{Técnicas y herramientas}
 
-En este capítulo se describen las tecnologías y herramientas seleccionadas para el desarrollo del proyecto. La elección de este \textit{stack} tecnológico responde a un análisis de eficiencia, seguridad y compatibilidad técnica, priorizando soluciones de código abierto y ampliamente respaldadas por la comunidad profesional.
+En este capítulo se recogen las principales técnicas, tecnologías y herramientas utilizadas durante el desarrollo del proyecto. No se pretende realizar una descripción exhaustiva de cada una de ellas, sino justificar su papel dentro del sistema construido.
 
-\section{Visión por Computador e Inteligencia Artificial}
+La selección de herramientas ha estado condicionada por el tipo de aplicación desarrollada: una plataforma web capaz de recibir imágenes, ejecutar modelos de visión por computador, gestionar usuarios y permisos, almacenar información persistente y validar su funcionamiento mediante pruebas automatizadas.
 
-La capacidad de procesamiento visual es el núcleo de este proyecto. Se han seleccionado herramientas que permiten un equilibrio entre precisión y rendimiento en tiempo real:
+\section{Metodología y seguimiento del proyecto}
 
-\begin{itemize}
-	\item \textbf{MediaPipe:} Framework de Google especializado en la detección de puntos clave corporales. 
-	\textit{Justificación:} A diferencia de modelos basados puramente en aprendizaje profundo que requieren GPUs de alto rendimiento, MediaPipe está optimizado para ejecutarse de forma eficiente en CPU mediante el uso de grafos de procesamiento. Esto garantiza que la aplicación sea accesible en una mayor variedad de dispositivos sin sacrificar la latencia \cite{lugaresi2019mediapipe, google_mediapipe_docs}.
-	
-	\item \textbf{YOLO (You Only Look Once) v8:} Modelo de detección de objetos por regresión. 
-	\textit{Justificación:} Se ha optado por la versión v8 de Ultralytics por ser el estándar actual en velocidad. Mientras que otros modelos como Faster R-CNN requieren dos etapas de procesamiento, YOLO realiza la detección en una sola pasada, lo que resulta crítico para sistemas que requieren una respuesta inmediata ante la cámara \cite{ultralytics_yolov8}.
-	
-	\item \textbf{OpenCV (cv2):} Librería de visión artificial por excelencia.
-	\textit{Justificación:} Se utiliza como "pegamento" técnico para la manipulación de imágenes. Su ventaja competitiva reside en su madurez y en la capacidad de manejar flujos de vídeo de forma nativa, permitiendo tareas de preprocesamiento (como el redimensionado o filtrado de ruido) que son costosas de implementar desde cero en Python \cite{opencv_docs}.
-\end{itemize}
+El desarrollo se ha organizado siguiendo un enfoque iterativo e incremental. Esta forma de trabajo ha permitido avanzar por fases, validar primero los elementos de mayor incertidumbre técnica y, posteriormente, incorporar nuevas funcionalidades sobre una base ya comprobada.
 
-\section{Desarrollo Backend y Lógica de Negocio}
+Para la planificación y seguimiento se ha utilizado Jira, organizando el trabajo en sprints y tareas. Esta herramienta ha permitido mantener una visión estructurada del avance del proyecto, registrar las actividades realizadas y relacionarlas con la planificación temporal del TFG \cite{jira_docs}.
 
-Para la construcción de la API y la orquestación de datos, se ha utilizado el ecosistema de Python, seleccionado por su sintaxis clara y su liderazgo en el sector de la IA:
+La comunicación con los tutores se ha realizado principalmente mediante Microsoft Teams, utilizado para reuniones, seguimiento del estado del proyecto y revisión de decisiones relevantes durante el desarrollo \cite{teams_docs}.
 
-\begin{itemize}
-	\item \textbf{Flask:} Microframework web.
-	\textit{Justificación:} Frente a frameworks "todo incluido" como Django, Flask ofrece una arquitectura minimalista. Esto evita la sobrecarga de componentes innecesarios y permite un control total sobre las rutas y la integración de los modelos de IA, facilitando un despliegue más ágil y ligero \cite{flask_docs}.
-	
-	\item \textbf{Flask-SQLAlchemy:} Capa de abstracción de base de datos (ORM).
-	\textit{Justificación:} Su uso es fundamental para la seguridad y el mantenimiento. Al utilizar un ORM, se evita la escritura de consultas SQL manuales, lo que mitiga el riesgo de ataques de inyección SQL y permite interactuar con los datos mediante objetos de Python, facilitando la legibilidad del código \cite{sqlalchemy_docs}.
-	
-	\item \textbf{Flask-JWT-Extended:} Gestión de autenticación mediante JSON Web Tokens.
-	\textit{Justificación:} Se ha elegido para implementar una arquitectura \textit{stateless} (sin estado). Esto permite que el servidor no tenga que almacenar sesiones en memoria, mejorando la escalabilidad y proporcionando un mecanismo robusto para proteger los \textit{endpoints} privados del sistema \cite{jwt_docs}.
-	
-	\item \textbf{Werkzeug y Python-dotenv:} Herramientas de utilidad y configuración.
-	\textit{Justificación:} Werkzeug garantiza la seguridad de las credenciales mediante el \textit{hashing} de contraseñas, asegurando que no se almacenen en texto plano. Por otro lado, \texttt{python-dotenv} permite gestionar variables de entorno, manteniendo las claves privadas y credenciales de acceso fuera del código fuente \cite{dotenv_docs}.
-\end{itemize}
+El código fuente se ha gestionado mediante GitHub, lo que ha permitido mantener un histórico de cambios, respaldar el proyecto y facilitar el control de versiones durante su evolución \cite{github_docs}.
 
-\section{Gestión de Datos}
+\section{Lenguaje y entorno de desarrollo}
+
+El lenguaje principal utilizado ha sido Python. Su elección resulta adecuada para este proyecto por la disponibilidad de bibliotecas orientadas a desarrollo web, inteligencia artificial, visión por computador, persistencia de datos y pruebas automatizadas \cite{python_docs}.
+
+El desarrollo se ha realizado principalmente sobre Linux Debian. Esta decisión ha permitido trabajar en un entorno cercano al que podría encontrarse en un servidor real, facilitando la gestión de dependencias, rutas, permisos y servicios asociados a la aplicación \cite{debian_docs}.
+
+Como entorno de desarrollo se ha utilizado Visual Studio Code, apoyado por su terminal integrada y extensiones para Python. También se ha empleado DBeaver para inspeccionar visualmente la base de datos durante el diseño e implementación del modelo relacional \cite{vscode_docs,dbeaver_docs}.
+
+\section{Visión por computador e inteligencia artificial}
+
+La parte de procesamiento visual constituye uno de los elementos centrales del proyecto. Para cubrir distintos tipos de análisis se han utilizado modelos y bibliotecas orientadas tanto a detección de objetos como a estimación de puntos clave.
 
 \begin{itemize}
-	\item \textbf{MariaDB:} Sistema de gestión de bases de datos relacionales.
-	\textit{Justificación:} Se ha seleccionado MariaDB sobre MySQL por su excelente rendimiento en la gestión de hilos y su naturaleza totalmente \textit{open-source}. Es la solución ideal para garantizar la integridad referencial de los datos de usuarios y registros históricos con una alta disponibilidad \cite{mariadb_docs}.
+	\item \textbf{YOLOv8 y Ultralytics}: se han utilizado para la detección de objetos sobre imágenes. En el proyecto se emplea una versión ligera del modelo, \texttt{yolov8n}, adecuada para obtener resultados visuales mediante cajas delimitadoras, clases detectadas y niveles de confianza \cite{ultralytics_yolov8}.
+	
+	\item \textbf{MediaPipe}: Framework utilizado para el análisis mediante landmarks.
+	
+	\textit{Justificación:} MediaPipe se ha empleado para los modos de detección de manos y estimación de pose. A diferencia de YOLO, que trabaja principalmente con cajas delimitadoras, MediaPipe permite obtener puntos clave y conexiones anatómicas, proporcionando una representación más estructural del elemento analizado \cite{lugaresi2019mediapipe,google_mediapipe_docs}.
+	
+	En la implementación se utiliza la interfaz \textit{Tasks API} de MediaPipe para cargar modelos locales en formato \texttt{.task}. Los modelos \texttt{hand\_landmarker.task} y \texttt{pose\_landmarker\_full.task} se almacenan en la carpeta \texttt{models/mp}. Si no están disponibles, el sistema puede descargarlos la primera vez; una vez guardados, las ejecuciones posteriores se realizan de forma local, sin depender de una API remota para la inferencia.
+	
+	\item \textbf{OpenCV}: se ha utilizado como biblioteca de apoyo para leer imágenes desde disco, transformar espacios de color, redimensionar recortes, dibujar resultados y guardar imágenes procesadas \cite{opencv_docs}.
+	
+	\item \textbf{NumPy}: se ha empleado como soporte para el tratamiento matricial de imágenes, especialmente en combinación con OpenCV y en pruebas automatizadas donde se generan imágenes simuladas \cite{numpy_docs}.
 \end{itemize}
 
-\section{Diseño y Diagramación}
+Esta combinación de herramientas permite trabajar con dos tipos de resultados complementarios: detecciones mediante cajas delimitadoras y análisis estructural mediante landmarks. Gracias a ello, la aplicación puede ofrecer tanto salidas visuales sencillas de interpretar como información estructurada asociada al procesamiento.
 
-Para la fase de planificación visual y modelado arquitectónico, se han empleado las siguientes herramientas:
+\section{Desarrollo web y backend}
+
+El backend de la aplicación se ha construido utilizando \textbf{Flask}. Se ha elegido este framework por su ligereza y flexibilidad, ya que permite comenzar con una demo sencilla y evolucionar hacia una aplicación modular organizada mediante controladores, servicios, modelos de datos y vistas \cite{flask_docs}.
+
+La aplicación utiliza \textit{Blueprints} de Flask para separar las rutas según su responsabilidad. De este modo, funcionalidades como autenticación, tienda, pipelines o administración se encuentran organizadas en módulos diferenciados, evitando concentrar toda la lógica en un único archivo.
+
+Para la autenticación se ha empleado Flask-JWT-Extended. Esta biblioteca permite generar y validar tokens JWT, necesarios para proteger las rutas privadas y asociar cada petición a un usuario autenticado \cite{jwt_docs}.
+
+Werkzeug se ha utilizado en dos aspectos concretos: la generación y comprobación de hashes de contraseñas, y el tratamiento seguro de nombres de ficheros subidos por el usuario mediante \texttt{secure\_filename} \cite{werkzeug_docs}.
+
+También se ha utilizado \texttt{python-dotenv} para cargar variables de entorno desde un fichero \texttt{.env}. Esto permite separar del código valores como claves secretas, configuración de JWT o cadena de conexión a la base de datos \cite{dotenv_docs}.
+
+\section{Frontend e interfaz de usuario}
+
+Aunque el núcleo técnico del proyecto se encuentra en el backend y en el procesamiento de imágenes, se ha desarrollado una interfaz web para facilitar el uso y la demostración del sistema.
+
+La interfaz se ha construido con \textbf{YHTML, CSS y JavaScript}. HTML define la estructura de las vistas, CSS permite mantener una presentación visual uniforme y JavaScript se encarga de comunicar la interfaz con los endpoints del backend, gestionar respuestas y almacenar temporalmente el token de sesión en el navegador \cite{mdn_html,mdn_css,mdn_javascript}.
+
+Las vistas se sirven mediante plantillas de Flask. En el proyecto se utilizan para separar páginas públicas, vistas de usuario autenticado y zona de administración \cite{flask_docs}.
+
+\section{Persistencia y configuración}
+
+La aplicación necesita almacenar información relacionada con usuarios, roles, planes, licencias, modelos disponibles, modos de ejecución, pipelines, ejecuciones y archivos temporales. Para ello se ha utilizado \textbf{YMariaDB} como sistema gestor de base de datos relacional \cite{mariadb_docs}.
+
+El acceso a datos se ha implementado mediante \textbf{SQLAlchemy y Flask-SQLAlchemy}. Estas herramientas permiten representar las tablas como clases de Python y trabajar con las entidades del sistema de forma más integrada con el código de la aplicación \cite{sqlalchemy_docs}.
+
+En el entorno de pruebas se utiliza \textbf{SQLite} en memoria. Esta decisión permite ejecutar las pruebas de forma rápida y aislada, creando y destruyendo el esquema de datos sin afectar a la base de datos principal del proyecto \cite{sqlite_docs}.
+
+La configuración de los modos de ejecución se ha separado parcialmente del código mediante ficheros \textbf{JSON}. Estos archivos recogen parámetros por defecto de modos como detección con YOLO, recorte de personas, detección de manos o estimación de pose, facilitando su modificación sin alterar directamente las funciones de procesamiento \cite{json_docs}.
+
+Además, el proyecto incluye un script de inicialización, \texttt{seed.py}, que permite preparar datos de demostración: usuarios, roles, planes, modelos de inteligencia artificial, modos y pipelines preconfigurados. Su finalidad es facilitar la puesta en marcha de un entorno de prueba o defensa.
+
+\section{Pruebas y validación}
+
+La validación del sistema se ha realizado mediante pruebas automatizadas con \textbf{Pytest}. Estas pruebas cubren distintas partes del proyecto, como autenticación, tienda, pipelines, modelos de datos, factoría de inteligencia artificial, launchers y funciones de procesamiento \cite{pytest_docs}.
+
+Para evitar que todas las pruebas dependan de modelos reales o de operaciones costosas sobre disco, se ha utilizado \textbf{unittest.mock}. Esta herramienta permite simular lecturas de imágenes, escrituras de archivos, respuestas de modelos y errores controlados, comprobando la lógica del sistema de forma más rápida y aislada \cite{python_unittest_mock_docs}.
+
+También se ha empleado el cliente de pruebas de Flask, que permite simular peticiones HTTP directamente sobre la aplicación sin levantar un servidor real. Esto resulta útil para comprobar respuestas JSON, códigos de estado, validaciones y comportamiento de los controladores \cite{flask_docs}.
+
+\section{Diseño, documentación y herramientas auxiliares}
+
+Durante el diseño del sistema se han utilizado herramientas de apoyo para representar la estructura de datos y documentar la arquitectura del proyecto.
 
 \begin{itemize}
-	\item \textbf{dbdiagram.io:} Herramienta de diseño de bases de datos basada en código.
-	\textit{Justificación:} Permite definir el esquema Entidad-Relación de forma rápida mediante lenguaje descriptivo (DSL). Su uso ha sido clave para iterar el modelo de datos de MariaDB antes de su implementación física, asegurando que todas las relaciones fuesen correctas.
+	\item \textbf{dbdiagram.io}: utilizado para trabajar de forma ágil sobre el modelo relacional antes de trasladarlo a SQLAlchemy y MariaDB \cite{dbdiagram_docs}.
 	
-	\item \textbf{Draw.io:} Aplicación de diagramación profesional.
-	\textit{Justificación:} Se ha utilizado para crear los diagramas de arquitectura del sistema, flujos de datos y lógica de los algoritmos de visión. Su versatilidad permite documentar visualmente el proyecto de forma estandarizada.
+	\item \textbf{Draw.io}: utilizado para elaborar diagramas de apoyo, especialmente representaciones visuales del modelo entidad-relación y otros esquemas del sistema \cite{drawio_docs}.
+	
+	\item \textbf{LaTeX}: utilizado para redactar la memoria y los anexos del TFG, generar índices, gestionar referencias y mantener una presentación adecuada para la documentación académica \cite{wiki:latex}.
 \end{itemize}
 
-\section{Documentación y redacción técnica}
+\section{Asistencia mediante IA generativa}
 
-\begin{itemize}
-	\item \textbf{LaTeX:} Sistema de preparación de documentos de alta calidad.
-	\textit{Justificación:} Se ha utilizado para la redacción de la memoria del TFG por su capacidad para estructurar documentos técnicos de forma rigurosa y profesional. Su uso facilita la gestión automática de capítulos, referencias cruzadas, bibliografía, figuras, tablas y anexos, además de ofrecer un acabado tipográfico especialmente adecuado para trabajos académicos y documentación técnica extensa \cite{wiki:latex}.
-\end{itemize}
+Durante el desarrollo y la redacción se han utilizado herramientas de IA generativa, principalmente \textbf{ChatGPT y Gemini}, como apoyo para contrastar ideas, revisar explicaciones, plantear alternativas de diseño, depurar errores y generar borradores de texto \cite{openai_chatgpt,google_gemini}.
 
+Su uso ha sido auxiliar. Las decisiones de análisis, implementación, validación y redacción final han sido revisadas y adaptadas dentro del propio proceso de desarrollo del TFG.
 
-\section{Entorno de Desarrollo e Infraestructura}
+\section{Síntesis}
 
-Esta sección comprende el sistema operativo y las aplicaciones que han permitido la escritura, depuración y control del software:
+Las herramientas utilizadas cubren las distintas necesidades del proyecto. Python, Flask, SQLAlchemy y MariaDB forman la base de la aplicación web y su persistencia. YOLO, MediaPipe, OpenCV y NumPy permiten abordar el procesamiento de imágenes y la integración de modelos de visión por computador. Pytest, \texttt{unittest.mock} y el cliente de pruebas de Flask aportan soporte para la validación automatizada del sistema.
 
-\begin{itemize}
-	\item \textbf{Linux (Debian):} Sistema operativo base.
-	\textit{Justificación:} Elegido por su estabilidad crítica y su gestión avanzada de permisos. Debian proporciona un entorno de servidor estandarizado donde las dependencias de Python y las librerías de IA se ejecutan de forma previsible y segura \cite{debian_docs}.
-	
-	\item \textbf{Visual Studio Code:} Entorno de desarrollo integrado (IDE).
-	\textit{Justificación:} Su potencia reside en su ecosistema de extensiones y su terminal integrada. Facilita la depuración de código en tiempo real y la integración directa con el control de versiones, optimizando el tiempo de desarrollo \cite{vscode_docs}.
-	
-	\item \textbf{DBeaver:} Cliente de base de datos universal.
-	\textit{Justificación:} A diferencia de herramientas básicas, DBeaver permite administrar MariaDB de forma visual, ejecutar consultas de prueba y monitorizar el estado de las tablas sin necesidad de usar la línea de comandos, lo que reduce errores humanos en la manipulación de datos.
-	
-	\item \textbf{GitHub:} Plataforma de control de versiones distribuido.
-	\textit{Justificación:} Es fundamental para garantizar la trazabilidad del código. Permite mantener un histórico de cambios, trabajar en diferentes ramas de desarrollo y asegurar que el trabajo esté respaldado en la nube \cite{github_docs}.
-\end{itemize}
-
-\section{Gestión y Comunicación del Proyecto}
-
-\begin{itemize}
-	\item \textbf{Jira:} Gestión del ciclo de vida del software.
-	\textit{Justificación:} Se ha empleado para implementar una metodología ágil. Permite la planificación de \textit{Sprints}, la priorización de tareas en el \textit{Backlog} y el seguimiento detallado del progreso, asegurando que se cumplen los hitos del TFG en el tiempo previsto \cite{jira_docs}.
-	
-	\item \textbf{Microsoft Teams:} Centro de colaboración.
-	\textit{Justificación:} Ha servido como canal de comunicación persistente para reuniones de seguimiento y compartición de documentos técnicos, manteniendo un histórico de las decisiones tomadas durante el desarrollo \cite{teams_docs}.
-\end{itemize}
-
-\section{Asistencia mediante IA Generativa}
-
-\begin{itemize}
-	\item \textbf{ChatGPT y Gemini:} Modelos de lenguaje de gran tamaño (LLM).
-	\textit{Justificación:} Se han utilizado como asistentes técnicos para la optimización de funciones complejas en Python, la depuración de errores de configuración en Debian y la generación de casos de prueba. Su uso ha permitido acelerar la resolución de problemas técnicos específicos \cite{openai_chatgpt, google_gemini}.
-\end{itemize}
+Junto a ellas, herramientas como Debian, Visual Studio Code, DBeaver, GitHub, Jira, Teams, dbdiagram.io, Draw.io y LaTeX han servido de apoyo para el desarrollo, seguimiento, diseño y documentación del proyecto. En conjunto, esta selección ha permitido construir una aplicación web modular, con usuarios, permisos, pipelines, resultados temporales y una base preparada para futuras ampliaciones.

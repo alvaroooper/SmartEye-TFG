@@ -1,4 +1,51 @@
-\capitulo{7}{Conclusiones y Líneas de trabajo futuras}
+\capitulo{7}{Conclusiones y líneas de trabajo futuras}
 
-Todo proyecto debe incluir las conclusiones que se derivan de su desarrollo. Éstas pueden ser de diferente índole, dependiendo de la tipología del proyecto, pero normalmente van a estar presentes un conjunto de conclusiones relacionadas con los resultados del proyecto y un conjunto de conclusiones técnicas. 
-Además, resulta muy útil realizar un informe crítico indicando cómo se puede mejorar el proyecto, o cómo se puede continuar trabajando en la línea del proyecto realizado. 
+En este capítulo se recogen las principales conclusiones obtenidas tras el desarrollo del Trabajo de Fin de Grado, así como las posibles líneas de evolución futura del proyecto.
+
+El trabajo partía de una idea inicial concreta: desarrollar una aplicación web capaz de procesar imágenes mediante modelos de inteligencia artificial. Sin embargo, durante su desarrollo, esa idea evolucionó hacia una plataforma más completa, en la que no solo se ejecutan modelos de visión por computador, sino que también se gestionan usuarios, permisos, planes, modelos disponibles, pipelines, ejecuciones, archivos temporales y funciones de administración.
+
+La principal aportación del proyecto no está en la creación de un nuevo modelo de inteligencia artificial, sino en la integración de modelos existentes dentro de una aplicación web modular, ampliable y controlada.
+
+\section{Conclusiones}
+
+El objetivo principal del proyecto se ha cumplido. Se ha desarrollado una aplicación web capaz de recibir imágenes, ejecutar sobre ellas modelos de inteligencia artificial y devolver resultados tanto visuales como estructurados. El usuario puede registrarse, iniciar sesión, consultar los pipelines disponibles, subir una imagen, ejecutar un análisis y visualizar los resultados obtenidos.
+
+Uno de los resultados más importantes ha sido la evolución desde una demo inicial de procesamiento de imágenes hasta una aplicación con una arquitectura más cercana a un sistema real. La primera fase permitió validar la integración de YOLO y MediaPipe desde un servidor web. A partir de esa base, el proyecto incorporó persistencia, autenticación, control de acceso, pipelines, historial, resultados temporales y administración.
+
+Desde el punto de vista técnico, una de las decisiones más relevantes ha sido diseñar el sistema de forma modular. La separación entre controladores, servicios, modelos de datos, factoría de inteligencia artificial, launchers y vistas ha permitido reducir el acoplamiento entre las distintas partes de la aplicación. Gracias a ello, la lógica principal no depende directamente de una biblioteca concreta como YOLO o MediaPipe, sino que delega la ejecución en componentes especializados.
+
+También destaca la incorporación de pipelines de procesamiento. Esta funcionalidad permite organizar el análisis de imágenes como una secuencia de etapas, donde cada etapa se asocia a un modelo y a un modo de ejecución. Esto aporta más flexibilidad que una ejecución aislada de modelos, ya que permite construir flujos simples o combinaciones más complejas, como detectar personas, generar recortes y aplicar después otro análisis sobre cada uno de ellos.
+
+La escalabilidad funcional de la aplicación es otro de los puntos más relevantes del proyecto. Los pipelines no quedan fijados como código cerrado, sino que pueden gestionarse desde la zona de administración. Esto permite crear, modificar o eliminar flujos de procesamiento utilizando modelos y modos ya registrados, sin necesidad de alterar directamente el código fuente. Esta característica diferencia el sistema de una demo estática y lo acerca a una plataforma ampliable.
+
+El modelo de datos también ha sido una parte fundamental. La base de datos no solo almacena usuarios, sino también roles, planes, suscripciones, alquileres, modelos de inteligencia artificial, modos, pipelines, etapas, ejecuciones y archivos temporales. Esta estructura permite representar la lógica del sistema de forma persistente y controlar la coherencia de los flujos definidos.
+
+La gestión de resultados temporales mediante tokens de descarga ha permitido evitar la exposición directa de rutas internas del servidor. Además, la separación entre ejecuciones y archivos físicos facilita conservar trazabilidad sin obligar a almacenar indefinidamente todos los resultados generados.
+
+Por último, la incorporación de pruebas automatizadas ha contribuido a mejorar la fiabilidad del sistema. Estas pruebas han permitido validar controladores, modelos de datos, servicios, factoría de inteligencia artificial, launchers, pipelines y situaciones de error. En un proyecto que combina desarrollo web, base de datos, permisos y modelos de inteligencia artificial, esta validación resulta especialmente importante.
+
+A nivel personal, el proyecto ha permitido aplicar de forma conjunta muchos de los conocimientos adquiridos durante el grado: desarrollo backend, bases de datos, arquitectura software, pruebas, seguridad básica, documentación técnica e integración de modelos de inteligencia artificial. También ha servido para comprender la diferencia entre construir una demo funcional y desarrollar una aplicación organizada, mantenible y preparada para crecer.
+
+\section{Líneas de trabajo futuras}
+
+Aunque el proyecto cumple los objetivos planteados, existen varias líneas de trabajo que permitirían mejorarlo y acercarlo a un entorno más real.
+
+Una primera línea de mejora sería completar la contenerización del sistema mediante Docker. Esto facilitaría que la aplicación, la base de datos y las dependencias necesarias pudieran ejecutarse de forma reproducible en otros equipos. Esta mejora sería especialmente útil de cara a la defensa, al despliegue o a futuras pruebas por parte de terceros.
+
+Otra mejora importante sería incorporar un sistema de migraciones de base de datos, por ejemplo mediante Alembic o Flask-Migrate. Actualmente, el sistema puede inicializar una base de datos para demostración, pero en un entorno real sería necesario evolucionar el esquema sin reinicializarlo completamente.
+
+También sería conveniente añadir procesamiento asíncrono para los pipelines. En la versión actual, el procesamiento se realiza dentro del flujo de petición. Para imágenes grandes, modelos más pesados o pipelines con varias etapas, sería más adecuado utilizar una cola de tareas. De esta forma, el usuario podría lanzar una ejecución, consultar su estado y recuperar los resultados cuando estuvieran disponibles.
+
+Otra línea futura sería ampliar el catálogo de modelos y modos. La arquitectura actual facilita esta evolución, ya que la incorporación de una nueva familia de modelos podría realizarse mediante un nuevo launcher y su registro en la factoría. También podrían añadirse nuevos modos sobre modelos ya existentes, como clasificación, segmentación, OCR o análisis de calidad de imagen.
+
+La administración de pipelines también podría ampliarse. Aunque el sistema ya permite gestionar pipelines desde la aplicación, en el futuro podría añadirse una interfaz más visual para construir flujos, reordenar etapas, validar compatibilidades o representar gráficamente la ejecución de cada pipeline.
+
+En cuanto a la seguridad, sería recomendable reforzar la validación de ficheros subidos por el usuario, limitar tamaños máximos, controlar mejor los tipos MIME, registrar eventos relevantes y revisar de forma más exhaustiva los permisos aplicados en cada operación. Estas medidas serían necesarias si la aplicación se utilizara en un entorno con usuarios reales.
+
+La tienda y los planes podrían evolucionar hacia un sistema comercial real. Actualmente validan la lógica funcional de acceso a modelos y pipelines, pero no integran pagos reales. Una evolución futura podría incorporar una pasarela de pago, gestión de facturación, webhooks, cancelaciones y control transaccional de suscripciones.
+
+También podría mejorarse el almacenamiento de resultados. En lugar de guardar los archivos generados en el propio servidor, podrían almacenarse en un servicio externo de almacenamiento de objetos. Esto permitiría separar la aplicación del almacenamiento físico y aplicar políticas de expiración más avanzadas.
+
+Finalmente, sería útil añadir documentación formal de los endpoints mediante OpenAPI o Swagger, así como monitorización básica del sistema. Estas mejoras facilitarían probar la aplicación, detectar errores y preparar el proyecto para un posible despliegue más profesional.
+
+En conjunto, estas líneas futuras muestran que el proyecto puede seguir creciendo sobre la base desarrollada. La arquitectura modular, la factoría de modelos, los pipelines administrables y el modelo de datos permiten que la aplicación no quede cerrada a los casos implementados, sino preparada para incorporar nuevas funcionalidades de forma progresiva.

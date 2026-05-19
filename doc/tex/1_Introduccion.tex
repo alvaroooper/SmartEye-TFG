@@ -1,3 +1,30 @@
 \capitulo{1}{Introducción}
 
-Descripción del contenido del trabajo y del estructura de la memoria y del resto de materiales entregados.
+En los últimos años, la inteligencia artificial aplicada a la visión por computador ha experimentado un importante crecimiento, especialmente en tareas como la detección de objetos, la estimación de pose, el reconocimiento de manos o el análisis automático de imágenes. Estas técnicas permiten extraer información útil a partir de una imagen y transformarla en resultados interpretables, tanto de forma visual como mediante datos estructurados.
+
+Sin embargo, el uso de estos modelos no se limita únicamente a ejecutarlos de forma aislada desde un script. Para que puedan ser utilizados por usuarios no técnicos o integrados en otros sistemas, resulta necesario construir una aplicación que permita cargar imágenes, seleccionar el tipo de análisis deseado, ejecutar el procesamiento en el servidor y devolver los resultados de forma clara. Este planteamiento exige combinar conocimientos de desarrollo web, gestión de datos, autenticación, procesamiento de imágenes e integración de modelos de inteligencia artificial.
+
+El presente Trabajo de Fin de Grado aborda el diseño e implementación de una plataforma web orientada al procesamiento de imágenes mediante modelos de inteligencia artificial. La aplicación permite a los usuarios autenticados seleccionar flujos de análisis, subir una imagen, ejecutar modelos como YOLO o MediaPipe y obtener como resultado una imagen procesada junto con información estructurada en formato JSON.
+
+El proyecto ha evolucionado desde una primera demo técnica, cuyo objetivo era comprobar la viabilidad de ejecutar modelos de visión artificial desde un servidor web, hasta una aplicación más completa y modular. La versión actual incorpora una arquitectura basada en Flask, organizada en controladores, servicios, modelos de datos y vistas. Además, incluye autenticación mediante tokens, gestión de usuarios y roles, control de acceso en función de planes o licencias, ejecución de pipelines de procesamiento, almacenamiento temporal de resultados y una interfaz diferenciada para usuarios y administradores.
+
+Uno de los aspectos más relevantes del sistema es la utilización de pipelines de inteligencia artificial. En lugar de limitarse a ejecutar un único modelo sobre una imagen, la aplicación permite definir flujos formados por varias etapas ordenadas. Cada etapa se asocia a un modelo y a un modo de ejecución concretos, lo que permite combinar tareas como detección de objetos, recorte de personas o estimación de pose. Esta aproximación facilita la ampliación del sistema y permite construir análisis más complejos a partir de componentes reutilizables.
+
+Desde el punto de vista funcional, el sistema cubre el flujo principal de uso: registro e inicio de sesión, acceso al panel de usuario, consulta de los pipelines disponibles, subida de una imagen, ejecución del análisis, visualización de resultados y descarga de los archivos generados mientras sigan disponibles. Junto a este flujo principal, se han incorporado funcionalidades complementarias como la gestión de planes, el alquiler temporal de modelos de inteligencia artificial, la consulta de compras, una guía de pipelines y un historial de ejecuciones con archivos temporales asociados.
+
+Desde el punto de vista administrativo, la aplicación permite consultar usuarios, revisar ejecuciones, gestionar estados de cuenta y administrar pipelines. Estas funcionalidades no convierten el proyecto en una plataforma comercial completa, ya que no se integra una pasarela de pago real, pero sí permiten validar la lógica de acceso, contratación simulada y control de permisos necesaria para una evolución posterior.
+
+\section{Materiales adjuntos}
+
+Junto a esta memoria se entregan los siguientes materiales:
+
+\begin{itemize}
+	\item Código fuente completo de la aplicación web.
+	\item Anexos técnicos del proyecto.
+	\item Ficheros de configuración utilizados por los modos de procesamiento.
+	\item Script de inicialización de datos para preparar un entorno de demostración.
+	\item Modelos locales necesarios para la ejecución de los modos de inteligencia artificial, cuando su tamaño y licencia permitan incluirlos en la entrega.
+	\item Instrucciones de instalación y ejecución de la aplicación.
+	\item Repositorio del proyecto.
+	\item Vídeo o capturas de funcionamiento de la aplicación.
+\end{itemize}

@@ -1,100 +1,110 @@
 \capitulo{3}{Conceptos teóricos}
 
-En aquellos proyectos que necesiten para su comprensión y desarrollo de unos conceptos teóricos de una determinada materia o de un determinado dominio de conocimiento, debe existir un apartado que sintetice dichos conceptos.
+Para comprender el desarrollo del proyecto es necesario introducir una serie de conceptos relacionados con la visión por computador, el procesamiento de imágenes y la integración de modelos de inteligencia artificial dentro de una aplicación web. El objetivo de este capítulo no es describir en profundidad todas las tecnologías utilizadas, sino presentar los fundamentos que permiten entender el problema abordado y las decisiones de diseño tomadas durante el desarrollo.
 
+El sistema desarrollado combina dos ámbitos principales. Por una parte, utiliza modelos de visión por computador para extraer información de imágenes. Por otra, integra dichos modelos dentro de una plataforma web con usuarios, permisos, persistencia, pipelines y resultados temporales. Esta combinación hace necesario explicar tanto los conceptos asociados al análisis visual como los relacionados con la ejecución controlada de modelos dentro de una aplicación.
 
-Para comprender adecuadamente el desarrollo del presente TFG es necesario introducir una serie de conceptos teóricos relacionados con la visión por computador, el procesamiento de imágenes y la construcción de aplicaciones web capaces de integrar modelos de inteligencia artificial. Este capítulo no pretende realizar una exposición exhaustiva de cada tecnología empleada, sino sintetizar aquellos fundamentos que permiten entender el problema abordado y las decisiones tomadas durante el desarrollo.
+\section{Procesamiento de imágenes y visión por computador}
 
-\section{Visión por computador y procesamiento de imágenes}
+La visión por computador es una rama de la inteligencia artificial orientada a obtener información útil a partir de imágenes o secuencias de vídeo. Su finalidad no consiste únicamente en almacenar o mostrar imágenes, sino en interpretarlas computacionalmente para localizar objetos, reconocer patrones, identificar puntos relevantes o generar una descripción estructurada de una escena.
 
-La visión por computador es una rama de la inteligencia artificial orientada a extraer información útil a partir de imágenes o secuencias de vídeo. Su objetivo no se limita a almacenar o mostrar imágenes, sino a interpretarlas computacionalmente para detectar objetos, localizar puntos clave, reconocer patrones o describir el contenido visual de una escena.
+Desde el punto de vista interno, una imagen digital puede entenderse como una matriz de píxeles. Cada píxel contiene información numérica sobre intensidad o color y, en imágenes a color, suele representarse mediante varios canales. Esta representación matricial es importante porque los modelos de inteligencia artificial no procesan la imagen como la percibe una persona, sino como un conjunto de valores numéricos que deben adaptarse al formato esperado por cada modelo.
 
-Desde el punto de vista del tratamiento interno, una imagen digital puede entenderse como una matriz de píxeles. Cada píxel almacena información de intensidad o color y, en imágenes en color, suele representarse mediante varios canales. Bibliotecas como OpenCV permiten cargar, transformar, anotar y guardar imágenes de forma eficiente, facilitando además su integración con estructuras matriciales manejadas en Python \cite{opencv_docs}.
+En el proyecto, el flujo básico de procesamiento comienza con la recepción de una imagen subida por el usuario. A continuación, el servidor valida el fichero, lo almacena temporalmente, lo transforma si es necesario y lo entrega al modelo correspondiente. Una vez finalizado el análisis, el resultado se convierte en una salida interpretable, normalmente formada por una imagen anotada y una respuesta estructurada en formato JSON.
 
-En aplicaciones de visión por computador, esta representación matricial resulta esencial, ya que los modelos de inteligencia artificial operan sobre la información numérica contenida en la imagen. Por ello, antes de aplicar un modelo, la imagen debe ser decodificada, adaptada al formato esperado y, tras el procesamiento, convertida nuevamente en una salida interpretable por el usuario.
+Este proceso introduce una diferencia importante respecto a una prueba aislada ejecutada desde un script local. En una aplicación web no basta con llamar a un modelo sobre una imagen almacenada en el equipo del desarrollador. Es necesario controlar la subida del fichero, la ubicación de los archivos generados, la relación entre la ejecución y el usuario, la disponibilidad temporal de los resultados y la forma en la que estos se devuelven al navegador.
 
-\section{Detección de objetos y análisis mediante puntos clave}
+\section{Detección de objetos y estimación de puntos clave}
 
-Dentro de la visión por computador existen distintos tipos de tareas. Dos de las más relevantes para este proyecto son la \textbf{detección de objetos} y la \textbf{detección de puntos clave o landmarks}.
+Dentro de la visión por computador existen diferentes formas de analizar una imagen. En este proyecto destacan dos enfoques: la detección de objetos y la estimación de puntos clave o \textit{landmarks}.
 
-La detección de objetos consiste en localizar en una imagen uno o varios elementos de interés y asignarles una clase. El resultado suele expresarse mediante cajas delimitadoras (\textit{bounding boxes}), una etiqueta identificativa y una puntuación de confianza. Este tipo de salida resulta especialmente útil cuando se desea identificar la presencia y posición aproximada de objetos dentro de una escena.
+La detección de objetos consiste en localizar elementos de interés dentro de una imagen y asignarles una clase. Su salida habitual incluye una caja delimitadora, una etiqueta y una puntuación de confianza. La caja indica la posición aproximada del objeto, la clase expresa qué tipo de elemento ha sido detectado y la confianza representa la seguridad asociada a la predicción.
 
-Por su parte, la detección de landmarks no se centra en delimitar un objeto completo mediante una caja, sino en localizar puntos anatómicos o estructurales relevantes. En modelos aplicados al cuerpo humano o a las manos, estos puntos pueden corresponder a articulaciones, extremos o regiones significativas. El valor de este enfoque es que ofrece una descripción más rica de la geometría del objeto analizado, permitiendo representar posturas, relaciones espaciales y conexiones entre puntos.
+La estimación de puntos clave aborda el problema desde otra perspectiva. En lugar de delimitar un objeto completo mediante una caja, localiza puntos significativos de una estructura. En el caso de una mano, estos puntos pueden corresponder a articulaciones y extremos de los dedos. En el caso de una pose corporal, pueden corresponder a hombros, codos, muñecas, rodillas u otras partes del cuerpo. A partir de estos puntos es posible reconstruir visualmente una postura o una estructura anatómica.
 
-Ambos enfoques son complementarios. Mientras la detección de objetos proporciona una descripción general basada en localización y clasificación, los landmarks permiten un análisis más detallado de la estructura interna de ciertos elementos de la imagen.
+Ambos enfoques son complementarios. La detección de objetos permite saber qué aparece en una imagen y dónde se encuentra, mientras que los \textit{landmarks} permiten describir con más detalle la estructura interna de determinados elementos. Esta diferencia es relevante en el proyecto porque permite combinar modelos con salidas distintas dentro de una misma aplicación.
 
-\section{YOLO como modelo de detección de objetos}
+La Tabla~\ref{tabla:deteccion-landmarks} resume las diferencias principales entre ambos enfoques y muestra cómo se aplican dentro del proyecto.
 
-YOLO (\textit{You Only Look Once}) es una familia de modelos de detección de objetos caracterizada por su enfoque de una sola etapa (\textit{one-stage detector}). Frente a otros métodos más complejos que separan la propuesta de regiones y la clasificación en varias fases, YOLO realiza la detección en una única pasada sobre la imagen, lo que lo convierte en una solución especialmente adecuada para escenarios donde se busca rapidez de inferencia y resultados visuales inmediatos \cite{ultralytics_yolov8}.
+\begin{table}[htbp]
+	\centering
+	\small
+	\begin{tabular}{p{0.28\textwidth} p{0.30\textwidth} p{0.30\textwidth}}
+		\toprule
+		\textbf{Aspecto} & \textbf{Detección de objetos} & \textbf{Estimación de landmarks} \\
+		\midrule
+		Resultado principal & Caja delimitadora, clase y confianza. & Puntos clave y conexiones entre ellos. \\
+		\midrule
+		Utilidad & Localizar objetos o personas en la imagen. & Describir la estructura de manos o cuerpo. \\
+		\midrule
+		Representación visual & Rectángulos y etiquetas sobre la imagen. & Esqueleto o malla de puntos sobre la imagen. \\
+		\midrule
+		Uso en el proyecto & Detección general y recorte de personas mediante YOLO. & Detección de manos y estimación de pose mediante MediaPipe. \\
+		\bottomrule
+	\end{tabular}
+	\caption{Comparación entre detección de objetos y estimación de puntos clave.}
+	\label{tabla:deteccion-landmarks}
+\end{table}
+Como se observa en la Tabla~\ref{tabla:deteccion-landmarks}, ambos enfoques producen salidas diferentes, pero compatibles. Esta compatibilidad es la que permite plantear pipelines en los que una primera etapa localiza regiones de interés y una etapa posterior realiza un análisis más detallado sobre ellas.
 
-De forma general, el funcionamiento interno de un detector YOLO puede resumirse en varias etapas. En primer lugar, la imagen se introduce en una red neuronal convolucional capaz de extraer características visuales relevantes. A partir de esas características, el modelo predice directamente posibles cajas delimitadoras, probabilidades de clase y valores de confianza. Posteriormente, se aplica un proceso de filtrado para eliminar detecciones redundantes o poco fiables, de manera que el resultado final conserve únicamente las detecciones más representativas.
+\section{Modelos utilizados: YOLO y MediaPipe}
 
-Una de las ventajas principales de YOLO es que integra localización y clasificación en un mismo flujo de cálculo. Esto reduce la complejidad del procesamiento y favorece el rendimiento en tiempo real o casi real. Además, su salida es fácilmente interpretable por el usuario, ya que muestra de forma visual los objetos detectados y su posición dentro de la imagen.
+El proyecto utiliza dos familias de modelos con objetivos diferentes: YOLO y MediaPipe. La elección de ambos responde a la intención de integrar técnicas complementarias dentro de una misma plataforma.
 
-En el contexto de este TFG, YOLO resulta especialmente útil porque permite validar de manera clara el procesamiento de imágenes mediante inteligencia artificial. La aparición de cajas, etiquetas y niveles de confianza sobre la imagen constituye una evidencia visual directa del funcionamiento del sistema.
+YOLO, acrónimo de \textit{You Only Look Once}, es una familia de modelos de detección de objetos. Su principal característica es que realiza la localización y clasificación de objetos en una única pasada sobre la imagen, lo que lo convierte en una opción adecuada cuando se buscan resultados visuales rápidos y fáciles de interpretar \cite{ultralytics_yolov8}.
 
-\section{Conceptos asociados a la salida de YOLO}
+De forma general, un detector YOLO recibe una imagen, extrae características visuales mediante una red neuronal y predice posibles cajas delimitadoras junto con sus clases y niveles de confianza. Posteriormente se aplican filtros para eliminar detecciones poco fiables o redundantes. El resultado puede representarse de dos formas: gráficamente, mediante cajas dibujadas sobre la imagen, y estructuralmente, mediante datos como clase, confianza y coordenadas.
 
-Para interpretar correctamente la salida de un detector de objetos conviene tener en cuenta algunos conceptos básicos.
+En este proyecto, YOLO se utiliza para la detección general de objetos y también para localizar personas dentro de una imagen. En este segundo caso, las cajas detectadas permiten generar recortes individuales que pueden ser utilizados por etapas posteriores del pipeline. Es importante señalar que este proceso no constituye una segmentación semántica mediante máscaras, sino un aislamiento basado en las coordenadas de las cajas delimitadoras.
 
-En primer lugar, cada detección suele ir acompañada de una \textbf{clase}, que indica el tipo de objeto reconocido, y de una \textbf{confianza}, que expresa el grado de seguridad del modelo respecto a esa predicción. Además, la localización del objeto se representa mediante una caja delimitadora definida por coordenadas dentro de la imagen.
+MediaPipe, por su parte, es un framework de percepción desarrollado para construir soluciones de análisis multimodal, especialmente en tareas como manos, rostro o pose corporal \cite{lugaresi2019mediapipe,google_mediapipe_docs}. A diferencia de un detector de objetos convencional, MediaPipe resulta especialmente útil cuando interesa obtener una representación estructural mediante puntos clave.
 
-Cuando el modelo produce varias detecciones solapadas sobre una misma región, es habitual aplicar mecanismos de supresión de redundancia, de forma que sólo se conserve la detección más representativa. Este proceso mejora la claridad del resultado final y evita que un mismo objeto aparezca marcado varias veces.
+En el proyecto se utiliza MediaPipe para los modos de manos y pose. En ambos casos se trabaja con modelos locales en formato \texttt{.task}, que permiten realizar la inferencia en el propio servidor. El resultado no se limita a indicar que existe una mano o una persona, sino que proporciona landmarks con coordenadas y, en algunos casos, información adicional como visibilidad o presencia.
 
-Por tanto, la salida de YOLO no debe entenderse únicamente como una imagen con rectángulos superpuestos, sino como una representación estructurada del contenido visual en la que cada detección combina localización, clasificación y confianza \cite{ultralytics_yolov8}.
+La combinación de YOLO y MediaPipe permite que la aplicación no dependa de un único tipo de análisis. YOLO aporta capacidad de localización general mediante cajas, mientras que MediaPipe aporta análisis estructural mediante landmarks. Esta complementariedad es la base de algunos pipelines del proyecto, especialmente aquellos en los que primero se localizan personas y después se aplica un análisis más específico sobre la imagen o sobre los recortes generados.
 
-\section{MediaPipe como framework de percepción}
+\section{Pipelines y factoría de modelos}
 
-MediaPipe es un framework orientado al desarrollo de soluciones de percepción multimodal en tiempo real, especialmente útil en tareas de visión por computador relacionadas con rostro, manos, pose corporal y otros elementos anatómicos \cite{lugaresi2019mediapipe,google_mediapipe_docs}.
+Un pipeline puede entenderse como una secuencia ordenada de etapas que se ejecutan sobre una entrada. En el contexto de este proyecto, cada etapa representa una operación de procesamiento de imagen asociada a un modelo de inteligencia artificial y a un modo concreto de ejecución.
 
-A diferencia de un modelo aislado concebido únicamente para producir una predicción, MediaPipe se plantea como una infraestructura capaz de organizar flujos completos de procesamiento. Internamente, su funcionamiento se apoya en grafos de cálculo formados por nodos o componentes que reciben datos, ejecutan una operación y entregan su salida al siguiente nodo. Esta organización facilita combinar distintas etapas dentro de un mismo pipeline, como preprocesado, detección, seguimiento, estimación de landmarks y postprocesado \cite{lugaresi2019mediapipe}.
+La utilización de pipelines permite superar la idea de ejecutar únicamente un modelo aislado. En lugar de limitarse a aplicar siempre una única inferencia sobre una imagen, el sistema puede definir flujos de análisis formados por varias etapas. Por ejemplo, una etapa puede detectar personas en una imagen, otra puede generar recortes a partir de esas detecciones y una etapa posterior puede aplicar estimación de pose sobre cada recorte.
 
-Esta estructura por grafos representa una de las características más importantes de MediaPipe, ya que permite diseñar soluciones modulares y eficientes. En lugar de concebir el procesamiento como un bloque monolítico, el framework lo divide en operaciones conectadas entre sí, favoreciendo la reutilización y la adaptación a distintos casos de uso.
+Este planteamiento introduce una característica importante: el flujo no siempre es estrictamente lineal. Algunas etapas pueden generar una única salida, mientras que otras pueden producir varias. Si en una imagen aparecen varias personas, una etapa de recorte puede generar varios archivos, y cada uno de ellos puede ser procesado después de forma independiente. Por tanto, el sistema debe contemplar tanto ejecuciones secuenciales como ejecuciones ramificadas.
 
-\section{Funcionamiento interno de MediaPipe en manos y pose}
+Para que este funcionamiento sea mantenible, la selección de modelos no debe quedar mezclada con la lógica principal de la aplicación. Si cada nuevo modelo obligara a modificar directamente el ejecutor de pipelines o los controladores web, el sistema sería difícil de ampliar. Por ello se utiliza un mecanismo de factoría.
 
-En soluciones como \textit{Hands} o \textit{Pose}, MediaPipe combina normalmente varias fases. De forma simplificada, primero localiza la región de interés donde previsiblemente se encuentra la mano o el cuerpo, y posteriormente aplica un modelo más específico para estimar los landmarks dentro de esa región \cite{google_mediapipe_docs}.
+Una factoría permite recibir un identificador de modelo y devolver el componente encargado de ejecutarlo. En el proyecto, esta idea se aplica mediante una factoría de inteligencia artificial y distintos \textit{launchers}. Cada familia de modelos dispone de un componente especializado: YOLO tiene su propio lanzador para resolver sus modos de ejecución, y MediaPipe dispone de otro para sus modos de manos y pose.
 
-En el caso de las manos, el sistema no se limita a indicar que existe una mano en la imagen, sino que estima puntos clave correspondientes a distintas articulaciones y extremos. A partir de esos puntos, es posible dibujar conexiones anatómicas y obtener una representación estructurada de la mano.
+Esta organización aporta desacoplamiento. El ejecutor de pipelines no necesita conocer los detalles internos de cada biblioteca ni llamar directamente a funciones concretas de YOLO o MediaPipe. Su responsabilidad es recorrer las etapas del pipeline, solicitar el motor adecuado y coordinar las entradas y salidas. De esta forma, el sistema queda preparado para incorporar nuevos modelos o modos sin rediseñar la arquitectura principal.
 
-De forma análoga, en la estimación de pose corporal, MediaPipe detecta puntos clave distribuidos por distintas regiones del cuerpo. La salida no consiste en una simple caja envolvente, sino en un conjunto de coordenadas asociadas a landmarks corporales. En muchos casos, cada landmark puede incluir además atributos adicionales, como visibilidad o presencia, que ayudan a interpretar la fiabilidad del resultado \cite{google_mediapipe_docs}.
+\section{Integración en una aplicación web}
 
-Este tipo de análisis aporta una información mucho más rica que la detección general de objetos. Mientras un detector clásico puede indicar dónde está una persona, un modelo basado en landmarks permite describir su postura o la disposición relativa de sus extremidades.
+La integración de modelos de inteligencia artificial dentro de una aplicación web requiere resolver aspectos que no aparecen cuando el modelo se ejecuta de forma aislada. Además del procesamiento visual, es necesario gestionar usuarios, permisos, datos persistentes, archivos generados y comunicación entre cliente y servidor.
 
-\section{Diferencia entre detección por cajas y detección por landmarks}
+En el proyecto, la aplicación web actúa como punto de entrada para el usuario. Desde el navegador se realizan acciones como registrarse, iniciar sesión, consultar pipelines disponibles, subir una imagen, ejecutar un análisis y visualizar los resultados. El backend recibe estas peticiones, valida los datos, comprueba permisos y coordina la ejecución del procesamiento.
 
-Desde el punto de vista teórico, la diferencia entre YOLO y MediaPipe en este proyecto resulta especialmente ilustrativa.
+La persistencia de datos resulta necesaria porque el sistema maneja información que debe conservarse más allá de una petición concreta. La base de datos representa usuarios, roles, planes, modelos de inteligencia artificial, modos de ejecución, pipelines, etapas, ejecuciones y archivos temporales. De esta forma, la aplicación no depende de configuraciones fijas en el código, sino de entidades relacionadas que reflejan la lógica del sistema.
 
-YOLO trabaja principalmente con el paradigma de \textbf{detección de objetos}: identifica entidades presentes en la imagen y las delimita mediante cajas. Su salida es adecuada cuando interesa conocer qué objetos aparecen y dónde se localizan de manera aproximada.
+El control de acceso es otro concepto clave. La autenticación permite identificar al usuario que realiza una petición, mientras que la autorización determina si puede ejecutar una acción concreta. En este proyecto, el acceso a determinados pipelines depende del rol del usuario, de su plan y de las licencias activas que tenga asociadas. Por tanto, la disponibilidad de un análisis no depende solo de que el modelo exista, sino también de que el usuario tenga permiso para utilizarlo.
 
-MediaPipe, en cambio, se orienta a la \textbf{estimación estructural mediante landmarks}. En lugar de ofrecer una delimitación global del objeto, describe puntos internos significativos y sus relaciones espaciales. Esta aproximación resulta especialmente adecuada cuando interesa analizar configuraciones anatómicas, posturas o movimientos.
+También resulta importante la gestión de resultados temporales. El procesamiento de imágenes genera archivos que deben estar disponibles para el usuario durante un tiempo limitado, pero no necesariamente de forma indefinida. Para evitar exponer rutas internas del servidor, los archivos generados se asocian a tokens de descarga. Así, el usuario accede al resultado mediante un identificador temporal, mientras que el servidor mantiene el control sobre la ubicación real del archivo, su disponibilidad y su expiración.
 
-Por tanto, ambos enfoques responden a necesidades distintas dentro de la visión por computador. La combinación de ambos en un mismo proyecto permite cubrir tipos de análisis complementarios y demuestra la flexibilidad de la aplicación desarrollada.
+Esta integración convierte el proyecto en algo más amplio que una demo de inteligencia artificial. El sistema no solo ejecuta modelos, sino que organiza su uso dentro de una aplicación con reglas de acceso, persistencia, trazabilidad y gestión temporal de recursos.
 
-\section{Procesamiento de imágenes en una aplicación web}
+\section{Pruebas automatizadas en sistemas con modelos de IA}
 
-Cuando un modelo de visión por computador se integra dentro de una aplicación web, el flujo de trabajo implica varias etapas. En primer lugar, el cliente envía una imagen al servidor. Después, el servidor la recibe, la valida, la transforma a una representación interna adecuada y ejecuta sobre ella el modelo seleccionado. Finalmente, el sistema devuelve una respuesta que puede incluir tanto información estructurada como una imagen procesada.
+Las pruebas automatizadas permiten comprobar que el sistema funciona de forma correcta y que los cambios introducidos durante el desarrollo no rompen funcionalidades existentes. En una aplicación web, estas pruebas pueden validar modelos de datos, controladores, servicios, autenticación, permisos y tratamiento de errores.
 
-Este planteamiento requiere separar adecuadamente la lógica de comunicación web de la lógica específica de procesamiento. En este contexto, Flask resulta una opción apropiada por su ligereza y por su capacidad para construir servicios web de forma flexible \cite{flask_docs}. A través de rutas HTTP, una aplicación basada en Flask puede recibir peticiones, procesar datos y devolver respuestas en distintos formatos, como HTML o JSON.
+Cuando una aplicación integra modelos de inteligencia artificial aparece una dificultad adicional: ejecutar inferencias reales en cada prueba puede ser lento, costoso y dependiente de archivos externos. Además, algunos errores que interesa validar no tienen que ver con el modelo en sí, sino con la lógica de aplicación que lo rodea.
 
-La separación entre una API orientada a integración y una interfaz web orientada a interacción humana constituye además una decisión coherente desde el punto de vista arquitectónico, ya que evita mezclar responsabilidades y facilita la evolución del sistema.
+Por este motivo, en este tipo de proyectos resulta útil emplear técnicas de simulación o \textit{mocking}. Mediante estas técnicas se sustituyen temporalmente determinadas dependencias por respuestas controladas. Así es posible comprobar que un controlador valida correctamente una petición, que una función responde ante una imagen inválida, que un fallo de escritura se propaga o que una etapa de pipeline se comporta de forma adecuada, sin depender siempre de una inferencia real.
 
-\section{Persistencia y modelo de datos}
-
-Aunque el procesamiento puntual de imágenes puede realizarse sin almacenamiento persistente, una aplicación real requiere un modelo de datos que permita representar usuarios, permisos, modelos disponibles, configuraciones y ejecuciones realizadas.
-
-En este contexto, los sistemas gestores de bases de datos relacionales permiten estructurar la información mediante tablas, claves primarias, claves foráneas y restricciones de integridad. MariaDB constituye una solución adecuada para este tipo de aplicaciones por su madurez, soporte transaccional e integración habitual en entornos Linux \cite{mariadb_docs}.
-
-Además, el uso de una capa de abstracción como SQLAlchemy facilita la interacción entre la aplicación Python y la base de datos, permitiendo modelar entidades y relaciones de forma más mantenible \cite{sqlalchemy_docs}. De esta manera, la persistencia deja de ser un mero almacenamiento de datos aislados y pasa a reflejar parte de la lógica estructural del sistema.
-
-\section{Autenticación y protección de recursos}
-
-En aplicaciones web que diferencian usuarios, permisos o acceso a determinadas funcionalidades, resulta necesario incorporar mecanismos de autenticación. Uno de los enfoques habituales en APIs consiste en utilizar tokens, de forma que el servidor pueda verificar la identidad del cliente y decidir si una determinada petición está autorizada.
-
-En el ecosistema de Flask, bibliotecas como Flask-JWT-Extended permiten implementar este tipo de mecanismos basados en JWT (\textit{JSON Web Tokens}), facilitando la protección de rutas y la gestión de sesiones de acceso en servicios web \cite{jwt_docs}. Este concepto resulta relevante en el proyecto porque la evolución prevista de la aplicación exige controlar qué usuarios pueden acceder a qué modelos o modos de ejecución.
+En el proyecto, las pruebas automatizadas ayudan a validar el comportamiento de la autenticación, la tienda, los pipelines, la factoría de inteligencia artificial, los launchers, los modelos de datos y las funciones de procesamiento. Esto aporta confianza sobre el funcionamiento del sistema y permite tratar de forma más segura una aplicación que combina lógica web, persistencia, permisos y procesamiento de imágenes.
 
 \section{Síntesis}
 
-Los conceptos teóricos expuestos en este capítulo permiten situar el proyecto dentro de un marco técnico claro. Por un lado, la visión por computador proporciona la base para comprender el procesamiento de imágenes y la diferencia entre detección de objetos y análisis mediante landmarks. Por otro, modelos y frameworks como YOLO y MediaPipe representan dos enfoques complementarios para extraer información visual de una imagen.
+Los conceptos expuestos en este capítulo permiten entender la base teórica del proyecto sin entrar en una descripción exhaustiva de cada tecnología. La visión por computador proporciona el marco necesario para comprender cómo una imagen puede convertirse en una entrada procesable por modelos de inteligencia artificial. Dentro de ese ámbito, YOLO y MediaPipe representan dos enfoques complementarios: detección de objetos mediante cajas delimitadoras y análisis estructural mediante landmarks.
 
-A su vez, la integración de estos modelos dentro de una aplicación web exige comprender nociones relacionadas con el intercambio cliente-servidor, la persistencia de datos y la protección de recursos. En conjunto, estos fundamentos teóricos permiten entender mejor tanto el alcance del proyecto como las decisiones adoptadas en su desarrollo.
+Sobre esa base se construye la idea de pipeline, que permite encadenar varias etapas de procesamiento y reutilizar la salida de una como entrada de otra. La factoría de modelos y los launchers permiten ejecutar esos modelos de forma desacoplada, manteniendo la aplicación preparada para futuras ampliaciones.
+
+Finalmente, la integración web añade conceptos propios de una aplicación real: autenticación, autorización, persistencia, control de acceso, gestión temporal de resultados y pruebas automatizadas. La combinación de todos estos elementos explica el alcance del TFG: no se trata únicamente de ejecutar modelos de inteligencia artificial, sino de construir una plataforma web modular capaz de organizarlos, controlarlos y ofrecer sus resultados de forma usable y trazable.
