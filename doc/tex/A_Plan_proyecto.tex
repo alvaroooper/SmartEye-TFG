@@ -459,7 +459,7 @@ A continuación se describen brevemente las tareas realizadas durante este sprin
 	\item \textbf{Fechas:} 20/03 – 26/03
 	\item \textbf{Objetivo del sprint:} \emph{Ajustar el diseño del modelo de datos e implementar completamente la base de datos del sistema.}
 	\item \textbf{Criterio de aceptación global:} Disponer de una base de datos completamente implementada en MariaDB y coherente con el modelo relacional actualizado.
-	\item \textbf{Explicación sprint retrasado:} Sufrí una baja médica.
+	\item \textbf{Explicación sprint retrasado:} El sprint se vio retrasado por una baja médica, por lo que parte del trabajo previsto se desplazó temporalmente..
 \end{itemize}
 
 Tal y como se muestra en la Tabla~\ref{tabla:sprint8} y la Figura~\ref{fig:sprint8}, este sprint se centra en consolidar el diseño de datos mediante su ajuste durante la implementación real, así como en completar la construcción de la base de datos del sistema.
@@ -619,8 +619,173 @@ A continuación se describen brevemente las tareas realizadas durante este sprin
 	
 \end{itemize}
 
+\subsection*{Visión general del Sprint 11}
+\begin{itemize}
+	\item \textbf{Fechas:} 24/04 – 29/04
+	\item \textbf{Objetivo del sprint:} \emph{Mejorar la documentación de sprints anteriores y comenzar a detallar la aplicación básica, incorporando persistencia de usuarios, ejecuciones y archivos.}
+	\item \textbf{Criterio de aceptación global:} Disponer de una documentación de planificación más completa y de una base funcional capaz de registrar usuarios, guardar ejecuciones en base de datos y gestionar los archivos generados durante el procesamiento.
+\end{itemize}
+
+Tal y como se muestra en la Tabla~\ref{tabla:sprint11} y la Figura~\ref{fig:sprint11}, este sprint se centra en completar partes pendientes de documentación y en avanzar en la aplicación básica, especialmente en la persistencia de usuarios, ejecuciones y archivos temporales. Durante el desarrollo se añadió además una nueva tarea, SCRUM-69 (Refactorización del orquestador para soporte Multi-Imagen), al detectarse que el guardado de ejecuciones en base de datos podía mejorarse si el orquestador soportaba correctamente salidas con varias imágenes.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Mejorar documentación sprints pasados & 5 \\
+		Actualizar documentación base de datos & 5 \\
+		Hacer registro de usuarios & 8 \\
+		Crear script semilla para base de datos & 6 \\
+		Implementar guardado de ejecuciones en BD & 8 \\
+		Implementar gestión de archivos y limpieza & 8 \\
+		Refactorización del orquestador para soporte Multi-Imagen & 8 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 11 – Resumen}
+	\label{tabla:sprint11}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint11.png}
+	\caption{Informe de trabajo completado Sprint 11}
+	\label{fig:sprint11}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 11}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	
+	\item \textbf{Mejorar documentación sprints pasados}  
+	Revisión de la documentación de los sprints anteriores para corregir descripciones incompletas, mejorar la coherencia entre tareas y dejar mejor reflejado el avance real del proyecto.
+	
+	\item \textbf{Actualizar documentación base de datos}  
+	Actualización de la documentación asociada al modelo de datos, incorporando los cambios realizados durante la implementación y ajustando la explicación de las tablas, relaciones y restricciones.
+	
+	\item \textbf{Hacer registro de usuarios}  
+	Implementación del alta de usuarios en la aplicación, permitiendo crear nuevas cuentas y almacenar sus datos de forma persistente en la base de datos.
+	
+	\item \textbf{Crear script semilla para base de datos}  
+	Creación de un script de carga inicial para insertar datos base en el sistema, como usuarios de prueba, roles, planes, modelos de IA, modos y pipelines iniciales.
+	
+	\item \textbf{Implementar guardado de ejecuciones en BD}  
+	Incorporación del registro de ejecuciones en base de datos, de forma que cada procesamiento realizado pueda quedar asociado a un usuario, un pipeline, su estado y la configuración aplicada.
+	
+	\item \textbf{Implementar gestión de archivos y limpieza}  
+	Implementación de la gestión de archivos generados durante las ejecuciones, incluyendo el registro de rutas temporales y la lógica necesaria para poder limpiar resultados caducados.
+	
+	\item \textbf{Refactorización del orquestador para soporte Multi-Imagen}  
+	Esta tarea se añadió durante el sprint al implementar el guardado de ejecuciones en base de datos. Al revisar cómo debían almacenarse los resultados, se detectó que algunos pipelines podían generar más de una imagen de salida, por ejemplo en procesos de recorte o análisis por sujetos. Por ello se refactorizó el orquestador para soportar correctamente salidas multi-imagen desde este punto del desarrollo, evitando dejar una estructura limitada que después habría sido más difícil de corregir.
+	
+\end{itemize}
 
 
+\subsection*{Visión general del Sprint 12}
+\begin{itemize}
+	\item \textbf{Fechas:} 04/05 – 07/05
+	\item \textbf{Objetivo del sprint:} \emph{Continuar con el desarrollo de la aplicación, incorporando funcionalidades de usuario, gestión comercial e historial de ejecuciones.}
+	\item \textbf{Criterio de aceptación global:} Disponer de una aplicación más completa, permitiendo al usuario modificar sus datos, alquilar modelos, cambiar de plan y consultar el historial de ejecuciones realizadas.
+\end{itemize}
+
+Tal y como se muestra en la Tabla~\ref{tabla:sprint12} y la Figura~\ref{fig:sprint12}, este sprint se centra en ampliar las funcionalidades disponibles para el usuario dentro de la aplicación. Tras haber avanzado en la autenticación, el registro de usuarios y el guardado de ejecuciones, en este sprint se incorporan opciones necesarias para que el sistema empiece a comportarse como una aplicación funcional y no sólo como una demo técnica.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Crear opción para modificar datos de usuario & 8 \\
+		Crear opción para alquilar modelos & 8 \\
+		Crear opción para ver historial de ejecuciones & 8 \\
+		Crear opción para cambiar de plan & 8 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 12 – Resumen}
+	\label{tabla:sprint12}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint12.png}
+	\caption{Informe de trabajo completado Sprint 12}
+	\label{fig:sprint12}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 12}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	
+	\item \textbf{Crear opción para modificar datos de usuario}  
+	Implementación de la funcionalidad que permite al usuario consultar y modificar sus datos personales desde la aplicación, avanzando hacia una gestión básica de perfil.
+	
+	\item \textbf{Crear opción para alquilar modelos}  
+	Desarrollo de la opción para contratar modelos de IA de forma individual, permitiendo que los usuarios del plan básico puedan acceder a modelos concretos durante un periodo determinado.
+	
+	\item \textbf{Crear opción para ver historial de ejecuciones}  
+	Incorporación de una vista de historial donde el usuario puede consultar las ejecuciones realizadas, aprovechando el trabajo previo de persistencia de ejecuciones y gestión de archivos.
+	
+	\item \textbf{Crear opción para cambiar de plan}  
+	Implementación de la funcionalidad para cambiar el plan del usuario comprando una mejora, permitiendo diferenciar entre el acceso básico y el acceso Pro dentro del sistema.
+	
+\end{itemize}
+
+\subsection*{Visión general del Sprint 13}
+\begin{itemize}
+	\item \textbf{Fechas:} 10/05 – 14/05
+	\item \textbf{Objetivo del sprint:} \emph{Corregir detalles de la aplicación básica, mejorar la estructura del código y comenzar con la creación de pruebas.}
+	\item \textbf{Criterio de aceptación global:} Disponer de una aplicación básica más estable, con mejoras en la organización del código y con una primera batería de tests que permita comprobar el correcto funcionamiento de partes importantes del sistema.
+\end{itemize}
+
+Tal y como se muestra en la Tabla~\ref{tabla:sprint13} y la Figura~\ref{fig:sprint13}, este sprint se centra en estabilizar la aplicación tras la incorporación de las funcionalidades principales de usuario, alquiler de modelos, planes e historial. Además, se comienza a dar más peso a la calidad interna del proyecto mediante mejoras de código y creación de pruebas.
+
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Mejoras comentarios y estructura de código & 8 \\
+		Corregir detalles aplicación básica & 16 \\
+		Creación de tests & 16 \\
+		\midrule
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 13 – Resumen}
+	\label{tabla:sprint13}
+\end{table}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint13.png}
+	\caption{Informe de trabajo completado Sprint 13}
+	\label{fig:sprint13}
+\end{figure}
+
+\subsubsection*{Descripción de las tareas del Sprint 13}
+
+A continuación se describen brevemente las tareas realizadas durante este sprint:
+
+\begin{itemize}
+	
+	\item \textbf{Mejoras comentarios y estructura de código}  
+	Revisión de distintas partes del código para mejorar su organización, aclarar comentarios y dejar una estructura más limpia de cara a futuras ampliaciones y mantenimiento.
+	
+	\item \textbf{Corregir detalles aplicación básica}  
+	Corrección de fallos y pequeños problemas detectados durante el uso de la aplicación básica, especialmente en las funcionalidades incorporadas en los sprints anteriores.
+	
+	\item \textbf{Creación de tests}  
+	Creación de pruebas y corrección de sus correspondientes fallos encontrados para validar partes importantes del sistema. Esta tarea permite comprobar de forma más controlada que los cambios realizados no rompen funcionalidades ya implementadas.
+	
+\end{itemize}
 
 \section{Estudio de viabilidad}
 

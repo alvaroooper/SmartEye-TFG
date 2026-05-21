@@ -15,7 +15,7 @@ De manera general, el diseño se ha construido siguiendo varios criterios:
 \begin{itemize}
 	\item \textbf{Separación de responsabilidades}: cada tabla representa una entidad o una asociación con significado propio.
 	\item \textbf{Evitar redundancia innecesaria}: se distinguen claramente conceptos como usuarios, roles, planes, suscripciones, modelos IA, modos, pipelines y ejecuciones.
-	\item \textbf{Preservar la integridad}: se emplean claves primarias, claves foráneas, restricciones \texttt{UNIQUE} y restricciones \texttt{CHECK}.
+	\item \textbf{Preservar la integridad}: se emplean claves primarias, claves foráneas, restricciones \texttt{UNIQUE} y restricciones \texttt{CHECK} para evitar valores incoherentes en importes, fechas, duraciones y orden de ejecución.
 	\item \textbf{Conservar la trazabilidad}: se evita el borrado automático en cascada en aquellas tablas cuyo contenido forma parte del histórico del sistema.
 	\item \textbf{Facilitar la escalabilidad}: la estructura permite añadir nuevos planes, nuevos modelos IA, nuevos modos o nuevos pipelines sin modificar la base del modelo.
 \end{itemize}
@@ -61,7 +61,7 @@ La tabla \texttt{USUARIO} representa la cuenta de cada persona registrada en el 
 	\texttt{username} & Nombre de usuario del sistema. También es \texttt{NOT NULL} y \texttt{UNIQUE} porque debe existir siempre y no puede repetirse sin generar ambigüedad.\\
 	\texttt{password\_hash} & Contraseña almacenada en formato hash. Es obligatoria porque forma parte de la autenticación y no se guarda en texto plano por seguridad.\\
 	\texttt{nombre\_visible} & Nombre mostrado en la interfaz. Se permite \texttt{NULL} porque no es imprescindible para el funcionamiento interno del sistema.\\
-	\texttt{estado\_cuenta} & Estado lógico de la cuenta. Es obligatorio y tiene el valor por defecto \texttt{activa} para evitar insertar usuarios sin estado definido.\\
+	\texttt{estado} & Estado lógico de la cuenta. Es obligatorio y tiene el valor por defecto \texttt{activa} para evitar insertar usuarios sin estado definido.\\
 	\texttt{creado\_en} & Fecha de creación del registro. Se marca como obligatoria y con valor por defecto para asegurar trazabilidad desde el alta.\\
 	\texttt{actualizado\_en} & Fecha de última modificación. Se actualiza automáticamente para facilitar auditoría y seguimiento de cambios.\\
 	\texttt{borrado\_en} & Fecha de borrado lógico. Se permite \texttt{NULL} porque solo debe informarse cuando el usuario deja de estar operativo sin eliminarse físicamente.\\
@@ -97,17 +97,18 @@ La clave primaria compuesta \texttt{(id\_usuario, id\_rol)} evita que el mismo r
 
 \subsection{Tabla TIPO\_PLAN}
 
-La tabla \texttt{TIPO\_PLAN} recoge el catálogo de planes disponibles en el sistema los cuales actualmente son pro y normal teniendo pro acceso a todos los modelos de IA y normal acceso a los que alquile, además de futuros planes que se implementen. Sus atributos se presentan en la Tabla~\ref{tabla:tipo_plan_atributos}. Se separa de \texttt{SUSCRIPCION\_PLAN} para distinguir entre el tipo abstracto de plan y la contratación concreta realizada por un usuario en un periodo determinado.
+La tabla \texttt{TIPO\_PLAN} recoge el catálogo de planes disponibles en el sistema. En la versión actual se contemplan los planes Básico y Pro: el primero sirve como plan de entrada y permite ampliar el acceso mediante alquileres individuales de modelos, mientras que el segundo representa un acceso más completo al catálogo disponible. Sus atributos se presentan en la Tabla~\ref{tabla:tipo_plan_atributos}. Se separa de \texttt{SUSCRIPCION\_PLAN} para distinguir entre el tipo abstracto de plan y la contratación concreta realizada por un usuario en un periodo determinado.
 
 \tablaSmall{Atributos de la tabla TIPO\_PLAN}{l p{10cm}}{tipo_plan_atributos}
 { \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
 	\texttt{id\_plan} & Identificador interno del plan. Se utiliza como clave primaria autoincremental.\\
 	\texttt{nombre} & Nombre del plan. Es \texttt{NOT NULL} y \texttt{UNIQUE} porque cada elemento del catálogo debe quedar claramente identificado.\\
 	\texttt{precio\_mensual} & Precio base mensual del plan. Se permite \texttt{NULL} para no obligar a informar un importe en planes gratuitos o todavía no definidos.\\
+	\texttt{descripcion} & Descripción del plan y de sus condiciones generales. Se permite \texttt{NULL} porque no afecta directamente a la lógica de acceso.\\
 	\texttt{habilitado} & Indica si el plan está disponible para nuevas contrataciones. Es obligatorio y tiene valor por defecto \texttt{TRUE} para evitar estados indefinidos.\\
 }
 
-La restricción \texttt{UNIQUE} sobre \texttt{nombre} se justifica porque el catálogo no debe contener dos planes con la misma denominación. El \texttt{CHECK} sobre \texttt{precio\_mensual} impide valores negativos, protegiendo la coherencia del dato económico desde la propia base de datos. El campo \texttt{habilitado} permite desactivar planes sin necesidad de eliminarlos, lo que conserva referencias históricas y simplifica la administración.
+La restricción \texttt{UNIQUE} sobre \texttt{nombre} se justifica porque el catálogo no debe contener dos planes con la misma denominación. El \texttt{CHECK} sobre \texttt{precio\_mensual} impide registrar precios negativos, reforzando la coherencia del dato económico desde la propia base de datos. El campo \texttt{habilitado} permite desactivar planes sin necesidad de eliminarlos, lo que conserva referencias históricas y simplifica la administración.
 
 \subsection{Tabla SUSCRIPCION\_PLAN}
 
@@ -118,16 +119,16 @@ La tabla \texttt{SUSCRIPCION\_PLAN} registra cada suscripción efectiva de un us
 	\texttt{id\_suscripcion} & Identificador interno de la suscripción. Se define como clave primaria autoincremental.\\
 	\texttt{id\_usuario} & Usuario suscrito. Es \texttt{NOT NULL} porque la suscripción siempre debe pertenecer a una cuenta concreta.\\
 	\texttt{id\_plan} & Plan contratado. También es \texttt{NOT NULL} porque toda suscripción debe asociarse a un plan del catálogo.\\
-	\texttt{fecha\_inicio} & Fecha de inicio de la suscripción. Se declara obligatoria con valor por defecto para registrar automáticamente el momento de alta.\\
+	\texttt{fecha\_compra} & Fecha en la que se registra la contratación. Es obligatoria y permite conservar trazabilidad sobre el momento de adquisición del servicio.\\
+	\texttt{fecha\_compra} & Fecha en la que se registra la contratación. Es obligatoria y permite conservar trazabilidad sobre el momento de adquisición del servicio.\\
 	\texttt{fecha\_fin} & Fecha de finalización, cuando exista. Se permite \texttt{NULL} porque una suscripción puede estar activa o no tener todavía cierre registrado.\\
-	\texttt{activo} & Indica si la suscripción está vigente. Es obligatorio y tiene valor por defecto \texttt{TRUE}, este dato se ha creado por velocidad en las consultas ya que se podría ver mirando por fecha si está vencido pero supondría mas procesamiento.\\
+	\texttt{activo} & Indica si la suscripción debe considerarse operativa. Es obligatorio y permite resolver de forma directa las consultas de acceso sin depender únicamente del cálculo por fechas.\\
 	\texttt{renovacion\_auto} & Indica si la renovación es automática. Es obligatorio y se inicia en \texttt{FALSE} por defecto.\\
 	\texttt{importe} & Importe cobrado en esa contratación concreta. Se permite \texttt{NULL} porque puede haber promociones o ajustes que no siempre se registren inicialmente.\\
 	\texttt{referencia\_pago} & Referencia externa del pago asociado. Se deja opcional porque no tiene por qué existir siempre o puede no haberse informado todavía.\\
 }
 
-Las claves foráneas hacia \texttt{USUARIO} y \texttt{TIPO\_PLAN} usan \texttt{RESTRICT} porque las suscripciones forman parte del histórico del sistema. El \texttt{CHECK} sobre fechas impide incoherencias temporales básicas y el \texttt{CHECK} sobre \texttt{importe} evita valores negativos.
-
+Las claves foráneas hacia \texttt{USUARIO} y \texttt{TIPO\_PLAN} usan \texttt{RESTRICT} porque las suscripciones forman parte del histórico del sistema. De este modo se evita eliminar usuarios o planes que todavía tienen contratos asociados. Además, el \texttt{CHECK} sobre fechas impide que una suscripción tenga una fecha de finalización anterior a su fecha de inicio, y el \texttt{CHECK} sobre \texttt{importe} evita registrar cantidades negativas.
 \subsection{Tabla IA\_MODELO}
 
 La tabla \texttt{IA\_MODELO} representa cada modelo de inteligencia artificial disponible en la aplicación. Sus atributos se muestran en la Tabla~\ref{tabla:ia_modelo_atributos}. Esta tabla es una de las entidades principales del dominio, ya que el sistema se centra en permitir el acceso y la ejecución de distintos modelos IA.
@@ -142,7 +143,7 @@ La tabla \texttt{IA\_MODELO} representa cada modelo de inteligencia artificial d
 	\texttt{ruta\_servidor} & Ruta o referencia interna utilizada por el backend para localizar el modelo. Se deja opcional para no forzar que todos los modelos se resuelvan exactamente igual.\\
 }
 
-La unicidad del nombre se establece para que cada modelo tenga una identidad lógica inequívoca. El \texttt{CHECK} sobre \texttt{precio} evita importes negativos. Además, el campo \texttt{habilitada} permite activar y desactivar modelos sin eliminarlos físicamente, lo que es útil en mantenimiento, pruebas o retirada temporal del servicio.
+La unicidad del nombre se establece para que cada modelo tenga una identidad lógica inequívoca. El \texttt{CHECK} sobre \texttt{precio} evita importes negativos en el catálogo de modelos. Además, el campo \texttt{habilitada} permite activar y desactivar modelos sin eliminarlos físicamente, lo que es útil en mantenimiento, pruebas o retirada temporal del servicio.
 
 \subsection{Tabla IA\_MODO}
 
@@ -172,51 +173,47 @@ La tabla \texttt{ALQUILA} registra la adquisición individual de acceso a un mod
 	\texttt{fecha\_compra} & Fecha de la operación. Se declara obligatoria con valor por defecto para registrar automáticamente el momento del alta.\\
 	\texttt{periodo\_inicio} & Fecha de inicio de la vigencia del acceso. Se permite \texttt{NULL} porque no todas las operaciones tienen por qué estar acotadas temporalmente del mismo modo.\\
 	\texttt{periodo\_fin} & Fecha de finalización de la vigencia. También se permite \texttt{NULL} para mantener flexibilidad.\\
-	\texttt{activo} & Indica si el acceso está actualmente operativo. Es obligatorio y tiene valor por defecto \texttt{TRUE}, este dato se ha creado por velocidad en las consultas ya que se podría ver mirando por fecha si está vencido pero supondría mas procesamiento.\\
+	\texttt{activo} & Indica si el acceso debe considerarse operativo. Es obligatorio y permite consultar de forma directa los modelos disponibles para el usuario.\\
 	\texttt{renovacion\_auto} & Indica si la renovación del acceso es automática. Es obligatorio y se inicia por defecto en \texttt{FALSE} para no asumir renovaciones sin indicación expresa.\\
-	\texttt{importe} & Importe cobrado en la operación concreta. Es necesario para si cambia el precio de alquiler de modelo quede registrado cuando se pagó en el momento de la compra. Se permite \texttt{NULL} porque puede haber casos gratuitos, promocionales o pendientes de registrar.\\
+	\texttt{importe} & Importe cobrado en la operación concreta. Se conserva para mantener el valor pagado en el momento de la compra, aunque posteriormente cambie el precio del modelo. Se permite \texttt{NULL} porque pueden existir casos gratuitos, promocionales o pendientes de registrar.\\
 	\texttt{referencia\_pago} & Referencia externa del pago. Se deja opcional porque no siempre existirá una referencia única o puede no haberse informado todavía.\\
 }
 
-Las claves foráneas hacia \texttt{USUARIO} e \texttt{IA\_MODELO} emplean \texttt{RESTRICT} porque estas operaciones forman parte del histórico de negocio y no conviene perderlas automáticamente al eliminar entidades relacionadas. El \texttt{CHECK} sobre \texttt{importe} evita cantidades negativas y el \texttt{CHECK} sobre el periodo obliga a que, si ambas fechas existen, la fecha final no sea anterior a la inicial.
-
+Las claves foráneas hacia \texttt{USUARIO} e \texttt{IA\_MODELO} emplean \texttt{RESTRICT} porque estas operaciones forman parte del histórico de negocio y no conviene perderlas automáticamente al eliminar entidades relacionadas. El \texttt{CHECK} sobre \texttt{importe} evita cantidades negativas, mientras que el \texttt{CHECK} sobre el periodo obliga a que, si existen fecha de inicio y fecha de fin, la finalización no sea anterior al comienzo del acceso.
 \subsection{Tabla PIPELINE}
 
-La tabla \texttt{PIPELINE} representa un flujo de procesamiento configurable. Sus atributos se presentan en la Tabla~\ref{tabla:pipeline_atributos}. En el diseño final destaca especialmente que el campo \texttt{id\_usuario} puede ser nulo y que, si el usuario se elimina, su valor pasa a \texttt{NULL} en lugar de desaparecer el pipeline esto es debido a que si se crea un pipeline por un administrador y se elimina dicho usuario no tiene sentido que dejen de existir sus pipelines creados
-.
+La tabla \texttt{PIPELINE} representa un flujo de procesamiento configurable. Cada pipeline agrupa una o varias etapas que se ejecutan de forma ordenada sobre una imagen. Sus atributos se presentan en la Tabla~\ref{tabla:pipeline_atributos}. Esta tabla es una de las partes más importantes del diseño, ya que permite que el sistema no dependa de flujos escritos de forma fija en el código, sino de configuraciones almacenadas y gestionables desde la propia aplicación.
 
 \tablaSmall{Atributos de la tabla PIPELINE}{l p{10cm}}{pipeline_atributos}
 { \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
 	\texttt{id\_pipeline} & Identificador interno del pipeline. Se define como clave primaria autoincremental.\\
-	\texttt{id\_usuario} & Usuario propietario del pipeline. Se permite \texttt{NULL} porque el diseño contempla conservar el pipeline aunque desaparezca su propietario original.\\
-	\texttt{nombre} & Nombre del pipeline. Es \texttt{NOT NULL} porque resulta necesario para identificarlo funcionalmente.\\
+	\texttt{id\_usuario} & Usuario propietario o creador del pipeline. Se permite \texttt{NULL} porque el diseño contempla conservar el pipeline aunque desaparezca su propietario original.\\
+	\texttt{nombre} & Nombre del pipeline. Es \texttt{NOT NULL} porque resulta necesario para identificarlo funcionalmente en el catálogo.\\
 	\texttt{descripcion} & Descripción del flujo. Se permite \texttt{NULL} porque no siempre es imprescindible documentarlo.\\
 	\texttt{habilitado} & Indica si el pipeline puede utilizarse. Es obligatorio y tiene valor por defecto \texttt{TRUE}.\\
-	\texttt{publico} & Indica si el pipeline puede usarse para todo el mundo (creados por administradores) o sólo para el creador, esto tiene sentido ya que en un futuro si se contempla que los usuarios puedan crear sus propios pipelines de forma que gracias a este campo se agilice la consulta a la bd viendo cuales son los públicos a mostrar en lugar de tener que consultar si el usuario que lo creó era o no administrador. \texttt{TRUE}.\\
 	\texttt{creado\_en} & Fecha de creación del pipeline. Se registra automáticamente para mantener trazabilidad temporal.\\
+	\texttt{publico} & Indica si el pipeline se muestra como disponible para los usuarios o si queda limitado a su propietario. Este campo facilita el filtrado del catálogo sin tener que deducir en cada consulta si el flujo procede de un administrador o de un usuario concreto.\\
 }
 
-La restricción \texttt{UNIQUE (id\_usuario, nombre)} evita que un mismo usuario tenga dos pipelines con el mismo nombre, lo que simplifica la gestión y evita ambigüedades. El hecho de permitir \texttt{NULL} en \texttt{id\_usuario} y usar \texttt{ON DELETE SET NULL} responde a una decisión de conservación: si el usuario desaparece, el pipeline puede seguir existiendo como estructura lógica. No se utiliza \texttt{CASCADE} porque eso implicaría perder pipelines potencialmente reutilizables o relevantes para el histórico del sistema.
-
+El campo \texttt{id\_usuario} usa \texttt{ON DELETE SET NULL}. Esta decisión evita que un pipeline desaparezca automáticamente si se elimina la cuenta que lo creó. En este proyecto tiene especial importancia, ya que los pipelines pueden haber sido definidos por un administrador y seguir siendo útiles para el resto del sistema. Además, se define la restricción \texttt{UNIQUE (id\_usuario, nombre)} para impedir que un mismo usuario tenga dos pipelines con el mismo nombre. Esta restricción resulta especialmente importante de cara a una posible evolución en la que los usuarios puedan crear sus propios pipelines, ya que permite mantener un catálogo privado ordenado y sin ambigüedades.
 
 \subsection{Tabla EJECUCION}
 
-La tabla \texttt{EJECUCION} registra cada ejecución concreta realizada en el sistema. Sus atributos se muestran en la Tabla~\ref{tabla:ejecucion_atributos}. Esta tabla es clave para la trazabilidad operativa, ya que permite saber quién ejecutó qué, cuándo lo hizo y con qué resultado.
+La tabla \texttt{EJECUCION} registra cada procesamiento realizado en el sistema. Sus atributos se muestran en la Tabla~\ref{tabla:ejecucion_atributos}. Esta tabla es clave para la trazabilidad operativa, ya que permite saber qué usuario ejecutó qué pipeline, cuándo se lanzó, con qué estado terminó y qué configuración se aplicó.
 
 \tablaSmall{Atributos de la tabla EJECUCION}{l p{10cm}}{ejecucion_atributos}
 { \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
 	\texttt{id\_ejecucion} & Identificador interno de la ejecución. Se define como clave primaria autoincremental.\\
-	\texttt{id\_usuario} & Usuario asociado a la ejecución. Es obligatorio para mantener responsabilidad y trazabilidad.\\
-	\texttt{id\_pipeline} & Pipeline ejecutado. Es \texttt{NOT NULL} porque cada ejecución debe quedar vinculada a un flujo concreto.\\
-	\texttt{origen} & Punto de entrada desde el que se lanza la ejecución. Se permite \texttt{NULL} porque no siempre es necesario registrar esta información.\\
-	\texttt{estado} & Estado de la ejecución. Es obligatorio y su valor por defecto es \texttt{pendiente}, que representa el estado inicial natural.\\
-	\texttt{duracion\_ms} & Duración de la ejecución en milisegundos. Se permite \texttt{NULL} porque puede no conocerse todavía al inicio del proceso.\\
-	\texttt{mensaje\_error\_user} & Mensaje de error orientado al usuario. Es opcional porque solo se utiliza cuando la ejecución falla.\\
+	\texttt{id\_usuario} & Usuario asociado a la ejecución. Es obligatorio para mantener responsabilidad y trazabilidad sobre el uso del sistema.\\
+	\texttt{id\_pipeline} & Pipeline ejecutado. Es \texttt{NOT NULL} porque cada ejecución debe quedar vinculada al flujo concreto que se lanzó.\\
+	\texttt{estado} & Estado de la ejecución. Es obligatorio y su valor por defecto es \texttt{pendiente}, que representa el estado inicial natural antes de completarse o fallar.\\
+	\texttt{duracion\_ms} & Duración de la ejecución en milisegundos. Se permite \texttt{NULL} porque puede no conocerse todavía al inicio del proceso o si la ejecución falla antes de completarse.\\
+	\texttt{mensaje\_error\_user} & Mensaje de error orientado al usuario. Es opcional porque solo se utiliza cuando la ejecución no puede completarse correctamente.\\
 	\texttt{creado\_en} & Fecha de creación de la ejecución. Se registra automáticamente para mantener trazabilidad temporal.\\
-	\texttt{config\_aplicada} & Configuración real utilizada en la ejecución ya sea con los valores predeterminados o con los modificados por el usuario. Se permite \texttt{NULL} porque no siempre será necesario persistirla.\\
+	\texttt{config\_aplicada} & Configuración real utilizada en la ejecución, tanto si procede de valores predeterminados como si ha sido modificada por el usuario. Se permite \texttt{NULL} porque no siempre será necesario persistirla.\\
 }
 
-La clave foránea hacia \texttt{USUARIO} utiliza \texttt{RESTRICT} para no perder histórico operativo al eliminar usuarios. La clave foránea hacia \texttt{PIPELINE} también usa \texttt{RESTRICT}, lo que implica que no se puede eliminar un pipeline si existen ejecuciones asociadas a él. Esta decisión se justifica porque una ejecución debe seguir apuntando al pipeline concreto con el que fue lanzada y no conviene dejar esa referencia incompleta. El \texttt{CHECK} sobre \texttt{duracion\_ms} evita registrar tiempos negativos.
+Las claves foráneas hacia \texttt{USUARIO} y \texttt{PIPELINE} utilizan \texttt{RESTRICT}. En ambos casos interesa conservar la referencia completa de la ejecución: no debe eliminarse un usuario o pipeline si existen registros históricos que dependen de ellos. De esta forma, el historial de ejecuciones mantiene significado y puede consultarse posteriormente desde la interfaz de usuario o desde el panel de administración. Además, el \texttt{CHECK} sobre \texttt{duracion\_ms} evita registrar tiempos negativos.
 
 \subsection{Tabla TEMPORAL\_ARCHIVO}
 
@@ -283,9 +280,17 @@ Una vez descritas las tablas por separado, conviene explicar de forma conjunta l
 
 \subsection{Valoración global del modelo}
 
-En conjunto, el modelo de datos final busca equilibrio entre flexibilidad, integridad y conservación del histórico. Las restricciones \texttt{UNIQUE} evitan duplicidades funcionales, los \texttt{CHECK} impiden valores inválidos sencillos y las claves foráneas mantienen la coherencia entre entidades. Además, la elección entre \texttt{CASCADE}, \texttt{RESTRICT} y \texttt{SET NULL} no se ha hecho de manera uniforme, sino en función del significado de cada relación dentro del sistema.
+En conjunto, el modelo de datos final ofrece una estructura coherente con el funcionamiento actual de la aplicación y con su posible evolución. No se limita a almacenar usuarios e imágenes procesadas, sino que representa los elementos principales del dominio: cuentas, roles, planes, alquileres de modelos, modelos de IA, modos de ejecución, pipelines, ejecuciones y archivos temporales.
 
-De este modo, el modelo no solo representa correctamente las entidades del dominio, sino que también refleja decisiones de diseño orientadas a la robustez, la trazabilidad y la mantenibilidad de la aplicación.
+Una de las decisiones más importantes del diseño es separar claramente el catálogo del sistema de las operaciones realizadas por los usuarios. Por ejemplo, los planes se definen en \texttt{TIPO\_PLAN}, pero las contrataciones concretas se registran en \texttt{SUSCRIPCION\_PLAN}; del mismo modo, los modelos de IA se almacenan en \texttt{IA\_MODELO}, mientras que los accesos individuales se reflejan en \texttt{ALQUILA}. Esta separación permite conservar el histórico de uso y de contratación aunque en el futuro cambien los precios, se deshabiliten modelos o se modifiquen las condiciones de un plan.
+
+También destaca la forma en que se han modelado los pipelines. La existencia de \texttt{PIPELINE} y \texttt{PIPELINE\_ETAPA} permite definir flujos de procesamiento formados por varias etapas ordenadas, sin tener que codificar cada combinación de modelos directamente en la aplicación. Esto favorece la ampliación del sistema, ya que se pueden añadir nuevos flujos combinando modelos y modos ya registrados. Además, la restricción \texttt{UNIQUE (id\_usuario, nombre)} evita que un mismo usuario pueda tener dos pipelines con el mismo nombre, algo especialmente útil si en el futuro se habilita la creación de pipelines propios por parte de los usuarios.
+
+Las restricciones del modelo refuerzan esta coherencia general. Las claves foráneas mantienen la relación entre las entidades, las restricciones \texttt{UNIQUE} evitan duplicidades funcionales y los \texttt{CHECK} impiden valores básicos incoherentes, como importes negativos, fechas de fin anteriores a las de inicio, duraciones negativas u órdenes de etapa no válidos.
+
+Por último, las acciones de borrado se han definido según el significado de cada relación. Se utiliza \texttt{RESTRICT} en tablas que forman parte del histórico funcional o económico del sistema, como suscripciones, alquileres y ejecuciones; \texttt{CASCADE} únicamente en dependencias fuertes, como las etapas de un pipeline o los archivos temporales de una ejecución; y \texttt{SET NULL} en la relación entre \texttt{USUARIO} y \texttt{PIPELINE}, para que un flujo pueda conservarse aunque desaparezca el usuario que lo creó.
+
+Por todo ello, el modelo resultante mantiene un equilibrio entre integridad, trazabilidad y capacidad de ampliación. Esta estructura permite cubrir las funcionalidades actuales del proyecto y deja preparada la base de datos para incorporar nuevos modelos, nuevos modos o nuevas formas de organizar pipelines sin rediseñar el sistema desde cero.
 
 \section{Diseño arquitectónico}
 
