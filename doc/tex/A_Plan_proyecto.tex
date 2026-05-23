@@ -791,6 +791,324 @@ A continuación se describen brevemente las tareas realizadas durante este sprin
 
 \subsection{Viabilidad económica}
 
+En este apartado se analiza el coste que habría tenido el desarrollo del proyecto si se hubiera realizado en un entorno empresarial real. Aunque el trabajo ha sido desarrollado como Trabajo de Fin de Grado, esta estimación permite valorar económicamente el esfuerzo invertido, los recursos utilizados y la posible recuperación de la inversión mediante el modelo de negocio planteado.
+
+La aplicación se ha diseñado con una orientación comercial basada en el acceso a modelos de inteligencia artificial y a planes de servicio. En concreto, se plantea un precio de \textbf{9,99 €/mes} para el alquiler individual de cada modelo de IA y de \textbf{19,99 €/mes} para el plan Pro, que permite un acceso más amplio al catálogo disponible.
+
+\subsubsection{Costes}
+
+La estructura de costes se ha dividido en costes de personal, hardware, software y otros gastos asociados al desarrollo.
+
+\paragraph{Costes de personal}
+
+Para estimar el coste de personal se ha tomado como referencia el XIX Convenio colectivo estatal de empresas de consultoría, tecnologías de la información y estudios de mercado y de la opinión pública. En concreto, se ha considerado el perfil correspondiente al área de programación, grupo D, nivel 1, por ajustarse al tipo de trabajo realizado: desarrollo backend, diseño de base de datos, integración de modelos de inteligencia artificial, autenticación, control de acceso, pruebas y documentación técnica \cite{boe_convenio_tic_tablas_2026}.
+
+El salario anual bruto de referencia utilizado es de \textbf{20.436,01 €}. A partir de una jornada anual de \textbf{1.800 horas}, se obtiene el coste bruto por hora mediante una regla de tres:
+
+\[
+\frac{20.436,01}{1.800} = 11,35
+\]
+
+Por tanto, el coste bruto por hora es de \textbf{11,35 €/h}. Dado que se han dedicado aproximadamente \textbf{300 horas} al desarrollo del proyecto, el coste salarial bruto proporcional sería:
+
+\[
+11,35 \times 300 = 3.406,00
+\]
+
+El coste salarial bruto proporcional asciende, por tanto, a \textbf{3.406,00 €}.
+
+Para calcular el coste real para la empresa no se utiliza el salario neto, sino el salario bruto más las cotizaciones empresariales correspondientes. El IRPF no se añade como coste empresarial adicional, ya que se trata de una retención practicada al trabajador sobre su salario bruto. En cambio, sí se tienen en cuenta las cotizaciones a cargo de la empresa.
+
+En esta estimación se han considerado los siguientes conceptos empresariales: contingencias comunes, contingencias profesionales, desempleo, Fondo de Garantía Salarial, formación profesional y Mecanismo de Equidad Intergeneracional. Los porcentajes generales de cotización se han tomado de la información oficial de la Seguridad Social \cite{seguridad_social_cotizacion_2026}. Para las contingencias profesionales se ha tomado como referencia la actividad de programación, consultoría y otras actividades relacionadas con la informática, correspondiente al CNAE 62 \cite{boe_tarifa_primas_2026}.
+
+El desglose del coste de personal se muestra en la Tabla~\ref{tabla:costes_personal}.
+
+\tablaSmall{Costes de personal}{l r r}{costes_personal}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Porcentaje} & \multicolumn{1}{r}{Coste} \\}{
+	Salario bruto proporcional a 300 horas & -- & 3.406,00 € \\
+	Contingencias comunes & 23,60\% & 803,82 € \\
+	Contingencias profesionales & 1,50\% & 51,09 € \\
+	Desempleo & 5,50\% & 187,33 € \\
+	Fondo de Garantía Salarial & 0,20\% & 6,81 € \\
+	Formación profesional & 0,60\% & 20,44 € \\
+	Mecanismo de Equidad Intergeneracional & 0,75\% & 25,55 € \\
+	\textbf{Total cotizaciones empresariales} & \textbf{32,15\%} & \textbf{1.095,03 €} \\
+	\textbf{Coste total de personal} &  & \textbf{4.501,03 €} \\
+}
+
+De este modo, el coste de personal no se limita al salario bruto proporcional, sino que refleja el coste aproximado que asumiría una empresa para desarrollar el proyecto durante las 300 horas estimadas.
+
+\paragraph{Costes de hardware}
+
+Para el desarrollo se ha utilizado un ordenador portátil, dos pantallas externas, teclado y ratón. Estos dispositivos no se consumen íntegramente durante el proyecto, por lo que se ha calculado su amortización proporcional. Se ha considerado una vida útil de \textbf{4 años} y un periodo de uso de \textbf{9 meses}.
+
+\[
+\text{Coste amortizado} = \text{Coste total} \times \frac{9}{48}
+\]
+
+El desglose del hardware utilizado y su coste amortizado se muestra en la Tabla~\ref{tabla:costes_hardware}.
+
+\tablaSmall{Costes de hardware}{l r r}{costes_hardware}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Coste total} & \multicolumn{1}{r}{Coste amortizado} \\}{
+	Ordenador portátil & 1.000,00 € & 187,50 € \\
+	Pantalla externa principal & 300,00 € & 56,25 € \\
+	Pantalla externa secundaria & 200,00 € & 37,50 € \\
+	Teclado & 60,00 € & 11,25 € \\
+	Ratón & 70,00 € & 13,13 € \\
+	\textbf{Total} & \textbf{1.630,00 €} & \textbf{305,63 €} \\
+}
+
+\paragraph{Costes de software}
+
+La mayor parte de las herramientas utilizadas durante el desarrollo son gratuitas o de código abierto. Es el caso de Python, Flask, MariaDB, Visual Studio Code, GitHub, Draw.io, DBeaver, \LaTeX{} y las principales librerías empleadas en el proyecto.
+
+No obstante, durante el desarrollo también se han utilizado herramientas de inteligencia artificial generativa como apoyo para la depuración de errores, revisión de código, contraste de decisiones técnicas y mejora de la documentación. Para esta estimación se han considerado las suscripciones utilizadas durante los nueve meses principales de trabajo.
+
+El desglose de costes de software se recoge en la Tabla~\ref{tabla:costes_software}.
+
+\tablaSmall{Costes de software}{l r r}{costes_software}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Coste mensual} & \multicolumn{1}{r}{Coste total} \\}{
+	ChatGPT Plus & 21,99 € & 197,91 € \\
+	Google AI Pro / Gemini & 21,99 € & 197,91 € \\
+	Herramientas libres y gratuitas & 0,00 € & 0,00 € \\
+	\textbf{Total} &  & \textbf{395,82 €} \\
+}
+
+\paragraph{Costes varios}
+
+También se han tenido en cuenta los costes derivados del uso de internet y electricidad durante el desarrollo. Para internet se ha considerado una tarifa mensual aproximada de \textbf{30 €} durante nueve meses. En el caso de la electricidad, se ha estimado un consumo medio de \textbf{180 W} para el equipo de trabajo completo, incluyendo portátil, pantallas y periféricos, durante las 300 horas de desarrollo.
+
+\[
+0,18 \times 300 \times 0,20 = 10,80
+\]
+
+El coste eléctrico estimado durante el desarrollo es de \textbf{10,80 €}. El resumen de estos gastos aparece en la Tabla~\ref{tabla:costes_varios}.
+
+\tablaSmall{Costes varios}{l r}{costes_varios}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Coste} \\}{
+	Internet & 270,00 € \\
+	Electricidad & 10,80 € \\
+	\textbf{Total} & \textbf{280,80 €} \\
+}
+
+No se ha incluido un coste específico de alojamiento en producción, ya que la entrega del proyecto se plantea como una aplicación reproducible en entorno local o de demostración. En caso de explotación real, habría que añadir costes de servidor, dominio, almacenamiento y mantenimiento, que dependerían del número de usuarios y del volumen de imágenes procesadas.
+
+\subsubsection{Costes totales}
+
+El coste total estimado del proyecto se obtiene sumando los costes de personal, hardware amortizado, software y gastos varios. Este resumen se muestra en la Tabla~\ref{tabla:costes_totales}.
+
+\tablaSmall{Costes totales del proyecto}{l r}{costes_totales}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Coste} \\}{
+	Personal & 4.501,03 € \\
+	Hardware amortizado & 305,63 € \\
+	Software & 395,82 € \\
+	Varios & 280,80 € \\
+	\textbf{Total} & \textbf{5.483,28 €} \\
+}
+
+Por tanto, el coste económico aproximado del desarrollo asciende a \textbf{5.483,28 €}. Esta cifra no representa un gasto real desembolsado íntegramente durante el TFG, sino una estimación del coste que tendría desarrollar una aplicación de estas características en un contexto profesional.
+
+\subsubsection{Beneficios}
+
+La aplicación desarrollada está pensada para poder generar ingresos mediante un modelo de acceso por servicios. Por un lado, los usuarios pueden alquilar modelos de inteligencia artificial de forma individual. Por otro, pueden contratar un plan Pro que habilite un acceso más completo a los modelos y pipelines disponibles.
+
+La Tabla~\ref{tabla:modelo_ingresos} muestra el modelo de ingresos previsto para la aplicación.
+
+\tablaSmall{Modelo de ingresos previsto}{l r}{modelo_ingresos}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Precio} \\}{
+	Alquiler mensual de un modelo IA & 9,99 €/mes \\
+	Plan Pro & 19,99 €/mes \\
+}
+
+A partir del coste total estimado, puede calcularse el número de mensualidades necesarias para recuperar la inversión inicial. Si únicamente se tuvieran en cuenta suscripciones Pro, sería necesario alcanzar aproximadamente:
+
+\[
+\frac{5.483,28}{19,99} = 274,30
+\]
+
+Es decir, serían necesarias unas \textbf{275 mensualidades Pro}. Esto podría equivaler, por ejemplo, a 55 usuarios Pro durante cinco meses o a unos 31 usuarios Pro durante nueve meses.
+
+En el caso de que la recuperación se realizara únicamente mediante alquileres individuales de modelos, el cálculo sería:
+
+\[
+\frac{5.483,28}{9,99} = 548,88
+\]
+
+Por tanto, serían necesarias aproximadamente \textbf{549 mensualidades de alquiler individual} para cubrir el coste estimado del desarrollo.
+
+La Tabla~\ref{tabla:recuperacion_inversion} resume las mensualidades necesarias en cada una de las dos vías de ingresos planteadas.
+
+\tablaSmall{Estimación de recuperación de la inversión}{l r r}{recuperacion_inversion}
+{ \multicolumn{1}{l}{Vía de ingresos} & \multicolumn{1}{r}{Precio mensual} & \multicolumn{1}{r}{Mensualidades necesarias} \\}{
+	Plan Pro & 19,99 € & 275 \\
+	Alquiler individual de modelo IA & 9,99 € & 549 \\
+}
+
+Estos cálculos muestran que el proyecto podría ser económicamente viable si consiguiera una base moderada de usuarios recurrentes. Además, el diseño basado en modelos, modos y pipelines permite ampliar el catálogo sin rehacer la aplicación desde cero. Esta característica es importante desde el punto de vista económico, ya que el coste de añadir nuevos servicios sería menor que el coste de desarrollo inicial.
+
+Por ello, la rentabilidad potencial del proyecto no depende únicamente de la versión actual, sino también de la posibilidad de incorporar nuevos modelos de inteligencia artificial, nuevos modos de análisis y nuevos pipelines configurables que aumenten el valor ofrecido al usuario.
+
 \subsection{Viabilidad legal}
 
+En esta sección se analizan los aspectos legales más relevantes del proyecto. En concreto, se estudian las licencias de las dependencias utilizadas, la compatibilidad entre ellas, la licencia más adecuada para el código fuente desarrollado, la licencia de la documentación y las consideraciones relacionadas con la protección de datos personales.
+
+Al tratarse de una aplicación web que integra librerías externas y modelos de inteligencia artificial, no basta con escoger una licencia de forma independiente. La licencia final del proyecto debe ser compatible con las licencias de las dependencias utilizadas y, especialmente, con aquellas que imponen obligaciones más restrictivas.
+
+\subsubsection{Software}
+
+En primer lugar, se analizan las dependencias principales utilizadas en el proyecto. Para ello se ha partido del entorno de ejecución empleado durante el desarrollo y se ha revisado el código fuente, ya que algunas dependencias se utilizan de forma directa aunque no aparezcan inicialmente como dependencia principal del entorno.
+
+En particular, se ha añadido \texttt{SQLAlchemy} al análisis porque el proyecto lo utiliza directamente para ejecutar sentencias SQL auxiliares en el proceso de inicialización de la base de datos. Además, se ha separado el análisis de MediaPipe en dos partes: por un lado la biblioteca Python \texttt{mediapipe}, y por otro los modelos \texttt{.task} descargados y almacenados localmente en \texttt{models/mp}.
+
+Las licencias se han consultado a partir de las fichas oficiales de PyPI, de la documentación de los proyectos y de las páginas de referencia sobre licencias libres \cite{pypi_flask,pypi_flask_sqlalchemy,pypi_sqlalchemy,pypi_flask_jwt_extended,pypi_python_dotenv,pypi_werkzeug,pypi_pymysql,pypi_cryptography,pypi_numpy,pypi_opencv_python_headless,pypi_pillow,pypi_mediapipe,pypi_torch,pypi_torchvision,pypi_ultralytics,pypi_gunicorn,pypi_pytest,choosealicense_agpl3,gnu_agpl3}. 
+La Tabla~\ref{tabla:dependencias_licencias} recoge las dependencias más relevantes del proyecto.
+
+\tablaSmall{Dependencias del proyecto y licencias}{p{3.2cm} p{1.7cm} p{6.3cm} p{2.6cm}}{dependencias_licencias}
+{ \multicolumn{1}{l}{Dependencia} & \multicolumn{1}{l}{Versión} & \multicolumn{1}{l}{Descripción} & \multicolumn{1}{l}{Licencia} \\}{
+	\texttt{Flask} & 3.0.3 & Framework web utilizado para construir la aplicación y definir sus rutas. & BSD-3-Clause\\
+	\texttt{Flask-SQLAlchemy} & 3.1.1 & Extensión que integra SQLAlchemy con Flask para la gestión de la base de datos. & BSD License \\
+	\texttt{SQLAlchemy} & 2.0.31 & ORM y capa de abstracción de base de datos utilizada también de forma directa en el proyecto. & MIT \\
+	\texttt{Flask-JWT-Extended} & 4.6.0 & Extensión utilizada para la autenticación mediante JSON Web Tokens. & MIT \\
+	\texttt{python-dotenv} & 1.0.1 & Biblioteca utilizada para cargar variables de entorno desde ficheros \texttt{.env}. & BSD-3-Clause \\
+	\texttt{Werkzeug} & 3.0.3 & Biblioteca WSGI utilizada por Flask y empleada también para funciones de seguridad. & BSD-3-Clause \\
+	\texttt{PyMySQL} & 1.1.1 & Conector Python para bases de datos MySQL/MariaDB. & MIT \\
+	\texttt{cryptography} & 42.0.8 & Biblioteca criptográfica utilizada como soporte de seguridad y conexión. & Apache-2.0 / BSD-3-Clause \\
+	\texttt{numpy} & 1.26.4 & Biblioteca de cálculo numérico utilizada como soporte del procesamiento de imágenes. & BSD-3-Clause \\
+	\texttt{opencv-python-headless} & 4.10.0.84 & Versión de OpenCV para procesamiento de imágenes sin dependencias gráficas. & MIT / Apache-2.0 / LGPL-2.1 \\
+	\texttt{Pillow} & 10.4.0 & Biblioteca de soporte para apertura y manipulación de imágenes. & HPND \\
+	\texttt{mediapipe} & 0.10.14 & Framework de Google utilizado para detección de manos y estimación de pose. & Apache-2.0 \\
+	\texttt{torch} & 2.3.1 & Biblioteca de aprendizaje profundo utilizada como parte del ecosistema de visión artificial. & BSD-3-Clause \\
+	\texttt{torchvision} & 0.18.1 & Biblioteca complementaria de PyTorch para tareas de visión por computador. & BSD-3-Clause \\
+	\texttt{ultralytics} & 8.2.50 & Biblioteca utilizada para integrar YOLOv8 en la detección de objetos y recorte de personas. & AGPL-3.0 / empresarial \\
+	\texttt{gunicorn} & 22.0.0 & Servidor WSGI utilizado para ejecutar aplicaciones Python en despliegue. & MIT \\
+	\texttt{pytest} & 8.2.2 & Framework utilizado para la ejecución de pruebas automatizadas. & MIT \\
+}
+
+Como puede observarse en la Tabla~\ref{tabla:dependencias_licencias}, la mayoría de dependencias utilizan licencias permisivas, como MIT, BSD o Apache-2.0. Estas licencias permiten el uso, modificación y distribución del software con pocas restricciones, siempre que se mantengan los avisos de copyright y licencia correspondientes.
+
+Sin embargo, la dependencia \texttt{ultralytics}, utilizada para integrar YOLOv8, introduce una restricción importante. Esta biblioteca se distribuye bajo licencia \texttt{AGPL-3.0}, salvo que se utilice una licencia empresarial específica. Por tanto, mientras el proyecto mantenga esta dependencia, no sería correcto licenciar todo el código bajo una licencia más permisiva como MIT o Apache-2.0 sin revisar previamente las obligaciones de AGPL-3.0.
+
+\subsubsection{Modelos y pesos utilizados}
+
+Además de las bibliotecas Python, el proyecto utiliza modelos preentrenados. Esta parte debe tratarse de forma separada porque los modelos no son exactamente código fuente propio, pero sí forman parte del funcionamiento real de la aplicación.
+
+En el caso de MediaPipe, el código garantiza que los modelos utilizados de \texttt{hand\_landmarker.task} y \texttt{pose\_landmarker\_full.task} estén disponibles en local. Si no existen en la carpeta \texttt{models/mp}, se descargan la primera vez desde los repositorios de Google y después se reutilizan localmente. Esta decisión evita depender de una descarga externa en cada ejecución y hace más controlable el comportamiento del sistema.
+
+La Tabla~\ref{tabla:modelos_pesos_licencias} recoge los modelos y pesos principales considerados en el proyecto.
+
+\tablaSmall{Modelos y pesos utilizados}{p{4cm} p{5.5cm} p{3.5cm}}{modelos_pesos_licencias}
+{ \multicolumn{1}{l}{Recurso} & \multicolumn{1}{l}{Uso en el proyecto} & \multicolumn{1}{l}{Licencia / condiciones} \\}{
+	\texttt{yolov8n.pt} & Pesos de YOLOv8 utilizados por la biblioteca \texttt{ultralytics} para detección de objetos y recorte de personas. & AGPL-3.0 / licencia empresarial \\
+	\texttt{hand\_landmarker.task} & Modelo de MediaPipe Tasks utilizado para detectar landmarks de manos. & Apache-2.0 \\
+	\texttt{pose\_landmarker\_full.task} & Modelo de MediaPipe Tasks utilizado para estimar la pose humana. & Apache-2.0 \\
+	Configuraciones JSON propias & Ficheros \texttt{mp\_manos.json}, \texttt{mp\_pose.json}, \texttt{yolo\_deteccion.json} y \texttt{yolo\_recortes.json}. & Propias del proyecto \\
+}
+
+Tal y como se muestra en la Tabla~\ref{tabla:modelos_pesos_licencias}, los modelos de MediaPipe no son el elemento que condiciona la licencia final del proyecto, ya que pertenecen al ecosistema MediaPipe y se documentan bajo condiciones compatibles con Apache-2.0 \cite{google_mediapipe_hand_landmarker,google_mediapipe_pose_landmarker,google_mediapipe_model_card_hand}. En cambio, los pesos y el uso de YOLOv8 mediante \texttt{ultralytics} sí deben tratarse junto con la licencia AGPL-3.0 de dicha biblioteca \cite{pypi_ultralytics,ultralytics_license}.
+
+\subsubsection{Compatibilidad de licencias}
+
+A la hora de escoger una licencia para el proyecto se ha buscado que sea lo menos restrictiva posible, pero siempre respetando las condiciones de las dependencias utilizadas.
+
+Las licencias MIT, BSD, HPND y Apache-2.0 son licencias permisivas y compatibles con un proyecto que finalmente se distribuya bajo una licencia copyleft fuerte. Por tanto, no impiden utilizar AGPL-3.0 como licencia final del código fuente. En cambio, la presencia de \texttt{ultralytics} sí condiciona la decisión, ya que AGPL-3.0 exige que el código fuente de las obras derivadas o integradas se ponga a disposición bajo la misma licencia cuando se distribuye el software o se ofrece como servicio de red \cite{choosealicense_agpl3,gnu_agpl3}.
+
+La Tabla~\ref{tabla:compatibilidad_licencias} resume el papel de cada familia de licencias dentro del proyecto.
+
+\tablaSmall{Compatibilidad de licencias}{p{3cm} p{7cm} p{3cm}}{compatibilidad_licencias}
+{ \multicolumn{1}{l}{Licencia} & \multicolumn{1}{l}{Uso en el proyecto} & \multicolumn{1}{l}{Compatibilidad} \\}{
+	MIT & Presente en dependencias como \texttt{SQLAlchemy}, \texttt{PyMySQL}, \texttt{gunicorn} y \texttt{pytest}. & Compatible \\
+	BSD / BSD-3-Clause & Presente en Flask, Werkzeug, NumPy, PyTorch y otras dependencias. & Compatible \\
+	Apache-2.0 & Presente en MediaPipe y en componentes del ecosistema OpenCV. & Compatible \\
+	HPND & Presente en Pillow. & Compatible \\
+	LGPL-2.1 & Presente en componentes binarios asociados a FFmpeg dentro de las ruedas de OpenCV. & Compatible con uso como librería \\
+	AGPL-3.0 & Presente en Ultralytics/YOLOv8. Condiciona la licencia final del código fuente. & Licencia dominante \\
+}
+
+Como se recoge en la Tabla~\ref{tabla:compatibilidad_licencias}, la licencia que condiciona la decisión final es \texttt{AGPL-3.0}. Si en el futuro se quisiera publicar el proyecto bajo una licencia más permisiva, habría que sustituir \texttt{ultralytics} por una alternativa compatible con esa licencia o adquirir una licencia empresarial que permita su integración en productos cerrados o con licencias diferentes.
+
+\subsubsection{Licencia del código fuente}
+
+Teniendo en cuenta las dependencias utilizadas, la licencia más adecuada para el código fuente del proyecto es la \textbf{GNU Affero General Public License v3.0} (\texttt{AGPL-3.0}). Esta licencia permite el uso, modificación y distribución del software, pero exige que las modificaciones y trabajos derivados se mantengan bajo la misma licencia. Además, está especialmente pensada para aplicaciones que se ofrecen a través de red, por lo que encaja con una aplicación web.
+
+La elección de AGPL-3.0 resulta coherente con el proyecto por dos motivos. En primer lugar, permite cumplir con la dependencia más restrictiva utilizada, que es \texttt{ultralytics}. En segundo lugar, protege el carácter abierto del proyecto si un tercero modifica la aplicación y la ofrece como servicio web.
+
+La Tabla~\ref{tabla:resumen_agpl} resume los aspectos principales de la licencia AGPL-3.0.
+
+\tablaSmall{Resumen de la licencia AGPL-3.0}{p{4cm} p{5.5cm} p{4cm}}{resumen_agpl}
+{ \multicolumn{1}{l}{Derechos} & \multicolumn{1}{l}{Condiciones} & \multicolumn{1}{l}{Limitaciones} \\}{
+	Uso comercial & Mantener avisos de copyright y licencia & Sin garantía \\
+	Distribución & Liberar el código fuente bajo la misma licencia & Limitación de responsabilidad \\
+	Modificación & Indicar los cambios realizados & No concede uso de marcas \\
+	Uso como servicio web & Hacer disponible el código fuente de la versión ofrecida por red & Copyleft fuerte \\
+	Uso de patentes & Mantener las condiciones de la licencia & Obligaciones sobre obras derivadas \\
+}
+
+Por todo ello, el código fuente de la aplicación se licenciaría bajo \texttt{AGPL-3.0}. Esta opción no impide una posible explotación económica del proyecto, ya que el modelo de negocio planteado se basa en el acceso a modelos y planes de servicio. No obstante, si se quisiera desarrollar una versión comercial cerrada, habría que revisar especialmente la dependencia con \texttt{ultralytics} y valorar la adquisición de una licencia empresarial.
+
+\subsubsection{Documentación}
+
+Aunque podría utilizarse la misma licencia que para el código fuente, no resulta lo más adecuado aplicar AGPL-3.0 a la documentación. Esta licencia está pensada principalmente para software y contiene obligaciones que no encajan tan bien con textos, diagramas o material explicativo.
+
+Por ello, para la documentación del proyecto se propone utilizar una licencia \textbf{Creative Commons Attribution 4.0 International} (\texttt{CC-BY-4.0}). Esta licencia permite copiar, distribuir y modificar la documentación, incluso con fines comerciales, siempre que se reconozca la autoría original \cite{creative_commons_by_4}.
+
+La Tabla~\ref{tabla:resumen_ccby} resume los aspectos principales de la licencia CC-BY-4.0.
+
+\tablaSmall{Resumen de la licencia CC-BY-4.0}{p{4cm} p{5.5cm} p{4cm}}{resumen_ccby}
+{ \multicolumn{1}{l}{Derechos} & \multicolumn{1}{l}{Condiciones} & \multicolumn{1}{l}{Limitaciones} \\}{
+	Uso comercial & Reconocimiento de autoría & Sin garantía \\
+	Distribución & Indicar cambios realizados si los hubiera & No concede derechos sobre marcas \\
+	Modificación & Mantener referencia a la licencia & No concede derechos sobre patentes \\
+	Uso privado & No aplicar restricciones adicionales incompatibles & Limitación de responsabilidad \\
+}
+
+De esta forma, la memoria, los anexos, los diagramas y el material escrito del proyecto pueden distribuirse de manera más natural que si se empleara una licencia diseñada para código fuente.
+
+\subsubsection{Imágenes, recursos y resultados generados}
+
+Las capturas, diagramas y recursos gráficos creados específicamente para la memoria y los anexos se consideran material propio del proyecto. Por coherencia con la documentación, se propone licenciarlos también bajo \texttt{CC-BY-4.0}, salvo aquellos recursos que procedan de herramientas o fuentes externas y que mantengan su propia licencia.
+
+En cuanto a las imágenes subidas por los usuarios a la aplicación, no se consideran parte del código fuente ni de la documentación del proyecto. Estas imágenes pertenecen al usuario que las aporta y la aplicación solo las trata para ejecutar el procesamiento solicitado. Por este motivo, el sistema debe evitar conservarlas indefinidamente y debe tratarlas como archivos temporales asociados a una ejecución.
+
+Los archivos generados por la aplicación, como imágenes procesadas o ficheros JSON de resultados, son salidas derivadas del uso del sistema. En una explotación real, las condiciones de uso deberían indicar expresamente si estos resultados pertenecen al usuario, al proveedor del servicio o si se someten a alguna licencia concreta. Para este TFG se considera que dichos resultados se generan únicamente como evidencia del procesamiento y no se redistribuyen como un conjunto de datos propio.
+
+\subsubsection{Protección de datos personales}
+
+Además de las licencias de software, el proyecto debe tener en cuenta la normativa sobre protección de datos personales, especialmente el Reglamento General de Protección de Datos y la Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales \cite{rgpd_2016_articulo_17,boe_lopdgdd_2018}.
+
+La aplicación gestiona cuentas de usuario, correos electrónicos, nombres de usuario, contraseñas cifradas mediante hash, suscripciones, alquileres de modelos y registros de ejecuciones. Por tanto, estos datos deben tratarse de acuerdo con los principios de minimización, limitación del plazo de conservación, confidencialidad y control por parte del usuario.
+
+Desde el punto de vista del diseño, se han incorporado varias decisiones orientadas a reducir riesgos:
+
+\begin{itemize}
+	\item Las contraseñas no se almacenan en texto plano, sino mediante hash.
+	\item Las imágenes y resultados se gestionan como archivos temporales.
+	\item El acceso a resultados se realiza mediante tokens de descarga.
+	\item Las ejecuciones quedan asociadas al usuario autenticado, evitando accesos cruzados entre usuarios.
+	\item Se contempla la baja de cuenta y la posterior anonimización de datos personales.
+\end{itemize}
+
+En relación con el derecho de supresión o derecho al olvido, el sistema contempla la posibilidad de que un usuario solicite la baja de su cuenta. Al hacerlo, se marca la cuenta como borrada, se revocan sus servicios activos y se registra la fecha de baja. Posteriormente, el proceso de mantenimiento puede anonimizar la identidad del usuario, manteniendo únicamente aquellos registros que deban conservarse por razones técnicas, históricas o de integridad del sistema.
+
+Esta decisión permite aproximar el comportamiento de la aplicación a los principios de minimización, limitación del plazo de conservación y control del usuario sobre sus datos. En una explotación real, sería necesario completar esta parte con una política de privacidad, condiciones de uso, información sobre el responsable del tratamiento, finalidad del tratamiento, base jurídica, plazo de conservación y procedimiento formal para ejercer derechos.
+
+\subsubsection{Resumen de licencias del proyecto}
+
+La Tabla~\ref{tabla:resumen_licencias_proyecto} recoge la propuesta final de licenciamiento del proyecto.
+
+\tablaSmall{Resumen de licencias del proyecto}{p{6cm} p{7cm}}{resumen_licencias_proyecto}
+{ \multicolumn{1}{l}{Recurso} & \multicolumn{1}{l}{Licencia propuesta} \\}{
+	Código fuente de la aplicación & AGPL-3.0 \\
+	Código fuente de pruebas & AGPL-3.0 \\
+	Configuraciones propias del proyecto & AGPL-3.0, al formar parte del funcionamiento de la aplicación \\
+	Modelos de MediaPipe utilizados localmente & Apache-2.0, según condiciones del ecosistema MediaPipe \\
+	Modelo YOLOv8 utilizado mediante Ultralytics & AGPL-3.0 / licencia empresarial \\
+	Documentación del proyecto & CC-BY-4.0 \\
+	Diagramas e imágenes propias de la documentación & CC-BY-4.0 \\
+	Imágenes subidas por usuarios & Propiedad del usuario que las aporta \\
+	Resultados generados por la aplicación & Según condiciones de uso del servicio \\
+}
+
+En conclusión, la viabilidad legal del proyecto es positiva siempre que se respeten las condiciones de las dependencias empleadas. La presencia de \texttt{ultralytics} obliga a adoptar una postura conservadora y licenciar el código bajo \texttt{AGPL-3.0}, salvo que se sustituya dicha dependencia o se obtenga una licencia empresarial. Para la documentación y recursos propios no software se propone \texttt{CC-BY-4.0}, por ser una licencia más adecuada para textos, diagramas e imágenes.
+
+Esta licencia no impide monetizar el servicio mediante alquileres de modelos o planes de suscripción, pero sí evita una explotación cerrada del código. Si en el futuro se quisiera distribuir o explotar la aplicación como producto propietario, habría que sustituir la dependencia \texttt{ultralytics} por otra alternativa compatible o adquirir una licencia empresarial.
 
