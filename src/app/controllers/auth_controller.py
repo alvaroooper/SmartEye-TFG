@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from app.utils.fechas import ahora_utc_naive, formatear_fecha_local
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_jwt_identity
@@ -189,7 +189,7 @@ def obtener_perfil():
             "username": usuario.username,
             "email": usuario.email,
             "nombre_visible": usuario.nombre_visible,
-            "fecha_registro": usuario.creado_en.strftime("%d/%m/%Y")
+            "fecha_registro": formatear_fecha_local(usuario.creado_en, "%d/%m/%Y")
         }
     }), 200
 
@@ -259,7 +259,7 @@ def eliminar_cuenta():
         
     try:
         usuario.estado = 'borrada'
-        usuario.borrado_en = datetime.now(timezone.utc).replace(tzinfo=None)
+        usuario.borrado_en = ahora_utc_naive()
         
         SuscripcionPlan.query.filter_by(id_usuario=usuario_id, activo=1).update({
             "activo": 0, 
@@ -306,7 +306,7 @@ def admin_cambiar_estado(id_usuario):
     nuevo_estado = datos.get('estado')
     
     usuario.estado = nuevo_estado
-    usuario.borrado_en = datetime.now(timezone.utc).replace(tzinfo=None) if nuevo_estado == 'borrada' else None
+    usuario.borrado_en = ahora_utc_naive() if nuevo_estado == 'borrada' else None
     
     try:
         db.session.commit()

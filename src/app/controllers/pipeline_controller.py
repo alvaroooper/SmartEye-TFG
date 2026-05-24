@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
+from app.utils.fechas import ahora_utc_naive, formatear_fecha_local
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import get_jwt, jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
@@ -40,7 +41,7 @@ def tareas_mantenimiento_automaticas():
     la recolección de basura (archivos expirados) y la coherencia de contratos.
     """
     try:
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
         cambios_realizados = False
         
         # 1. Purga de artefactos temporales (Data Retention Policy)
@@ -105,7 +106,7 @@ def listar_pipelines():
     """
     try:
         usuario_id = obtener_usuario_id_actual()
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
 
         if usuario_id is None:
             return jsonify({"mensaje": "Identidad de usuario inválida."}), 401
@@ -167,7 +168,7 @@ def obtener_configuracion_completa(id_pipeline):
     """Lectura y ensamblado de los esquemas JSON de configuración por cada etapa del flujo."""
     try:
         usuario_id = obtener_usuario_id_actual()
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
 
         if usuario_id is None:
             return jsonify({"mensaje": "Identidad de usuario inválida."}), 401
@@ -554,8 +555,8 @@ def analizar_imagen():
     dinámicas de expiración de activos (TTL) según el nivel de suscripción.
     """
     usuario_id = get_jwt_identity()
-    ahora_utc = datetime.now(timezone.utc)
-    ahora_naive = ahora_utc.replace(tzinfo=None)
+    ahora_naive = ahora_utc_naive()
+    ahora_utc = ahora_naive.replace(tzinfo=timezone.utc)
     
     if usuario_id is None:
         return jsonify({
@@ -624,7 +625,7 @@ def analizar_imagen():
     # Lógica de negocio: Los usuarios Pro disponen de una ventana de persistencia mayor
     es_pro = usuario_tiene_pro_vigente(usuario_id, ahora_naive)
     
-    fecha_expiracion = ahora_naive + (timedelta(days=7) if es_pro else timedelta(minutes=5))
+    fecha_expiracion = ahora_naive + (timedelta(days=30) if es_pro else timedelta(minutes=5))
 
     # --------------------------------------------------------------------------
     # 4. REGISTRO DE AUDITORÍA Y PREPARACIÓN DE WORKSPACE
@@ -638,7 +639,7 @@ def analizar_imagen():
     db.session.add(nueva_ejecucion)
     db.session.commit()
 
-    start_time = datetime.now()
+    start_time = datetime.now(timezone.utc)
     
     try:
         # Aislamiento físico de la ejecución en disco para evitar colisiones de assets
@@ -703,7 +704,7 @@ def analizar_imagen():
 
         # Finalización exitosa: Cierre de métricas de rendimiento
         nueva_ejecucion.estado = 'completado'
-        nueva_ejecucion.duracion_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+        nueva_ejecucion.duracion_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
         db.session.commit()
         
         return jsonify({"status": "success", "resultados_etapas": analisis}), 200
@@ -729,7 +730,7 @@ def serve_output(token):
     Resuelve el token único, valida la política de expiración (TTL) y retorna el asset físico.
     """
     archivo = TemporalArchivo.query.filter_by(token_descarga=token).first()
-    ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    ahora_naive = ahora_utc_naive()
     
     if not archivo or (archivo.expira_en and archivo.expira_en <= ahora_naive):
         return jsonify({"error": "Excepción de seguridad: El recurso solicitado ya no está disponible o ha expirado"}), 404
@@ -743,25 +744,33 @@ def serve_output(token):
 def historial_ejecuciones():
     """Retorna el log cronológico de operaciones del usuario autenticado."""
     usuario_id = get_jwt_identity()
-    ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
-    ejecuciones = Ejecucion.query.filter_by(id_usuario=usuario_id).order_by(Ejecucion.creado_en.desc()).all()
-    
+    ahora_naive = ahora_utc_naive()
+
+    ejecuciones = Ejecucion.query.filter_by(
+        id_usuario=usuario_id
+    ).order_by(Ejecucion.creado_en.desc()).all()
+
     resultado = []
+
     for ej in ejecuciones:
         pipe = db.session.get(Pipeline, ej.id_pipeline)
-        # Validación optimizada: Se comprueba si existe al menos un archivo activo asociado a la ejecución
-        activos = TemporalArchivo.query.filter(TemporalArchivo.id_ejecucion == ej.id_ejecucion, 
-                                               TemporalArchivo.expira_en > ahora_naive).first()
+
+        activos = TemporalArchivo.query.filter(
+            TemporalArchivo.id_ejecucion == ej.id_ejecucion,
+            TemporalArchivo.expira_en > ahora_naive
+        ).first()
+
         resultado.append({
             "id": ej.id_ejecucion,
             "pipeline": pipe.nombre if pipe else "Instancia Desconocida",
-            "fecha": ej.creado_en.strftime("%d/%m/%Y %H:%M"),
+            "fecha": formatear_fecha_local(ej.creado_en),
             "estado": ej.estado,
             "duracion": f"{ej.duracion_ms} ms" if ej.duracion_ms else "-",
             "error": ej.mensaje_error_user,
-            "archivos_disponibles": bool(activos)
+            "archivos_disponibles": bool(activos),
+            "config_aplicada": ej.config_aplicada
         })
-        
+
     return jsonify(resultado), 200
 
 @pipeline_bp.route('/ejecuciones_totales', methods=['GET'])
@@ -787,7 +796,7 @@ def ejecuciones_totales_admin():
                 "id": ej.id_ejecucion,
                 "usuario": usuario.username if usuario else "Usuario eliminado",
                 "pipeline": pipeline.nombre if pipeline else "Pipeline eliminado",
-                "fecha": ej.creado_en.strftime("%d/%m/%Y %H:%M") if ej.creado_en else "-",
+                "fecha": formatear_fecha_local(ej.creado_en),
                 "estado": ej.estado,
                 "duracion": f"{ej.duracion_ms} ms" if ej.duracion_ms else "-",
                 "error": ej.mensaje_error_user
@@ -809,7 +818,7 @@ def obtener_archivos_ejecucion(id_ejecucion):
     Mapea tokens de descarga con las etapas lógicas correspondientes.
     """
     usuario_id = get_jwt_identity()
-    ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    ahora_naive = ahora_utc_naive()
 
     ejecucion = Ejecucion.query.filter_by(
         id_ejecucion=id_ejecucion,

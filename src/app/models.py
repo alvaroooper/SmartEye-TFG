@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from app.utils.fechas import ahora_utc_naive
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 
@@ -30,8 +30,8 @@ class Usuario(db.Model):
     estado = db.Column(db.String(50), nullable=False, default='activa')
     
     # Metadatos de auditoría con soporte de zona horaria (UTC)
-    creado_en = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    actualizado_en = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    creado_en = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
+    actualizado_en = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive, onupdate=ahora_utc_naive)
     borrado_en = db.Column(db.DateTime, nullable=True)
 
     # Definiciones de relaciones y mapeos bidireccionales
@@ -73,8 +73,8 @@ class SuscripcionPlan(db.Model):
     id_suscripcion = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('USUARIO.id_usuario', ondelete='RESTRICT'), nullable=False)
     id_plan = db.Column(db.Integer, db.ForeignKey('TIPO_PLAN.id_plan', ondelete='RESTRICT'), nullable=False)
-    fecha_compra = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    fecha_inicio = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    fecha_compra = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
+    fecha_inicio = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
     fecha_fin = db.Column(db.DateTime, nullable=True)
     activo = db.Column(db.Boolean, nullable=False, default=True)
     renovacion_auto = db.Column(db.Boolean, nullable=False, default=False)
@@ -120,7 +120,7 @@ class Alquila(db.Model):
     id_compra = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('USUARIO.id_usuario', ondelete='RESTRICT'), nullable=False)
     id_ia = db.Column(db.Integer, db.ForeignKey('IA_MODELO.id_ia', ondelete='RESTRICT'), nullable=False)
-    fecha_compra = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    fecha_compra = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
     periodo_inicio = db.Column(db.DateTime, nullable=True)
     periodo_fin = db.Column(db.DateTime, nullable=True)
     activo = db.Column(db.Boolean, nullable=False, default=True)
@@ -140,7 +140,7 @@ class Pipeline(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
     habilitado = db.Column(db.Boolean, nullable=False, default=True)
-    creado_en = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    creado_en = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
     publico = db.Column(db.Integer, default=1)
     
     etapas = db.relationship('PipelineEtapa', backref='pipeline', lazy=True, cascade="all, delete-orphan")
@@ -154,7 +154,7 @@ class Ejecucion(db.Model):
     estado = db.Column(db.String(50), nullable=False, default='pendiente')
     duracion_ms = db.Column(db.Integer, nullable=True)
     mensaje_error_user = db.Column(db.Text, nullable=True)
-    creado_en = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    creado_en = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
     config_aplicada = db.Column(db.Text, nullable=True)
 
 class TemporalArchivo(db.Model):
