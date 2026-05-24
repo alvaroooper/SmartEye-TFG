@@ -255,13 +255,24 @@
             }
 
             // --- 4. RENDERIZADO SECUENCIAL DE ETAPAS (PIPELINE) ---
-            data.etapas.forEach(etapa => {
-                
+            data.etapas.forEach((etapa, index) => {
+
+                const info = etapa.info || {};
+
+                const numeroEtapa = info.etapa || (index + 1);
+                const nombreEtapa = info.nombre_etapa || etapa.nombre_etapa || `Etapa ${numeroEtapa}`;
+                const nombreIA = info.ia || "N/A";
+                const nombreModo = info.modo || "N/A";
+
+                const imagenes = Array.isArray(etapa.imagenes) ? etapa.imagenes : [];
+                const jsonEtapa = etapa.json || null;
+
                 let htmlImagenes = '';
-                if (etapa.imagenes.length === 0) {
+
+                if (imagenes.length === 0) {
                     htmlImagenes = "<p style='color: #666; font-style: italic;'>El procesamiento de esta etapa no generó salidas visuales.</p>";
                 } else {
-                    etapa.imagenes.forEach(img => {
+                    imagenes.forEach(img => {
                         htmlImagenes += `
                             <div class="img-wrapper" id="wrapper_${img.token}">
                                 <img src="/api/v1/outputs/${img.token}" alt="Resultado Procesado" onerror="manejarImagenRota('${img.token}')">
@@ -271,25 +282,46 @@
                     });
                 }
 
+                let htmlJson = '';
+
+                if (jsonEtapa && jsonEtapa.token) {
+                    htmlJson = `
+                        <div class="actions-footer">
+                            <button class="btn-gris btn-mostrar-json" data-token="${jsonEtapa.token}">Mostrar Datos JSON</button>
+                            <a href="/api/v1/outputs/${jsonEtapa.token}" download="${jsonEtapa.nombre}" class="btn-gris">Descargar Datos JSON</a>
+                        </div>
+                        <div class="json-data"></div>
+                    `;
+                } else {
+                    htmlJson = `
+                        <div class="actions-footer">
+                            <p style="color: #666; font-style: italic;">No hay archivo JSON asociado a esta etapa.</p>
+                        </div>
+                        <div class="json-data"></div>
+                    `;
+                }
+
                 const card = document.createElement('div');
                 card.className = 'etapa-card';
+
                 card.innerHTML = `
                     <div class="etapa-header">
-                        <h4>Etapa ${etapa.info.etapa}: ${etapa.info.nombre_etapa} <span style="font-size: 0.95rem; color: #777; font-weight: normal;">(Motor IA: ${etapa.info.ia} - Análisis: ${etapa.info.modo})</span></h4>
+                        <h4>
+                            Etapa ${numeroEtapa}: ${nombreEtapa}
+                            <span style="font-size: 0.95rem; color: #777; font-weight: normal;">
+                                (Motor IA: ${nombreIA} - Análisis: ${nombreModo})
+                            </span>
+                        </h4>
                     </div>
                     <div class="etapa-body">
                         <div class="scroll-container">
                             ${htmlImagenes}
                         </div>
-                        
-                        <div class="actions-footer">
-                            <button class="btn-gris btn-mostrar-json" data-token="${etapa.json.token}">Mostrar Datos JSON</button>
-                            <a href="/api/v1/outputs/${etapa.json.token}" download="${etapa.json.nombre}" class="btn-gris">Descargar Datos JSON</a>
-                        </div>
-                        
-                        <div class="json-data"></div>
+
+                        ${htmlJson}
                     </div>
                 `;
+
                 contenidoDiv.appendChild(card);
             });
 

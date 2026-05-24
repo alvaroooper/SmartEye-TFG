@@ -810,32 +810,67 @@ def obtener_archivos_ejecucion(id_ejecucion):
     """
     usuario_id = get_jwt_identity()
     ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
-    
-    ejecucion = Ejecucion.query.filter_by(id_ejecucion=id_ejecucion, id_usuario=usuario_id).first()
+
+    ejecucion = Ejecucion.query.filter_by(
+        id_ejecucion=id_ejecucion,
+        id_usuario=usuario_id
+    ).first()
+
     if not ejecucion:
-        return jsonify({"error": "Violación de acceso: Permiso denegado para esta instancia"}), 403
-        
-    archivos = TemporalArchivo.query.filter(TemporalArchivo.id_ejecucion == id_ejecucion, 
-                                           TemporalArchivo.expira_en > ahora_naive).all()
-    
-    etapas = PipelineEtapa.query.filter_by(id_pipeline=ejecucion.id_pipeline).order_by(PipelineEtapa.orden).all()
-    datos_etapas, img_list, idx_etapa, img_orig = [], [], 0, None
+        return jsonify({
+            "error": "Violación de acceso: Permiso denegado para esta instancia"
+        }), 403
+
+    archivos = TemporalArchivo.query.filter(
+        TemporalArchivo.id_ejecucion == id_ejecucion,
+        TemporalArchivo.expira_en > ahora_naive
+    ).order_by(TemporalArchivo.id_temporal.asc()).all()
+
+    etapas = PipelineEtapa.query.filter_by(
+        id_pipeline=ejecucion.id_pipeline
+    ).order_by(PipelineEtapa.orden).all()
+
+    datos_etapas = []
+    img_list = []
+    idx_etapa = 0
+    img_orig = None
 
     for arch in archivos:
-        info = {"token": arch.token_descarga, "nombre": os.path.basename(arch.ruta_servidor)}
-        
-        if arch.tipo == "imagen_original": 
-            img_orig = info
-        elif arch.tipo == "resultado_imagen": 
-            img_list.append(info)
+        info_archivo = {
+            "token": arch.token_descarga,
+            "nombre": os.path.basename(arch.ruta_servidor)
+        }
+
+        if arch.tipo == "imagen_original":
+            img_orig = info_archivo
+
+        elif arch.tipo == "resultado_imagen":
+            img_list.append(info_archivo)
+
         elif arch.tipo == "resultado_json":
-            etapa_label = etapas[idx_etapa].nombre if idx_etapa < len(etapas) else f"Etapa_Ordinaria_{idx_etapa+1}"
+            etapa_bd = etapas[idx_etapa] if idx_etapa < len(etapas) else None
+
+            numero_etapa = etapa_bd.orden if etapa_bd else idx_etapa + 1
+            nombre_etapa = etapa_bd.nombre if etapa_bd else f"Etapa {numero_etapa}"
+            nombre_ia = etapa_bd.modelo.nombre if etapa_bd and etapa_bd.modelo else "N/A"
+            nombre_modo = etapa_bd.modo.nombre_modo if etapa_bd and etapa_bd.modo else "N/A"
+
             datos_etapas.append({
-                "nombre_etapa": etapa_label, 
-                "imagenes": img_list, 
-                "json": info
+                "info": {
+                    "etapa": numero_etapa,
+                    "nombre_etapa": nombre_etapa,
+                    "ia": nombre_ia,
+                    "modo": nombre_modo
+                },
+                "nombre_etapa": nombre_etapa,
+                "imagenes": img_list,
+                "json": info_archivo
             })
+
             img_list = []
             idx_etapa += 1
-            
-    return jsonify({"imagen_original": img_orig, "etapas": datos_etapas}), 200
+
+    return jsonify({
+        "imagen_original": img_orig,
+        "etapas": datos_etapas
+    }), 200

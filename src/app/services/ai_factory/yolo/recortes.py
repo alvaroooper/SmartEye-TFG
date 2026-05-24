@@ -20,7 +20,7 @@ def procesar_recortes_personas(imagen_path: str, config: Dict[str, Any] = None, 
 
     Args:
         imagen_path (str): Ruta absoluta al activo físico de entrada.
-        config (Dict, opcional): Hiperparámetros (conf, scale_factor).
+        config (Dict, opcional): Hiperparámetros (conf, iou, imgsz, scale_factor).
         prefijo (str, opcional): Hash de trazabilidad para serialización de archivos.
 
     Returns:
@@ -31,12 +31,17 @@ def procesar_recortes_personas(imagen_path: str, config: Dict[str, Any] = None, 
     
     # 1. CONFIGURACIÓN DE PARÁMETROS DE SEGMENTACIÓN
     try:
-        confianza = float(config.get("conf", 0.30))
+        # Factor confianza para filtrar detecciones (valor entre 0 y 1)
+        confianza_minima = float(config.get("conf", 0.30))
+        # Umbral de solapamiento para NMS (Non-Maximum Suppression)
+        iou = float(config.get("iou", 0.45))
+        # Tamaño de imagen para la inferencia (se recomienda 1280 para un mejor balance entre precisión y velocidad)
+        imgsz = int(config.get("imgsz", 1280))
         # Factor de escalado para compensar la pérdida de resolución en recortes pequeños
-        factor_escala = float(config.get("scale_factor", 3.0))
+        scale_factor = float(config.get("scale_factor", 3.0))
     except (ValueError, TypeError):
-        raise ValueError("Excepción de tipo: Los hiperparámetros de recorte (conf, scale_factor) deben ser numéricos.")
-    
+        raise ValueError("Excepción de tipo: Los hiperparámetros de recorte (conf, iou, imgsz, scale_factor) deben ser numéricos.")
+    print(f"[YOLO RECORTES] conf={confianza_minima}, iou={iou}, imgsz={imgsz}, scale_factor={scale_factor}")
     # 2. INGESTA Y VALIDACIÓN DE INTEGRIDAD
     imagen = cv2.imread(imagen_path)
     if imagen is None:
@@ -44,7 +49,7 @@ def procesar_recortes_personas(imagen_path: str, config: Dict[str, Any] = None, 
 
     # 3. INFERENCIA SELECTIVA (FILTRADO POR CLASE 'PERSON')
     # Se restringe la detección exclusivamente a la clase 0 (Humanos)
-    resultados = _MODELO_YOLO_INSTANCE(imagen, conf=confianza, classes=[0])
+    resultados = _MODELO_YOLO_INSTANCE(imagen, conf=confianza_minima, iou=iou, imgsz=imgsz, classes=[0], verbose=False)
     
     # Preparación del entorno de salida
     directorio = os.path.dirname(imagen_path)
@@ -73,8 +78,8 @@ def procesar_recortes_personas(imagen_path: str, config: Dict[str, Any] = None, 
         # 5. NORMALIZACIÓN Y RE-ESCALADO TÉCNICO
         # Se aplica interpolación cúbica (INTER_CUBIC) para el redimensionamiento,
         # lo que garantiza una mayor suavidad y detalle en la ampliación de la ROI.
-        nuevo_ancho = int(recorte_raw.shape[1] * factor_escala)
-        nuevo_alto = int(recorte_raw.shape[0] * factor_escala)
+        nuevo_ancho = int(recorte_raw.shape[1] * scale_factor)
+        nuevo_alto = int(recorte_raw.shape[0] * scale_factor)
         
         recorte_ampliado = cv2.resize(
             recorte_raw, 
