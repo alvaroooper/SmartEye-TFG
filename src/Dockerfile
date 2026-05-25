@@ -22,12 +22,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+    && pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+RUN groupadd --gid 1000 appgroup \
+    && useradd --uid 1000 --gid appgroup --home-dir /app --shell /usr/sbin/nologin appuser
+
+COPY --chown=appuser:appgroup app ./app
+COPY --chown=appuser:appgroup configs ./configs
+COPY --chown=appuser:appgroup config.py run.py seed.py entrypoint.sh ./
 
 RUN mkdir -p /app/execution_data /app/models/mp /app/models/yolo \
-    && chmod +x /app/entrypoint.sh
+    && chmod +x /app/entrypoint.sh \
+    && chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 5000
 
