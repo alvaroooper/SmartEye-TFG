@@ -3,6 +3,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
+ENV MPLCONFIGDIR=/tmp/matplotlib
+ENV YOLO_CONFIG_DIR=/tmp/ultralytics
 
 WORKDIR /app
 
@@ -27,16 +29,16 @@ RUN pip install --upgrade pip \
 RUN groupadd --gid 1000 appgroup \
     && useradd --uid 1000 --gid appgroup --home-dir /app --shell /usr/sbin/nologin appuser
 
-COPY --chown=appuser:appgroup app ./app
-COPY --chown=appuser:appgroup configs ./configs
-COPY --chown=appuser:appgroup config.py run.py seed.py entrypoint.sh ./
+COPY app ./app
+COPY configs ./configs
+COPY config.py run.py seed.py entrypoint.sh ./
 
-RUN mkdir -p /app/execution_data /app/models/mp /app/models/yolo \
-    && chmod +x /app/entrypoint.sh \
-    && chown -R appuser:appgroup /app
-
+RUN mkdir -p /app/execution_data /app/models/mp /app/models/yolo /tmp/matplotlib /tmp/ultralytics \
+    && chmod 755 /app/entrypoint.sh \
+    && chown -R appuser:appgroup /app/execution_data /app/models /tmp/matplotlib /tmp/ultralytics \
+    && chmod -R u+rwX,g-rwx,o-rwx /app/execution_data /app/models /tmp/matplotlib /tmp/ultralytics
 USER appuser
 
 EXPOSE 5000
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
