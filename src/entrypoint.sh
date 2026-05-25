@@ -42,7 +42,7 @@ for intento in range(1, 41):
         print("MariaDB disponible.")
         break
     except Exception as exc:
-    	print(f"Intento {intento}/40: no se pudo conectar con MariaDB. Error: {exc}")
+        print(f"Intento {intento}/40: no se pudo conectar con MariaDB. Error: {exc}")
         time.sleep(2)
 else:
     print("ERROR: No se pudo conectar con MariaDB.")
@@ -57,3 +57,4 @@ fi
 echo "Arrancando aplicación Flask con Gunicorn..."
 
 exec gunicorn --workers 1 --bind 0.0.0.0:5000 --timeout 300 run:app
+

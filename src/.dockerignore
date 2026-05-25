@@ -1,5 +1,6 @@
 .git
 .gitignore
+.github
 
 __pycache__
 *.pyc
@@ -10,13 +11,27 @@ __pycache__
 .mypy_cache
 .ruff_cache
 
-venv
-.venv
-env
-ENV
+venv/
+.venv/
+env/
+ENV/
 
 .env
+.env.*
+!.env.example
+
+.coverage
+coverage.xml
+htmlcov/
+
 *.log
 
 execution_data/*
 !execution_data/.gitkeep
+
+outputs/
+uploads/
+instance/
+
+sonar-project.properties
+.coveragerc
