@@ -1,0 +1,21 @@
+[run]
+relative_files = True
+source = src
+omit =
+    src/tests/*
+    src/tests/**/*
+    src/seed.py
+    src/run.py
+    src/config.py
+    src/ejecucion_data/*
+    src/ejecucion_data/**/*
+    src/models/*
+    src/models/**/*
+    */__pycache__/*
+    */migrations/*
+    */outputs/*
+    */uploads/*
+    */instance/*
+
+[xml]
+output = coverage.xml
