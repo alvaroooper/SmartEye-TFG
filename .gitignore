@@ -225,7 +225,7 @@ TSWLatexianTemp*
 
 
 ##############################################################
-### AÑADIDO PARA PROYECTO TFG PYTHON + IA ####################
+### AÑADIDO PARA PROYECTO TFG PYTHON + IA + DOCKER ###########
 ##############################################################
 
 # === PYTHON ===
@@ -234,17 +234,50 @@ __pycache__/
 *.pyo
 *.pyd
 .venv/
+venv/
 env/
-__pycache
+ENV/
+ia_env/
 
-# Tests
+# === PAQUETES / BUILD PYTHON ===
+*.egg-info/
+dist/
+build/
+
+# === TESTS / COBERTURA ===
 .pytest_cache/
 .coverage
 coverage.xml
 htmlcov/
-# === MODELOS ===
+
+# === VARIABLES DE ENTORNO / SECRETOS ===
+.env
+.env.*
+!.env.example
+
+# === BASES DE DATOS LOCALES ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === FLASK / INSTANCIA LOCAL ===
+instance/
+
+# === RESULTADOS TEMPORALES DE EJECUCIONES ===
+execution_data/*
+!execution_data/.gitkeep
+
+# === MODELOS IA PESADOS ===
 *.pt
 *.task
+
+# Mantener carpetas de modelos aunque estén vacías
+!models/
+!models/mp/
+!models/yolo/
+!models/mp/.gitkeep
+!models/yolo/.gitkeep
+
 # === EXPERIMENTOS IA ===
 experiments/**/outputs/
 runs/
@@ -257,6 +290,3 @@ runs/
 # === SISTEMA / OTROS ===
 .DS_Store
 Thumbs.db
-
-# === ARCHIVOS DEL PROYECTO LOCAL===
-ia_env/
