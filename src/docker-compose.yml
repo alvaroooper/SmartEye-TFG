@@ -1,0 +1,54 @@
+name: tfg_ai
+
+services:
+  db:
+    image: mariadb:11.4
+    container_name: tfg_ai_db
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      TZ: Europe/Madrid
+
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+    ports:
+      - "127.0.0.1:3307:3306"
+
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$${MARIADB_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: tfg_ai_web
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      TZ: Europe/Madrid
+
+    ports:
+      - "5000:5000"
+
+    volumes:
+      - ./execution_data:/app/execution_data
+      - ./models:/app/models
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mariadb_data:

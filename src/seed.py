@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+from app.utils.fechas import ahora_utc_naive
 from werkzeug.security import generate_password_hash
 from sqlalchemy import text
 
@@ -122,7 +123,7 @@ def seed():
         db.create_all()
         aplicar_restricciones_bd()
 
-        ahora = datetime.now()
+        ahora = ahora_utc_naive()
 
         # 2. DEFINICIÓN DE PERFILES DE ACCESO
         admin_rol = Rol(

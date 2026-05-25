@@ -1,0 +1,344 @@
+<mxfile host="app.diagrams.net" agent="ChatGPT">
+  <diagram name="Página-1" id="0">
+    <mxGraphModel dx="1786" dy="973" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1750" pageHeight="1650" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=26;fontColor=#111827;fontStyle=1;" value="CU-17 – Gestionar pipelines desde administración" vertex="1">
+          <mxGeometry height="35" width="1750" y="8" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2f3b4e;strokeColor=#2f3b4e;fontColor=#ffffff;fontStyle=1;fontSize=14;arcSize=10;spacingLeft=40;" value="Administrador" vertex="1">
+          <mxGeometry height="58" width="210" x="10" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="5" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#ffffff;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="42" width="34" x="28" y="78" as="geometry" />
+        </mxCell>
+        <mxCell id="6" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;strokeColor=#94a3b8;dashed=1;dashPattern=4 4;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="115" y="155" as="sourcePoint" />
+            <mxPoint x="115" y="1562" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2f6de1;strokeColor=#2f6de1;fontColor=#ffffff;fontStyle=1;fontSize=13;arcSize=10;" value="Interfaz web&#xa;(admin_panel.html)" vertex="1">
+          <mxGeometry height="58" width="235" x="312.5" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="8" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;strokeColor=#94a3b8;dashed=1;dashPattern=4 4;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="430" y="155" as="sourcePoint" />
+            <mxPoint x="430" y="1562" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#7c3aed;strokeColor=#7c3aed;fontColor=#ffffff;fontStyle=1;fontSize=13;arcSize=10;" value="Pipeline Controller" vertex="1">
+          <mxGeometry height="58" width="285" x="617.5" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="10" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;strokeColor=#94a3b8;dashed=1;dashPattern=4 4;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="760" y="155" as="sourcePoint" />
+            <mxPoint x="760" y="1562" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#166534;strokeColor=#166534;fontColor=#ffffff;fontStyle=1;fontSize=13;arcSize=10;" value="Base de datos" vertex="1">
+          <mxGeometry height="58" width="260" x="980" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="12" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;strokeColor=#94a3b8;dashed=1;dashPattern=4 4;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1110" y="155" as="sourcePoint" />
+            <mxPoint x="1110" y="1562" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#9333ea;strokeColor=#9333ea;fontColor=#ffffff;fontStyle=1;fontSize=13;arcSize=10;" value="Servicio JWT" vertex="1">
+          <mxGeometry height="58" width="205" x="1357.5" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="14" edge="1" parent="1" source="18" style="endArrow=none;html=1;rounded=0;strokeWidth=1;strokeColor=#94a3b8;dashed=1;dashPattern=4 4;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1460" y="155" as="sourcePoint" />
+            <mxPoint x="1460" y="1562" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="15" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1f2937;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1445" width="14" x="108" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="16" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eaf2ff;strokeColor=#2563eb;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="1445" width="14" x="423" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="17" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#7c3aed;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="225" width="14" x="753" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="19" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#166534;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="70" width="14" x="1103" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#7c3aed;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="90" width="14" x="753" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="21" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#7c3aed;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="350" width="14" x="753" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="22" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#9333ea;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="60" width="14" x="1453" y="820" as="geometry" />
+        </mxCell>
+        <mxCell id="23" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#166534;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="170" width="14" x="1103" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="24" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#7c3aed;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="95" width="14" x="753" y="1190" as="geometry" />
+        </mxCell>
+        <mxCell id="25" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#7c3aed;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="220" width="14" x="753" y="1365" as="geometry" />
+        </mxCell>
+        <mxCell id="26" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#166534;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="130" width="14" x="1103" y="1410" as="geometry" />
+        </mxCell>
+        <mxCell id="27" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Accede a /admin y abre gestión de pipelines">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="122" y="190" as="sourcePoint" />
+            <mxPoint x="423" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="28" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Muestra panel de administración">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="423" y="240" as="sourcePoint" />
+            <mxPoint x="122" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="29" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Solicita cargar inventario técnico">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="122" y="285" as="sourcePoint" />
+            <mxPoint x="423" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="30" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="GET /api/v1/detalles_completos&#xa;GET /api/v1/admin/catalogo_ia">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="437" y="320" as="sourcePoint" />
+            <mxPoint x="753" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="31" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Valida JWT y rol admin">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="767" y="355" as="sourcePoint" />
+            <mxPoint x="1453" y="355" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="32" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Token y rol correctos">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1453" y="390" as="sourcePoint" />
+            <mxPoint x="767" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="33" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Consulta pipelines, etapas, modelos y modos">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="767" y="430" as="sourcePoint" />
+            <mxPoint x="1103" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="34" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Inventario técnico">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1103" y="480" as="sourcePoint" />
+            <mxPoint x="767" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="35" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="200 Listado de pipelines + catálogo IA">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="753" y="525" as="sourcePoint" />
+            <mxPoint x="437" y="525" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="36" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Muestra pipelines existentes y formulario de edición">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="423" y="570" as="sourcePoint" />
+            <mxPoint x="122" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="37" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#94a3b8;dashed=1;dashPattern=6 4;strokeWidth=1.5;" value="" vertex="1">
+          <mxGeometry height="115" width="775" x="55" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="38" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontSize=11;fontStyle=1;align=left;spacingLeft=6;" value="alt [token inválido o usuario no administrador]" vertex="1">
+          <mxGeometry height="24" width="340" x="55" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="39" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#dc2626;" value="401/403 Acceso denegado">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="753" y="645" as="sourcePoint" />
+            <mxPoint x="437" y="645" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="40" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#dc2626;" value="Muestra error al administrador">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="423" y="690" as="sourcePoint" />
+            <mxPoint x="122" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="41" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Crea/edita pipeline y define etapas">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="122" y="765" as="sourcePoint" />
+            <mxPoint x="423" y="765" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="42" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="POST /api/v1/admin/pipelines o PUT&#xa;/api/v1/admin/pipelines/{id}">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="437" y="805" as="sourcePoint" />
+            <mxPoint x="753" y="805" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="43" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Valida JWT y rol admin">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="767" y="835" as="sourcePoint" />
+            <mxPoint x="1453" y="835" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="44" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Autorización correcta">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1453" y="870" as="sourcePoint" />
+            <mxPoint x="767" y="870" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="45" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Comprueba IA/modo y coherencia de etapas">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="767" y="910" as="sourcePoint" />
+            <mxPoint x="1103" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="46" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Modelos y modos válidos">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1103" y="955" as="sourcePoint" />
+            <mxPoint x="767" y="955" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="47" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Inserta/actualiza PIPELINE y PIPELINE_ETAPA&#xa;commit()">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="767" y="995" as="sourcePoint" />
+            <mxPoint x="1103" y="995" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="48" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Persistencia correcta">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1103" y="1040" as="sourcePoint" />
+            <mxPoint x="767" y="1040" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="49" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="201/200 Pipeline guardado">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="753" y="1090" as="sourcePoint" />
+            <mxPoint x="437" y="1090" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="50" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Confirma operación y refresca listado">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="423" y="1135" as="sourcePoint" />
+            <mxPoint x="122" y="1135" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="51" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#94a3b8;dashed=1;dashPattern=6 4;strokeWidth=1.5;" value="" vertex="1">
+          <mxGeometry height="125" width="805" x="55" y="1170" as="geometry" />
+        </mxCell>
+        <mxCell id="52" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontSize=11;fontStyle=1;align=left;spacingLeft=6;" value="alt [pipeline inexistente, etapa inválida o modelo deshabilitado]" vertex="1">
+          <mxGeometry height="24" width="340" x="55" y="1170" as="geometry" />
+        </mxCell>
+        <mxCell id="53" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#dc2626;" value="400/404 Error de validación">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="753" y="1225" as="sourcePoint" />
+            <mxPoint x="437" y="1225" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="54" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#dc2626;" value="Muestra el error recibido">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="423" y="1270" as="sourcePoint" />
+            <mxPoint x="122" y="1270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="55" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Solicita eliminar un pipeline">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="122" y="1340" as="sourcePoint" />
+            <mxPoint x="423" y="1340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="56" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="DELETE /api/v1/admin/pipelines/{id}">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="437" y="1380" as="sourcePoint" />
+            <mxPoint x="753" y="1380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="57" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Busca pipeline y ejecuciones asociadas">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="767" y="1420" as="sourcePoint" />
+            <mxPoint x="1103" y="1420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="58" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Resultado de comprobación">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1103" y="1460" as="sourcePoint" />
+            <mxPoint x="767" y="1460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="59" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#94a3b8;dashed=1;dashPattern=6 4;strokeWidth=1.5;" value="" vertex="1">
+          <mxGeometry height="105" width="1165" x="55" y="1485" as="geometry" />
+        </mxCell>
+        <mxCell id="60" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;fontSize=11;fontStyle=1;align=left;spacingLeft=6;" value="alt [existen ejecuciones asociadas]" vertex="1">
+          <mxGeometry height="24" width="257" x="55" y="1485" as="geometry" />
+        </mxCell>
+        <mxCell id="61" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#1f2937;" value="Deshabilita pipeline en lugar de borrarlo">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="767" y="1525" as="sourcePoint" />
+            <mxPoint x="1103" y="1525" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="62" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="200 Pipeline deshabilitado">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="753" y="1570" as="sourcePoint" />
+            <mxPoint x="437" y="1570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="63" edge="1" parent="1" style="endArrow=block;html=1;rounded=0;strokeWidth=1.4;strokeColor=#15803d;" value="Actualiza el listado mostrado">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="423" y="1610" as="sourcePoint" />
+            <mxPoint x="122" y="1610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="H2PDR5IwXhICjboG0XpQ-63" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;strokeColor=#94a3b8;dashed=1;dashPattern=4 4;" target="18" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1460" y="155" as="sourcePoint" />
+            <mxPoint x="1460" y="1562" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="18" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#9333ea;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="60" width="14" x="1453" y="340" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

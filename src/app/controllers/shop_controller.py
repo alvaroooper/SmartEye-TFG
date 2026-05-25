@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from app.utils.fechas import ahora_utc_naive, formatear_fecha_local
 from app import db
 from app.models import Pipeline, PipelineEtapa, IAModo, IAModelo, Alquila, SuscripcionPlan, TipoPlan
 
@@ -20,7 +21,7 @@ def list_shop():
     """
     try:
         usuario_id = get_jwt_identity()
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
         
         # Uso de db.session.query para compatibilidad con SQLAlchemy 2.0
         modelos_ia = db.session.query(IAModelo).filter_by(habilitada=True).all()
@@ -59,7 +60,7 @@ def rent_model(id_ia):
     Implementa validación de solapamiento contractual y sanitización de fechas.
     """
     usuario_id = get_jwt_identity()
-    ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    ahora_naive = ahora_utc_naive()
     
     datos = request.get_json() or {}
     quiere_renovacion = datos.get('renovacion_auto', False)
@@ -121,7 +122,7 @@ def list_planes():
     """Retorna la matriz de niveles de servicio (Tiers) y la vinculación actual del usuario."""
     try:
         usuario_id = get_jwt_identity()
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
         planes = db.session.query(TipoPlan).filter_by(habilitado=True).all()
         
         suscripciones = db.session.query(SuscripcionPlan).filter(
@@ -157,7 +158,7 @@ def suscribir_plan(id_plan):
     Revoca automáticamente planes previos para mantener la consistencia (Suscripción Única).
     """
     usuario_id = get_jwt_identity()
-    ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+    ahora_naive = ahora_utc_naive()
     
     datos = request.get_json() or {}
     quiere_renovacion = datos.get('renovacion_auto', False)
@@ -212,7 +213,7 @@ def mis_compras():
     """Consolida todos los activos lógicos (suscripciones y licencias) vinculados a la identidad."""
     try:
         usuario_id = get_jwt_identity()
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
         
         # 1. Auditoría de Licencias de IA
         alquileres = db.session.query(Alquila).filter(
@@ -229,8 +230,8 @@ def mis_compras():
                 datos_alquileres.append({
                     "id_compra": a.id_compra,
                     "nombre": ia.nombre.capitalize(),
-                    "fecha_inicio": a.periodo_inicio.strftime('%d/%m/%Y'),
-                    "fecha_fin": a.periodo_fin.strftime('%d/%m/%Y') if a.periodo_fin else "Vitalicio",
+                    "fecha_inicio": formatear_fecha_local(a.periodo_inicio, "%d/%m/%Y"),
+                    "fecha_fin": formatear_fecha_local(a.periodo_fin, "%d/%m/%Y", "Vitalicio"),
                     "estado": estado,
                     "renovacion_auto": True if a.renovacion_auto == 1 else False,
                     "importe": str(a.importe)
@@ -252,8 +253,8 @@ def mis_compras():
                 datos_planes.append({
                     "id_suscripcion": sub.id_suscripcion,
                     "nombre": plan.nombre,
-                    "fecha_inicio": sub.fecha_inicio.strftime('%d/%m/%Y'),
-                    "fecha_fin": sub.fecha_fin.strftime('%d/%m/%Y') if sub.fecha_fin else "Vitalicio",
+                    "fecha_inicio": formatear_fecha_local(sub.fecha_inicio, "%d/%m/%Y"),
+                    "fecha_fin": formatear_fecha_local(sub.fecha_fin, "%d/%m/%Y", "Vitalicio"),
                     "estado": estado,
                     "renovacion_auto": True if sub.renovacion_auto == 1 else False,
                     "importe": str(precio_float),
@@ -310,7 +311,7 @@ def empezar_ahora_alquiler(id_compra):
         
         if not alquiler: return jsonify({"status": "error", "mensaje": "Licencia no localizada"}), 404
         
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
         alquiler.periodo_inicio = ahora_naive
         alquiler.periodo_fin = ahora_naive + timedelta(days=30)
         db.session.commit()
@@ -329,7 +330,7 @@ def empezar_ahora_plan(id_suscripcion):
         
         if not sub: return jsonify({"status": "error", "mensaje": "Contrato no localizado"}), 404
         
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
         sub.fecha_inicio = ahora_naive
         if sub.fecha_fin: 
             sub.fecha_fin = ahora_naive + timedelta(days=30)
@@ -352,7 +353,7 @@ def guia_pipelines():
     """
     try:
         usuario_id = get_jwt_identity()
-        ahora_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        ahora_naive = ahora_utc_naive()
         
         # Bypass global por suscripción Pro
         es_pro_activo = db.session.query(SuscripcionPlan).join(TipoPlan).filter(

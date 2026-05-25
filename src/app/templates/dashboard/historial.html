@@ -55,7 +55,7 @@
                     <th>Resultados</th> </tr>
             </thead>
             <tbody id="tbodyHistorial">
-                <tr><td colspan="5" class="empty-state">Cargando historial...</td></tr>
+                <tr><td colspan="6" class="empty-state">Cargando historial...</td></tr>
             </tbody>
         </table>
     </div>
@@ -80,7 +80,7 @@
             tbody.innerHTML = ''; 
 
             if (ejecuciones.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aún no has ejecutado ningún pipeline.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Aún no has ejecutado ningún pipeline.</td></tr>';
                 return;
             }
 
@@ -126,7 +126,7 @@
             });
 
         } catch (error) {
-            tbody.innerHTML = `<tr><td colspan="5" style="color: red; text-align: center;">Error de conexión: ${error.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error de conexión: ${error.message}</td></tr>`;
         }
     }
 
@@ -141,10 +141,7 @@
         }
     }
     function abrirPestanaResultados(id) {
-        // 1. Copiamos el token al localStorage para que la nueva pestaña pueda verlo
-        localStorage.setItem('puente_token', sessionStorage.getItem('jwt_token'));
-        // 2. Abrimos la nueva pestaña
-        window.open(`/resultados/${id}`, '_blank');
+        window.location.href = `/resultados/${id}`;
     }
 </script>
 </body>

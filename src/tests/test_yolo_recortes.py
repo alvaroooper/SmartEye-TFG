@@ -12,7 +12,12 @@ def test_configuracion_invalida(mock_imread):
     from app.services.ai_factory.yolo.recortes import procesar_recortes_personas
     
     # Le pasamos un string en lugar de un número
-    config_erronea = {"conf": "texto_invalido"}
+    config_erronea = {
+        "conf": "texto_invalido",
+        "iou": "texto_invalido",
+        "imgsz": "texto_invalido",
+        "scale_factor": "texto_invalido"
+    }   
     
     with pytest.raises(ValueError) as exc:
         procesar_recortes_personas("/tmp/input.jpg", config=config_erronea)
@@ -77,7 +82,7 @@ def test_procesar_recortes_exito(mock_imwrite, mock_resize, mock_imread, mock_yo
     # --- EJECUCIÓN ---
     rutas, datos_json = procesar_recortes_personas(
         imagen_path="/tmp/foto.jpg", 
-        config={"conf": 0.5, "scale_factor": 2.0}, 
+        config={"conf": 0.5,"iou": 0.45,"imgsz": 640, "scale_factor": 2.0}, 
         prefijo="test"
     )
     
