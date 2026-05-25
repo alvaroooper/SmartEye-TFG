@@ -1,9 +1,33 @@
 \apendice{Anexo de sostenibilización curricular}
 
 \section{Introducción}
-Este anexo incluirá una reflexión personal del alumnado sobre los aspectos de la sostenibilidad que se abordan en el trabajo.
-Se pueden incluir tantas subsecciones como sean necesarias con la intención de explicar las competencias de sostenibilidad adquiridas durante el alumnado y aplicadas al Trabajo de Fin de Grado.
 
-Más información en el documento de la CRUE \url{https://www.crue.org/wp-content/uploads/2020/02/Directrices_Sosteniblidad_Crue2012.pdf}.
+Este anexo recoge una reflexión personal sobre la relación entre el Trabajo de Fin de Grado desarrollado y los principios de sostenibilidad trabajados durante la formación universitaria. Aunque el proyecto tiene un carácter principalmente técnico, centrado en el desarrollo de una aplicación web para la orquestación de modelos de inteligencia artificial aplicados al procesamiento de imágenes, su diseño también incorpora decisiones vinculadas con la sostenibilidad ambiental, social, económica y ética.
 
-Este anexo tendrá una extensión comprendida entre 600 y 800 palabras.
+La sostenibilidad no se ha entendido únicamente como una cuestión medioambiental, sino como una forma de diseñar tecnología responsable, mantenible, segura y útil para las personas. En este sentido, el proyecto se relaciona especialmente con los Objetivos de Desarrollo Sostenible 8 y 9 de la Agenda 2030: trabajo decente y crecimiento económico, e industria, innovación e infraestructura.
+
+\section{Innovación, infraestructura y mantenibilidad}
+
+Uno de los aspectos más relevantes del proyecto es la construcción de una plataforma modular capaz de integrar distintos modelos de inteligencia artificial y diferentes modos de ejecución. La aplicación no se limita a ejecutar un único algoritmo, sino que permite organizar modelos en pipelines configurables. Esto favorece una infraestructura software flexible, alineada con el ODS 9.
+
+Desde el punto de vista de sostenibilidad tecnológica, esta decisión evita desarrollar una aplicación distinta para cada modelo o caso de uso. En lugar de duplicar soluciones, se ha diseñado una arquitectura basada en separación de responsabilidades, servicios y patrones de creación, de modo que la incorporación de nuevos modelos pueda realizarse con menor impacto sobre el código existente. Esta forma de trabajar contribuye a reducir deuda técnica y facilita la evolución futura del sistema.
+
+También se ha incorporado Docker como mecanismo de despliegue reproducible. Esta decisión mejora la portabilidad del proyecto, reduce problemas derivados de diferencias entre entornos y facilita que otros usuarios puedan ejecutar la aplicación sin instalar manualmente todas las dependencias.
+
+\section{Uso responsable de recursos y datos}
+
+El proyecto incorpora decisiones orientadas a un uso más responsable de los recursos computacionales y del almacenamiento. Las imágenes y resultados generados durante las ejecuciones no se almacenan indefinidamente, sino que se gestionan como archivos temporales con políticas de expiración. Esta medida evita la acumulación innecesaria de datos, reduce el uso de almacenamiento y limita la permanencia de información sensible.
+
+Además, se ha trabajado con modelos que pueden quedar disponibles de forma local una vez descargados, reduciendo la dependencia de llamadas externas continuas. Desde el punto de vista ético, se ha tenido en cuenta que el procesamiento de imágenes puede implicar información sensible. Por ello, el sistema evita exponer rutas internas de archivos y utiliza tokens para acceder a los resultados.
+
+\section{Relación con el trabajo decente y la formación profesional}
+
+El proyecto también se relaciona con el ODS 8, ya que desarrolla competencias técnicas aplicables al ámbito profesional: diseño de arquitecturas web, persistencia de datos, pruebas automatizadas, despliegue mediante contenedores, control de acceso y uso de modelos de inteligencia artificial. Estas competencias son relevantes para el desarrollo de software de calidad y para la incorporación responsable de tecnologías emergentes.
+
+Durante el desarrollo he aprendido que la sostenibilidad de un sistema no depende solo de su funcionalidad inicial, sino también de su mantenibilidad, seguridad y capacidad de evolución. Un proyecto difícil de desplegar, probar o ampliar acaba consumiendo más recursos técnicos y humanos. Por ello, decisiones como la modularidad, la documentación, los tests unitarios y la cobertura del backend forman parte de una visión sostenible del desarrollo software.
+
+\section{Conclusión}
+
+La realización de este Trabajo de Fin de Grado me ha permitido aplicar la sostenibilidad desde una perspectiva informática práctica. El proyecto no resuelve por sí solo un problema medioambiental, pero sí incorpora principios de diseño responsable: reutilización, modularidad, control de recursos, protección de datos, despliegue reproducible y facilidad de mantenimiento.
+
+Como aprendizaje personal, considero que la sostenibilidad curricular en ingeniería informática implica tomar decisiones técnicas pensando no solo en que el sistema funcione, sino en que pueda mantenerse, auditarse, ampliarse y utilizarse de forma segura. Esta visión resulta fundamental para desarrollar tecnología útil, responsable y alineada con las necesidades sociales y profesionales actuales.
