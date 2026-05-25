@@ -20,19 +20,19 @@ jobs:
 
     steps:
       - name: Descargar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Configurar Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
       - name: Instalar dependencias del sistema
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1 libglib2.0-0
+          sudo apt-get install -y libgl1 libglib2.0-0 gpg dirmngr
 
       - name: Instalar dependencias Python
         run: |
@@ -43,8 +43,8 @@ jobs:
       - name: Ejecutar tests con cobertura
         run: |
           pytest src/tests --cov=src --cov-report=xml:coverage.xml --cov-report=term-missing
-          
+
       - name: Analizar con SonarCloud
-        uses: SonarSource/sonarqube-scan-action@v7
+        uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
