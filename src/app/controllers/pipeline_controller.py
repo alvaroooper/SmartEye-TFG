@@ -16,6 +16,9 @@ from app.models import (
 
 pipeline_bp = Blueprint('pipeline', __name__)
 
+# Mensajes reutilizables
+PRIVILEGIOS_INSUFICIENTES = "Privilegios insuficientes"
+
 # ==============================================================================
 # CONFIGURACIÓN DEL ENTORNO DE EJECUCIÓN
 # ==============================================================================

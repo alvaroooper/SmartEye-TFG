@@ -21,12 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng16-16 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY requirements.lock .
 
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
-
-RUN groupadd --gid 1000 appgroup \
+RUN python -m pip install --no-cache-dir --only-binary=:all: --require-hashes -r requirements.lock \
+    && groupadd --gid 1000 appgroup \
     && useradd --uid 1000 --gid appgroup --home-dir /app --shell /usr/sbin/nologin appuser
 
 COPY app ./app
