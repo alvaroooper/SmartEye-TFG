@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Iniciar Sesión - IA Explorer</title>
     <style>
         /* Configuración de estilos base y layout centralizado */
@@ -110,11 +111,11 @@
     
     <form id="formLogin">
         <div class="form-group">
-            <label>Email o Nombre de Usuario</label>
+            <label for="identificador">Email o Nombre de Usuario</label>
             <input type="text" id="identificador" placeholder="ejemplo@tfg.es o usuario99" required>
         </div>
         <div class="form-group">
-            <label>Contraseña</label>
+            <label for="password">Contraseña</label>
             <input type="password" id="password" placeholder="••••••••" required>
         </div>
         <button type="submit" id="btnEntrar">Entrar al Panel</button>
@@ -156,7 +157,10 @@
             // Petición al endpoint de autenticación unificado
             const response = await fetch('/api/v1/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content 
+                },
                 body: JSON.stringify({ identificador, password })
             });
 

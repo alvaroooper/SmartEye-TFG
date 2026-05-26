@@ -314,7 +314,7 @@ def admin_cambiar_estado(id_usuario):
             "status": "success", 
             "mensaje": f"Estado operativo de '{usuario.username}' modificado a '{nuevo_estado}'."
         }), 200
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return jsonify({"mensaje": "Fallo de actualización en la base de datos."}), 500
     

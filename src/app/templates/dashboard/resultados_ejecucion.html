@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Resultados de Ejecución - IA Explorer</title>
     <style>
         /* ==========================================================================
@@ -218,7 +219,7 @@
         try {
             // --- 2. PETICIÓN DE ARCHIVOS A LA API ---
             const response = await fetch(`/api/v1/ejecucion/${idEjecucion}/archivos`, {
-                headers: { 'Authorization': 'Bearer ' + token }
+                headers: { 'Authorization': 'Bearer ' + token,'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             
             if (!response.ok) {
@@ -340,7 +341,9 @@
                     this.innerText = 'Consultando Servidor...';
                     try {
                         const tokenJson = this.getAttribute('data-token');
-                        const res = await fetch(`/api/v1/outputs/${tokenJson}`);
+                        const res = await fetch(`/api/v1/outputs/${tokenJson}`, {
+                            headers: { 'Authorization': 'Bearer ' + token,'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
+                        });
                         
                         // Validación de disponibilidad del archivo físico
                         if (!res.ok) throw new Error("El archivo ha sido purgado del almacenamiento persistente.");

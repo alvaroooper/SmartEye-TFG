@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Historial de Ejecuciones - IA Explorer</title>
     <style>
         :root { --primary: #0056b3; --bg: #f4f7f6; --text: #333; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
@@ -71,7 +72,7 @@
 
         try {
             const response = await fetch('/api/v1/historial', {
-                headers: { 'Authorization': 'Bearer ' + token }
+                headers: { 'Authorization': 'Bearer ' + token, 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             
             if (!response.ok) throw new Error("Error al cargar el historial");

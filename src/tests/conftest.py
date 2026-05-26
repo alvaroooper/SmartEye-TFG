@@ -10,6 +10,11 @@ class TestConfig:
     # No afecta a la base de datos real del proyecto.
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Desactivación de CSRF únicamente en entorno de pruebas automatizadas.
+    # Los tests validan la lógica de API, autenticación, permisos y persistencia,
+    # no el envío de tokens CSRF desde formularios HTML.
+    WTF_CSRF_ENABLED = False
 
     # Claves fijas únicamente para entorno de test.
     SECRET_KEY = 'test_secret'

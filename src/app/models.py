@@ -2,13 +2,16 @@ from app.utils.fechas import ahora_utc_naive
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 
+# Constantes reutilizables para referencias de clave externa
+USUARIO_ID_FK = 'USUARIO.id_usuario'
+
 # ==============================================================================
 # ENTIDADES DE RELACIÓN Y TABLAS ASOCIATIVAS
 # ==============================================================================
 
 # Implementación de la relación Many-to-Many para el control de acceso (RBAC)
 usuario_rol = db.Table('USUARIO_ROL',
-    db.Column('id_usuario', db.Integer, db.ForeignKey('USUARIO.id_usuario', ondelete='CASCADE'), primary_key=True),
+    db.Column('id_usuario', db.Integer, db.ForeignKey(USUARIO_ID_FK, ondelete='CASCADE'), primary_key=True),
     db.Column('id_rol', db.Integer, db.ForeignKey('ROL.id_rol', ondelete='RESTRICT'), primary_key=True)
 )
 
@@ -71,7 +74,7 @@ class SuscripcionPlan(db.Model):
     """Persistencia de contratos de suscripción y vigencia de servicios premium."""
     __tablename__ = 'SUSCRIPCION_PLAN'
     id_suscripcion = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_usuario = db.Column(db.Integer, db.ForeignKey('USUARIO.id_usuario', ondelete='RESTRICT'), nullable=False)
+    id_usuario = db.Column(db.Integer, db.ForeignKey(USUARIO_ID_FK, ondelete='RESTRICT'), nullable=False)
     id_plan = db.Column(db.Integer, db.ForeignKey('TIPO_PLAN.id_plan', ondelete='RESTRICT'), nullable=False)
     fecha_compra = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
     fecha_inicio = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
@@ -118,7 +121,7 @@ class Alquila(db.Model):
     """Gestión de licencias temporales para motores de IA bajo demanda."""
     __tablename__ = 'ALQUILA'
     id_compra = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_usuario = db.Column(db.Integer, db.ForeignKey('USUARIO.id_usuario', ondelete='RESTRICT'), nullable=False)
+    id_usuario = db.Column(db.Integer, db.ForeignKey(USUARIO_ID_FK, ondelete='RESTRICT'), nullable=False)
     id_ia = db.Column(db.Integer, db.ForeignKey('IA_MODELO.id_ia', ondelete='RESTRICT'), nullable=False)
     fecha_compra = db.Column(db.DateTime, nullable=False, default=ahora_utc_naive)
     periodo_inicio = db.Column(db.DateTime, nullable=True)
@@ -136,7 +139,7 @@ class Pipeline(db.Model):
     """Definición estructural de flujos de trabajo secuenciales (IA Workflows)."""
     __tablename__ = 'PIPELINE'
     id_pipeline = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_usuario = db.Column(db.Integer, db.ForeignKey('USUARIO.id_usuario', ondelete='SET NULL'), nullable=True)
+    id_usuario = db.Column(db.Integer, db.ForeignKey(USUARIO_ID_FK, ondelete='SET NULL'), nullable=True)
     nombre = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
     habilitado = db.Column(db.Boolean, nullable=False, default=True)
@@ -149,7 +152,7 @@ class Ejecucion(db.Model):
     """Auditoría y registro histórico de procesamientos ejecutados en el motor."""
     __tablename__ = 'EJECUCION'
     id_ejecucion = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_usuario = db.Column(db.Integer, db.ForeignKey('USUARIO.id_usuario', ondelete='RESTRICT'), nullable=False)
+    id_usuario = db.Column(db.Integer, db.ForeignKey(USUARIO_ID_FK, ondelete='RESTRICT'), nullable=False)
     id_pipeline = db.Column(db.Integer, db.ForeignKey('PIPELINE.id_pipeline', ondelete='RESTRICT'), nullable=False)
     estado = db.Column(db.String(50), nullable=False, default='pendiente')
     duracion_ms = db.Column(db.Integer, nullable=True)

@@ -1,15 +1,18 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from config import Config
 
 # ==============================================================================
 # INICIALIZACIÓN DE EXTENSIONES GLOBALES
 # ==============================================================================
-# Se instancian los objetos de persistencia y seguridad fuera del factory para 
+# Se instancian los objetos de persistencia y seguridad fuera del factory para
 # permitir su acceso global, vinculándolos dinámicamente en el tiempo de ejecución.
 db = SQLAlchemy()
 jwt = JWTManager()
+csrf = CSRFProtect()
+
 
 def create_app(config_class=Config):
     """
@@ -18,14 +21,30 @@ def create_app(config_class=Config):
     registro de controladores y definición de la capa de presentación.
     """
     app = Flask(__name__)
-    
+
     # Carga de la configuración del sistema
     app.config.from_object(config_class)
-    
+
     # Inicialización de extensiones bajo el contexto de la aplicación
     db.init_app(app)
     jwt.init_app(app)
-    
+    csrf.init_app(app)
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        """
+        Gestión homogénea de errores CSRF.
+
+        En las rutas API se devuelve una respuesta JSON para mantener el contrato
+        de comunicación con el frontend. En el resto de casos se informa igualmente
+        del rechazo de la petición.
+        """
+        return jsonify({
+            "status": "error",
+            "mensaje": "Token CSRF ausente o inválido.",
+            "detalle": error.description
+        }), 400
+
     # ==========================================================================
     # REGISTRO DE MÓDULOS (BLUEPRINTS) - CONTROLADORES API
     # ==========================================================================
@@ -42,58 +61,58 @@ def create_app(config_class=Config):
     # ==========================================================================
     # DEFINICIÓN DE RUTAS: INTERFAZ WEB (FRONTEND)
     # ==========================================================================
-    
-    @app.route('/')
+
+    @app.route('/', methods=['GET'])
     def index():
         """Página de inicio pública."""
         return render_template('public/index.html')
 
-    @app.route('/login')
+    @app.route('/login', methods=['GET'])
     def login_page():
         """Punto de acceso de usuarios."""
         return render_template('public/login.html')
 
-    @app.route('/registro')
+    @app.route('/registro', methods=['GET'])
     def registro_page():
         """Formulario de alta de nuevos usuarios."""
         return render_template('public/registro.html')
 
-    @app.route('/dashboard')
+    @app.route('/dashboard', methods=['GET'])
     def dashboard():
         """Panel principal de usuario autenticado."""
-        return render_template('dashboard/usuario_panel.html') 
-    
-    @app.route('/perfil')
+        return render_template('dashboard/usuario_panel.html')
+
+    @app.route('/perfil', methods=['GET'])
     def vista_perfil():
         """Gestión de cuenta y configuración de usuario."""
         return render_template('dashboard/perfil.html')
 
-    @app.route('/admin')
+    @app.route('/admin', methods=['GET'])
     def admin_panel():
         """Consola de administración y auditoría del sistema."""
         return render_template('admin/admin_panel.html')
-    
-    @app.route('/shop')
+
+    @app.route('/shop', methods=['GET'])
     def shop_view():
         """Marketplace de servicios y modelos de IA."""
         return render_template('dashboard/shop.html')
-    
-    @app.route('/mis-compras')
+
+    @app.route('/mis-compras', methods=['GET'])
     def mis_compras_view():
         """Listado de servicios contratados por el usuario."""
         return render_template('dashboard/mis_compras.html')
-    
-    @app.route('/guia-compra')
+
+    @app.route('/guia-compra', methods=['GET'])
     def guia_compra_view():
         """Manual de usuario y guía técnica de adquisición."""
         return render_template('dashboard/guia_compra.html')
-    
-    @app.route('/historial')
+
+    @app.route('/historial', methods=['GET'])
     def historial_view():
         """Registro histórico de ejecuciones realizadas."""
         return render_template('dashboard/historial.html')
-    
-    @app.route('/resultados/<int:id_ejecucion>')
+
+    @app.route('/resultados/<int:id_ejecucion>', methods=['GET'])
     def resultados_view(id_ejecucion):
         """Vista detallada de los resultados de un proceso específico."""
         return render_template('dashboard/resultados_ejecucion.html', id_ejecucion=id_ejecucion)

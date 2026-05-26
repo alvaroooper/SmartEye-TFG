@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Mi Perfil - IA Explorer</title>
     <style>
         /* Paleta de colores profesional */
@@ -174,19 +175,19 @@
         <h3>👤 Información de mi Cuenta</h3>
         <div class="info-grid">
             <div class="info-item">
-                <label>Nombre Visible Actual</label>
+                <div class="info-label">Nombre Visible Actual</div>
                 <span id="cur_nombre">Cargando...</span>
             </div>
             <div class="info-item">
-                <label>Nombre de Usuario (Login)</label>
+                <div class="info-label">Nombre de Usuario (Login)</div>
                 <span id="cur_username">Cargando...</span>
             </div>
             <div class="info-item">
-                <label>Correo Electrónico</label>
+                <div class="info-label">Correo Electrónico</div>
                 <span id="cur_email">Cargando...</span>
             </div>
             <div class="info-item">
-                <label>Fecha de Registro</label>
+                <div class="info-label">Fecha de Registro</div>
                 <span id="cur_fecha">Cargando...</span>
             </div>
         </div>
@@ -249,7 +250,9 @@
     async function cargarDatosPerfil() {
         try {
             const response = await fetch('/api/v1/auth/perfil', {
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                 }
             });
             const res = await response.json();
             
@@ -324,7 +327,8 @@
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') 
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify(payload)
             });
@@ -375,7 +379,7 @@
         try {
             const response = await fetch('/api/v1/auth/cuenta', {
                 method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'), 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             
             if (response.ok) {

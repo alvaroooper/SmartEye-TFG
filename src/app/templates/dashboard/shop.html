@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Tienda de Modelos IA - IA Explorer</title>
     <style>
         :root { --primary: #0056b3; --bg: #f4f7f6; --success: #28a745; --text: #333; }
@@ -92,7 +93,7 @@
             const hoy = new Date().toISOString().split('T')[0];
             
             const response = await fetch('/api/v1/shop/modelos', {
-                headers: { 'Authorization': 'Bearer ' + token }
+                headers: { 'Authorization': 'Bearer ' + token, 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             const modelos = await response.json();
             contenedor.innerHTML = ''; 
@@ -157,7 +158,8 @@
                 method: 'POST',
                 headers: { 
                     'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
-                    'Content-Type': 'application/json' 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content 
                 },
                 body: JSON.stringify({ renovacion_auto: quiereRenovacion, fecha_inicio: fechaElegida })
             });
@@ -185,7 +187,7 @@
             const hoy = new Date().toISOString().split('T')[0];
             
             const response = await fetch('/api/v1/shop/planes', {
-                headers: { 'Authorization': 'Bearer ' + token }
+                headers: { 'Authorization': 'Bearer ' + token, 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             const planes = await response.json();
             contenedor.innerHTML = ''; 
@@ -261,7 +263,8 @@
                 method: 'POST',
                 headers: { 
                     'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({ renovacion_auto: quiereRenovacion, fecha_inicio: fechaElegida })
             });
