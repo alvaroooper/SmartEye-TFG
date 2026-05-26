@@ -2,10 +2,737 @@
 
 \section{Introducción}
 
+Este apéndice recoge la información técnica necesaria para comprender, instalar y ejecutar el proyecto desde el punto de vista de un programador. A diferencia de la documentación de usuario, orientada al uso funcional de la aplicación, esta sección describe la estructura interna del código, los principales módulos que componen el sistema y las formas disponibles para preparar un entorno de desarrollo o ejecución.
+
+La aplicación ha sido desarrollada en Python utilizando Flask como framework web principal. La persistencia se realiza mediante SQLAlchemy y Flask-SQLAlchemy sobre una base de datos MariaDB. El procesamiento de imágenes se apoya en librerías de visión por computador e inteligencia artificial como OpenCV, MediaPipe y Ultralytics/YOLO.
+
+Desde el punto de vista técnico, el proyecto puede ejecutarse mediante Docker Compose o mediante un entorno virtual de Python. La ejecución Docker se documenta en el manual de usuario, mientras que en este apéndice se detalla el entorno local de desarrollo empleado por programadores.
+
+\begin{itemize}
+	\item \textbf{Ejecución mediante Docker Compose:} recomendada para levantar el sistema completo de forma reproducible, incluyendo la aplicación web y la base de datos MariaDB.
+	\item \textbf{Ejecución mediante entorno virtual de Python:} recomendada para programadores que quieran modificar el código, depurar la aplicación o ejecutar pruebas directamente desde el sistema anfitrión.
+\end{itemize}
+
+La ejecución mediante Docker reduce la necesidad de instalar dependencias manualmente, ya que la aplicación web, sus dependencias Python y la base de datos se encapsulan en contenedores. En cambio, la ejecución mediante entorno virtual resulta más flexible durante el desarrollo, aunque requiere instalar previamente Python, MariaDB y algunas librerías del sistema.
+
 \section{Estructura de directorios}
+
+El código fuente ejecutable del proyecto se encuentra dentro del directorio \texttt{src} del repositorio. Esta carpeta contiene la aplicación Flask, los servicios de procesamiento, los controladores, las plantillas HTML, los ficheros de configuración de los modelos y las pruebas automatizadas.
+
+La estructura principal del proyecto es la siguiente:
+
+\begin{verbatim}
+	src/
+	|-- app/
+	|   |-- __init__.py
+	|   |-- models.py
+	|   |-- utils/
+	|   |   |-- fechas.py
+	|   |-- controllers/
+	|   |   |-- __init__.py
+	|   |   |-- auth_controller.py
+	|   |   |-- pipeline_controller.py
+	|   |   |-- shop_controller.py
+	|   |-- services/
+	|   |   |-- __init__.py
+	|   |   |-- pipeline_runner.py
+	|   |   |-- ai_factory/
+	|   |       |-- __init__.py
+	|   |       |-- interface.py
+	|   |       |-- mediapipe_modelo/
+	|   |       |   |-- __init__.py
+	|   |       |   |-- launcher.py
+	|   |       |   |-- manos.py
+	|   |       |   |-- pose.py
+	|   |       |-- yolo/
+	|   |           |-- __init__.py
+	|   |           |-- launcher.py
+	|   |           |-- deteccion.py
+	|   |           |-- recortes.py
+	|   |-- templates/
+	|       |-- admin/
+	|       |   |-- admin_panel.html
+	|       |-- dashboard/
+	|       |   |-- guia_compra.html
+	|       |   |-- historial.html
+	|       |   |-- mis_compras.html
+	|       |   |-- perfil.html
+	|       |   |-- resultados_ejecucion.html
+	|       |   |-- shop.html
+	|       |   |-- usuario_panel.html
+	|       |-- public/
+	|           |-- index.html
+	|           |-- login.html
+	|           |-- registro.html
+	|
+	|-- configs/
+	|   |-- mp_manos.json
+	|   |-- mp_pose.json
+	|   |-- yolo_deteccion.json
+	|   |-- yolo_recortes.json
+	|
+	|-- models/
+	|   |-- mp/
+	|   |-- yolo/
+	|
+	|-- execution_data/
+	|
+	|-- tests/
+	|   |-- __init__.py
+	|   |-- conftest.py
+	|   |-- test_ai_factory.py
+	|   |-- test_ai_interface.py
+	|   |-- test_auth_controller.py
+	|   |-- test_mediapipe_launcher.py
+	|   |-- test_mediapipe_manos.py
+	|   |-- test_mediapipe_pose.py
+	|   |-- test_models.py
+	|   |-- test_pipeline_controller.py
+	|   |-- test_pipeline_runner.py
+	|   |-- test_shop_controller.py
+	|   |-- test_yolo_deteccion.py
+	|   |-- test_yolo_launcher.py
+	|   |-- test_yolo_recortes.py
+	|
+	|-- config.py
+	|-- run.py
+	|-- seed.py
+	|-- requirements.txt
+	|-- Dockerfile
+	|-- docker-compose.yml
+	|-- entrypoint.sh
+	|-- .env.example
+	|-- .dockerignore
+\end{verbatim}
+
+A continuación se describe la finalidad de los elementos más relevantes:
+
+\begin{itemize}
+	\item \textbf{\texttt{app/}:} contiene el código principal de la aplicación Flask.
+	\item \textbf{\texttt{app/\_\_init\_\_.py}:} implementa la factoría de creación de la aplicación, inicializa las extensiones y registra los distintos blueprints.
+	\item \textbf{\texttt{app/models.py}:} define las entidades persistentes del sistema mediante SQLAlchemy.
+	\item \textbf{\texttt{app/utils/fechas.py}:} centraliza funciones auxiliares relacionadas con fechas, uso de UTC y presentación en zona horaria local.
+	\item \textbf{\texttt{app/controllers/}:} contiene los controladores de autenticación, tienda y ejecución de pipelines.
+	\item \textbf{\texttt{app/services/}:} contiene la lógica de servicio, incluyendo el orquestador de pipelines y la factoría de modelos de inteligencia artificial.
+	\item \textbf{\texttt{app/services/ai\_factory/}:} agrupa la interfaz común y las implementaciones concretas para los motores MediaPipe y YOLO.
+	\item \textbf{\texttt{app/templates/}:} contiene las plantillas HTML de la interfaz web, separadas entre vistas públicas, vistas de usuario autenticado y panel de administración.
+	\item \textbf{\texttt{configs/}:} almacena ficheros JSON con configuraciones predeterminadas para los modos de ejecución disponibles.
+	\item \textbf{\texttt{models/}:} contiene la estructura de carpetas destinada a almacenar modelos y recursos locales de inteligencia artificial.
+	\item \textbf{\texttt{execution\_data/}:} almacena archivos generados durante las ejecuciones, como imágenes originales, imágenes procesadas y resultados JSON.
+	\item \textbf{\texttt{tests/}:} contiene las pruebas automatizadas del proyecto.
+	\item \textbf{\texttt{config.py}:} centraliza la configuración de Flask, JWT y SQLAlchemy a partir de variables de entorno.
+	\item \textbf{\texttt{run.py}:} es el punto de entrada principal de la aplicación.
+	\item \textbf{\texttt{seed.py}:} inicializa la base de datos, crea las tablas y carga datos de demostración.
+	\item \textbf{\texttt{requirements.txt}:} define las dependencias Python necesarias para ejecutar el proyecto.
+	\item \textbf{\texttt{Dockerfile}:} define la imagen Docker de la aplicación web.
+	\item \textbf{\texttt{docker-compose.yml}:} define los servicios necesarios para ejecutar la aplicación mediante Docker Compose.
+	\item \textbf{\texttt{entrypoint.sh}:} script de arranque del contenedor web, encargado de preparar el entorno, esperar a la base de datos y lanzar la aplicación.
+\end{itemize}
 
 \section{Manual del programador}
 
 \section{Compilación, instalación y ejecución del proyecto}
 
+Al tratarse de una aplicación desarrollada en Python, el proyecto no requiere una fase de compilación tradicional. No obstante, sí es necesario preparar el entorno de ejecución, instalar las dependencias, configurar la conexión con la base de datos e inicializar el esquema de persistencia.
+
+La instalación mediante Docker Compose, orientada a usuarios finales y a la ejecución reproducible del sistema completo, se describe en el apéndice de \textit{Documentación de usuario}, dentro de la sección de instalación. En este apartado se documenta únicamente la preparación de un entorno local de desarrollo mediante un entorno virtual de Python, dirigido a programadores que necesiten modificar el código fuente, depurar la aplicación o ejecutar pruebas automatizadas.
+
+El entorno local de desarrollo se plantea para sistemas GNU/Linux o, en caso de utilizar Windows, mediante WSL2. No se considera como vía principal la ejecución nativa sobre Windows, ya que el proyecto integra dependencias de visión por computador, modelos de inteligencia artificial y una base de datos MariaDB, cuya instalación y comportamiento son más controlables en un entorno Linux. Para equipos Windows, la opción recomendada para ejecutar la aplicación completa es el despliegue Docker descrito en la documentación de usuario.
+
+\subsection{Requisitos previos del entorno de desarrollo}
+
+Para ejecutar el proyecto en un entorno local de programación se requiere disponer de:
+
+\begin{itemize}
+	\item \textbf{Git}, para clonar el repositorio.
+	\item \textbf{Python 3.11}, versión recomendada para el proyecto.
+	\item \textbf{\texttt{venv}}, para crear un entorno virtual aislado.
+	\item \textbf{\texttt{pip}}, para instalar las dependencias Python.
+	\item \textbf{MariaDB}, como sistema gestor de base de datos.
+	\item \textbf{Librerías del sistema}, necesarias para algunas dependencias de visión por computador.
+\end{itemize}
+
+El archivo \texttt{requirements.txt} contiene las dependencias Python necesarias para ejecutar la aplicación, como Flask, SQLAlchemy, Flask-SQLAlchemy, Flask-JWT-Extended, PyMySQL, OpenCV, MediaPipe, Torch, Torchvision, Ultralytics, Gunicorn y Pytest.
+
+Python y MariaDB no aparecen en \texttt{requirements.txt}, ya que no son paquetes instalables mediante \texttt{pip}; deben instalarse previamente en el sistema cuando se trabaja sin Docker.
+
+\subsection{Instalación de herramientas en GNU/Linux}
+
+En sistemas basados en Debian o Ubuntu, se puede instalar Git, Python y las herramientas necesarias con:
+
+\begin{verbatim}
+	sudo apt update
+	sudo apt install -y git python3.11 python3.11-venv python3-pip
+\end{verbatim}
+
+También se debe instalar MariaDB:
+
+\begin{verbatim}
+	sudo apt install -y mariadb-server
+\end{verbatim}
+
+Después, se habilita e inicia el servicio:
+
+\begin{verbatim}
+	sudo systemctl enable mariadb
+	sudo systemctl start mariadb
+\end{verbatim}
+
+Para comprobar que MariaDB está en ejecución:
+
+\begin{verbatim}
+	sudo systemctl status mariadb
+\end{verbatim}
+
+Además, algunas dependencias de visión por computador requieren librerías del sistema. Se recomienda instalar:
+
+\begin{verbatim}
+	sudo apt install -y build-essential ffmpeg libgl1 libglib2.0-0 \
+	libgomp1 libsm6 libxext6 libxrender1
+\end{verbatim}
+
+Estas librerías permiten ejecutar correctamente dependencias relacionadas con OpenCV, MediaPipe y Ultralytics.
+
+\subsection{Obtención del proyecto}
+
+El proyecto se obtiene desde el repositorio de GitHub:
+
+\begin{verbatim}
+	git clone https://github.com/alvaroooper/TFG.git
+\end{verbatim}
+
+Después se accede al directorio donde se encuentra el código fuente ejecutable:
+
+\begin{verbatim}
+	cd TFG/src
+\end{verbatim}
+
+A partir de este punto, todos los comandos deben ejecutarse desde la carpeta \texttt{src}, ya que contiene los archivos principales de la aplicación, como \texttt{run.py}, \texttt{seed.py}, \texttt{config.py}, \texttt{requirements.txt}, la carpeta \texttt{app/}, los ficheros de configuración, los modelos, los archivos temporales y las pruebas.
+
+\subsection{Creación del entorno virtual}
+
+Desde la carpeta \texttt{src}, se crea el entorno virtual con:
+
+\begin{verbatim}
+	python3.11 -m venv .venv
+\end{verbatim}
+
+Después se activa:
+
+\begin{verbatim}
+	source .venv/bin/activate
+\end{verbatim}
+
+Cuando el entorno está activado, la terminal muestra normalmente el prefijo \texttt{(.venv)}.
+
+A continuación, se actualiza \texttt{pip}:
+
+\begin{verbatim}
+	pip install --upgrade pip
+\end{verbatim}
+
+Y se instalan las dependencias del proyecto:
+
+\begin{verbatim}
+	pip install -r requirements.txt
+\end{verbatim}
+
+El mismo archivo \texttt{requirements.txt} se utiliza tanto para la imagen Docker como para el entorno local, ya que recoge las dependencias Python del proyecto. La diferencia es que, en Docker, Python y las librerías del sistema se instalan dentro de la imagen, mientras que en el entorno local deben estar disponibles previamente en el sistema operativo.
+
+\subsection{Configuración de MariaDB local}
+
+En la ejecución local, la base de datos debe crearse manualmente. Para acceder a MariaDB como administrador:
+
+\begin{verbatim}
+	sudo mariadb
+\end{verbatim}
+
+Se crea la base de datos:
+
+\begin{verbatim}
+	CREATE DATABASE ia_orquestada_db
+	CHARACTER SET utf8mb4
+	COLLATE utf8mb4_unicode_ci;
+\end{verbatim}
+
+Después, se crea el usuario de la aplicación:
+
+\begin{verbatim}
+	CREATE USER 'usuarioIAOrquestadaDB'@'localhost'
+	IDENTIFIED BY 'ContrasennaUsuarioTfg2026';
+\end{verbatim}
+
+Se conceden permisos sobre la base de datos:
+
+\begin{verbatim}
+	GRANT ALL PRIVILEGES ON ia_orquestada_db.*
+	TO 'usuarioIAOrquestadaDB'@'localhost';
+\end{verbatim}
+
+Si la conexión se realiza mediante \texttt{127.0.0.1}, también puede crearse el usuario para esa dirección:
+
+\begin{verbatim}
+	CREATE USER 'usuarioIAOrquestadaDB'@'127.0.0.1'
+	IDENTIFIED BY 'ContrasennaUsuarioTfg2026';
+	
+	GRANT ALL PRIVILEGES ON ia_orquestada_db.*
+	TO 'usuarioIAOrquestadaDB'@'127.0.0.1';
+\end{verbatim}
+
+Finalmente, se actualizan los permisos y se sale de MariaDB:
+
+\begin{verbatim}
+	FLUSH PRIVILEGES;
+	EXIT;
+\end{verbatim}
+
+\subsection{Configuración del archivo .env}
+
+La aplicación carga su configuración desde un archivo \texttt{.env}. Si existe un archivo \texttt{.env.example}, se puede copiar para crear el archivo real:
+
+\begin{verbatim}
+	cp .env.example .env
+\end{verbatim}
+
+Para ejecución local mediante entorno virtual, la variable \texttt{DATABASE\_URL} debe apuntar a la base de datos local, no al servicio \texttt{db} utilizado por Docker. Una configuración válida es:
+
+\begin{verbatim}
+	SECRET_KEY=clave-general-flask-tfg-123
+	JWT_SECRET_KEY=super-clave-jwt-tfg-2026-indescifrable
+	
+	DATABASE_URL=mysql+pymysql://usuarioIAOrquestadaDB:ContrasennaUsuarioTfg2026@localhost:3306/ia_orquestada_db?charset=utf8mb4
+\end{verbatim}
+
+El host \texttt{localhost} indica que MariaDB se está ejecutando directamente en la máquina del programador. En el despliegue Docker se utiliza \texttt{db}, pero ese nombre solo existe dentro de la red interna de Docker Compose.
+
+\subsection{Inicialización de la base de datos}
+
+Con el entorno virtual activado y el archivo \texttt{.env} configurado, se inicializa la base de datos mediante:
+
+\begin{verbatim}
+	python seed.py
+\end{verbatim}
+
+Este script elimina las tablas existentes, crea de nuevo el esquema, aplica restricciones adicionales cuando el motor utilizado es MariaDB/MySQL y carga datos iniciales de demostración.
+
+Debe ejecutarse con precaución, ya que reinicializa la base de datos y puede eliminar datos previos.
+
+\subsection{Ejecución de la aplicación}
+
+Con el entorno virtual activado, la aplicación se ejecuta mediante:
+
+\begin{verbatim}
+	python run.py
+\end{verbatim}
+
+El servidor queda disponible en:
+
+\begin{verbatim}
+	http://localhost:5000
+\end{verbatim}
+
+Este modo utiliza el servidor de desarrollo de Flask y resulta adecuado para programación, depuración y comprobación de cambios en el código fuente.
+
+\subsection{Uso de la base de datos Docker desde el entorno local}
+
+Como alternativa para programadores, puede utilizarse un enfoque mixto: ejecutar la aplicación en el entorno virtual local y utilizar únicamente la base de datos MariaDB levantada con Docker Compose. Esta opción evita instalar MariaDB directamente en el sistema, pero mantiene la comodidad de ejecutar y depurar la aplicación fuera del contenedor.
+
+Para ello, se debe levantar únicamente el servicio de base de datos, tal como se describe en la instalación Docker de la documentación de usuario:
+
+\begin{verbatim}
+	docker compose up -d db
+\end{verbatim}
+
+En ese caso, la variable \texttt{DATABASE\_URL} del archivo \texttt{.env} local debe apuntar al puerto expuesto por Docker Compose:
+
+\begin{verbatim}
+	DATABASE_URL=mysql+pymysql://usuarioIAOrquestadaDB:ContrasennaUsuarioTfg2026@localhost:3307/ia_orquestada_db?charset=utf8mb4
+\end{verbatim}
+
+Después, desde el entorno virtual, se pueden ejecutar los comandos habituales:
+
+\begin{verbatim}
+	python seed.py
+	python run.py
+\end{verbatim}
+
+\subsection{Problemas frecuentes en entorno local}
+
+\subsubsection{Versión incorrecta de Python}
+
+Si se utiliza una versión de Python distinta de la esperada, algunas dependencias pueden no instalarse correctamente. Se recomienda comprobar la versión antes de crear el entorno virtual:
+
+\begin{verbatim}
+	python3.11 --version
+\end{verbatim}
+
+\subsubsection{Error de conexión con MariaDB}
+
+Si la aplicación no puede conectarse a MariaDB, debe comprobarse que el servicio está activo:
+
+\begin{verbatim}
+	sudo systemctl status mariadb
+\end{verbatim}
+
+También debe revisarse que el usuario, contraseña, host, puerto y nombre de base de datos coinciden con los definidos en \texttt{DATABASE\_URL}.
+
+\subsubsection{Puerto 5000 ocupado}
+
+Si el puerto 5000 está ocupado, Flask no podrá arrancar. Puede comprobarse con:
+
+\begin{verbatim}
+	sudo lsof -i :5000
+\end{verbatim}
+
+En ese caso, debe cerrarse el proceso que ocupa el puerto o modificar temporalmente el puerto de ejecución en \texttt{run.py}.
+
+\subsubsection{Puerto 3306 ocupado}
+
+MariaDB utiliza por defecto el puerto 3306. Si ya existe otro servicio utilizando ese puerto, MariaDB puede no arrancar correctamente o la aplicación puede conectarse a una instancia distinta de la esperada. En ese caso, debe revisarse la configuración del servicio de base de datos o utilizar el modo mixto con la base de datos en Docker expuesta en el puerto 3307.
+
+\subsubsection{Errores relacionados con OpenCV, MediaPipe o Ultralytics}
+
+Si aparecen errores relacionados con bibliotecas gráficas o multimedia, se debe revisar que estén instaladas las dependencias del sistema indicadas anteriormente:
+
+\begin{verbatim}
+	sudo apt install -y build-essential ffmpeg libgl1 libglib2.0-0 \
+	libgomp1 libsm6 libxext6 libxrender1
+\end{verbatim}
+
+\subsubsection{Reinstalación del entorno virtual}
+
+Si se producen conflictos de dependencias, puede eliminarse y recrearse el entorno virtual:
+
+\begin{verbatim}
+	deactivate
+	rm -rf .venv
+	python3.11 -m venv .venv
+	source .venv/bin/activate
+	pip install --upgrade pip
+	pip install -r requirements.txt
+\end{verbatim}
+
+
 \section{Pruebas del sistema}
+
+\subsection{Pruebas unitarias del backend}
+
+Durante el desarrollo del proyecto se han realizado pruebas unitarias centradas principalmente en el backend de la aplicación. Esta decisión se debe a que la parte crítica del sistema se encuentra en la lógica de servidor: autenticación, control de acceso, gestión de usuarios, contratación de servicios, filtrado de pipelines, ejecución de modelos de inteligencia artificial, persistencia de resultados y control de errores.
+
+El backend concentra la mayor parte de las reglas de negocio del proyecto. Por ello, las pruebas se han orientado a validar que los controladores, servicios y componentes auxiliares responden correctamente tanto en flujos correctos como ante entradas inválidas, errores de persistencia o intentos de acceso no autorizado.
+
+Las pruebas se encuentran en la carpeta \texttt{tests/}. Entre otros aspectos, cubren:
+
+\begin{itemize}
+	\item Validación de autenticación, registro, inicio de sesión y gestión de perfiles.
+	\item Control de acceso basado en roles.
+	\item Gestión de planes, alquileres y servicios contratados.
+	\item Filtrado de pipelines según suscripción o licencias activas.
+	\item Ejecución del orquestador de pipelines.
+	\item Funcionamiento de la factoría de modelos de IA.
+	\item Validaciones de los módulos MediaPipe y YOLO.
+	\item Gestión del historial de ejecuciones y archivos temporales.
+	\item Comportamiento ante errores controlados y excepciones.
+\end{itemize}
+
+Para aislar las pruebas del entorno real, se utiliza una configuración específica de test con una base de datos SQLite en memoria. De esta manera, los tests no modifican la base de datos MariaDB utilizada por la aplicación en desarrollo o despliegue.
+
+\subsection{Ejecución de las pruebas}
+
+Para lanzar las pruebas, primero debe estar activado el entorno virtual e instaladas las dependencias del proyecto:
+
+\begin{verbatim}
+	source .venv/bin/activate
+	pip install -r requirements.txt
+\end{verbatim}
+
+Después, las pruebas pueden ejecutarse con:
+
+\begin{verbatim}
+	pytest
+\end{verbatim}
+
+Si se desea obtener una salida más detallada:
+
+\begin{verbatim}
+	pytest -v
+\end{verbatim}
+
+También puede ejecutarse un archivo de pruebas concreto:
+
+\begin{verbatim}
+	pytest tests/test_auth_controller.py
+\end{verbatim}
+
+O una prueba específica:
+
+\begin{verbatim}
+	pytest tests/test_auth_controller.py::test_login_exito_y_fallos
+\end{verbatim}
+
+\subsection{Ejecución de pruebas con cobertura}
+
+Para medir la cobertura del backend se puede utilizar el complemento \texttt{pytest-cov}. Si no estuviera instalado, debe añadirse a las dependencias de desarrollo o instalarse manualmente en el entorno virtual:
+
+\begin{verbatim}
+	pip install pytest-cov
+\end{verbatim}
+
+La cobertura sobre el paquete principal de la aplicación se obtiene con:
+
+\begin{verbatim}
+	pytest --cov=app --cov-report=term-missing
+\end{verbatim}
+
+Este comando ejecuta los tests y muestra en la terminal el porcentaje de cobertura, junto con las líneas no ejecutadas de cada módulo.
+
+Si se desea generar un informe HTML navegable:
+
+\begin{verbatim}
+	pytest --cov=app --cov-report=html
+\end{verbatim}
+
+El informe se genera en la carpeta:
+
+\begin{verbatim}
+	htmlcov/
+\end{verbatim}
+
+y puede consultarse abriendo el archivo:
+
+\begin{verbatim}
+	htmlcov/index.html
+\end{verbatim}
+
+La medición de cobertura se ha utilizado como apoyo para comprobar que la parte crítica del backend quedaba suficientemente ejercitada por las pruebas automatizadas.
+
+\subsection{Informe de cobertura del backend}
+
+Además de la ejecución de las pruebas unitarias, se generó un informe de cobertura del backend mediante \texttt{pytest-cov}. El objetivo de esta medición fue comprobar qué parte del código de servidor quedaba ejercitada por la batería de tests, ya que el backend constituye la parte crítica del proyecto al concentrar la autenticación, la autorización, la lógica de negocio, la persistencia, la ejecución de pipelines y la integración con los modelos de inteligencia artificial.
+
+El informe de cobertura se generó con el siguiente comando:
+
+\begin{verbatim}
+	pytest --cov=app --cov-report=term-missing --cov-report=html tests
+\end{verbatim}
+
+Como resultado, se obtuvo una cobertura global del \textbf{92\%} sobre el paquete principal \texttt{app}. El informe recoge un total de \textbf{1239 sentencias}, de las cuales \textbf{93} no fueron cubiertas por las pruebas. No se excluyeron sentencias del análisis.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{img/coverage_report.png}
+	\caption{Informe de cobertura del backend generado mediante \texttt{pytest-cov}.}
+	\label{fig:coverage_backend}
+\end{figure}
+
+Como puede observarse en la Figura~\ref{fig:coverage_backend}, la mayoría de los módulos principales presentan una cobertura elevada. Destacan especialmente los modelos de datos, los servicios de MediaPipe, el lanzador de YOLO, el orquestador de pipelines y la utilidad de fechas, que alcanzan coberturas cercanas o iguales al 100\%. 
+
+Los módulos con menor cobertura corresponden principalmente a controladores con mayor número de ramas, validaciones y respuestas alternativas, como \texttt{pipeline\_controller.py}, y a determinadas rutas de procesamiento de YOLO. Aun así, la cobertura global obtenida permite comprobar que la parte esencial del backend ha sido ejercitada de forma amplia mediante pruebas automatizadas.
+
+La cobertura no garantiza por sí sola la ausencia de errores, pero sí ha servido como métrica de apoyo para detectar zonas menos probadas y reforzar la validación de los componentes más relevantes del sistema.
+
+\subsection{Pruebas funcionales manuales basadas en casos de uso}
+
+Además de las pruebas unitarias del backend, se ha definido un conjunto de pruebas funcionales manuales asociadas a los casos de uso principales del sistema. Estas pruebas no se ejecutan de forma automática, sino que están pensadas para ser realizadas manualmente sobre la interfaz de la aplicación, comprobando que los flujos visibles para el usuario se corresponden con los requisitos funcionales definidos.
+
+Cada caso de prueba incluye el caso de uso asociado, la precondición necesaria para ejecutarlo, la entrada o procedimiento de prueba y la salida esperada. Para su ejecución se parte de una instalación funcional del sistema y de una base de datos inicializada mediante el script \texttt{seed.py}.
+
+Los usuarios de referencia para estas pruebas son:
+
+\begin{itemize}
+	\item \textbf{Administrador:} \texttt{admin} / \texttt{Admin123}.
+	\item \textbf{Usuario básico:} \texttt{pepe} / \texttt{User123}.
+	\item \textbf{Usuario Pro:} \texttt{ramon} / \texttt{User123}.
+\end{itemize}
+
+\begin{table}[p]
+	\centering
+	\scriptsize
+	\renewcommand{\arraystretch}{1.25}
+	\begin{tabularx}{\linewidth}{p{0.10\linewidth} p{0.13\linewidth} X X X}
+		\toprule
+		\textbf{Caso} & \textbf{CU} & \textbf{Precondición} & \textbf{Entrada / procedimiento} & \textbf{Salida esperada} \\
+		\midrule
+		
+		CP-01 & CU-1 & El usuario no está autenticado y no existe una cuenta con los mismos datos. & Acceder a \texttt{/registro}, introducir usuario, correo, contraseña segura y enviar el formulario. & La cuenta se crea correctamente, se asigna el rol de usuario y el sistema permite acceder con las nuevas credenciales. \\
+		
+		\midrule
+		
+		CP-02 & CU-1 & El usuario no está autenticado. & Intentar registrarse con correo duplicado, nombre de usuario duplicado, campos vacíos o contraseña débil. & El sistema rechaza el registro y muestra un mensaje de error sin crear una cuenta nueva. \\
+		
+		\midrule
+		
+		CP-03 & CU-2 & Existe una cuenta activa en el sistema. & Acceder a \texttt{/login}, introducir usuario o correo y contraseña válidos. & El sistema autentica al usuario y lo redirige al panel correspondiente según su rol. \\
+		
+		\midrule
+		
+		CP-04 & CU-2 & Existe una cuenta registrada o suspendida. & Introducir credenciales incorrectas o intentar iniciar sesión con una cuenta no activa. & El sistema impide el acceso y muestra un mensaje de error. \\
+		
+		\midrule
+		
+		CP-05 & CU-3 & El usuario ha iniciado sesión. & Acceder a \texttt{/perfil}, modificar el nombre visible y guardar los cambios. & El sistema actualiza los datos del perfil y muestra la información modificada. \\
+		
+		\midrule
+		
+		CP-06 & CU-3 & El usuario ha iniciado sesión. & Cambiar la contraseña introduciendo contraseña actual y nueva contraseña segura. & La contraseña se actualiza correctamente y la nueva credencial permite iniciar sesión. \\
+		
+		\midrule
+		
+		CP-07 & CU-4 & El usuario ha iniciado sesión. & Solicitar la baja de cuenta desde la sección de perfil. & La cuenta queda marcada como borrada, sus servicios activos se desactivan y no puede volver a iniciar sesión. \\
+		
+		\bottomrule
+	\end{tabularx}
+	\caption{Casos de prueba manuales de autenticación y gestión de cuenta.}
+	\label{tab:pruebas_manuales_identidad}
+\end{table}
+
+\begin{table}[p]
+	\centering
+	\scriptsize
+	\renewcommand{\arraystretch}{1.25}
+	\begin{tabularx}{\linewidth}{p{0.10\linewidth} p{0.13\linewidth} X X X}
+		\toprule
+		\textbf{Caso} & \textbf{CU} & \textbf{Precondición} & \textbf{Entrada / procedimiento} & \textbf{Salida esperada} \\
+		\midrule
+		
+		CP-08 & CU-5 & El usuario ha iniciado sesión. & Acceder a la tienda de servicios desde el panel. & El sistema muestra los planes y modelos de IA disponibles, indicando el estado de cada uno para el usuario. \\
+		
+		\midrule
+		
+		CP-09 & CU-6 & El usuario ha iniciado sesión y el plan está habilitado. & Seleccionar el plan Pro y confirmar la suscripción. & El sistema registra la suscripción, actualiza el estado del plan y amplía el acceso del usuario a los pipelines correspondientes. \\
+		
+		\midrule
+		
+		CP-10 & CU-7 & El usuario ha iniciado sesión y el modelo de IA está habilitado. & Seleccionar un modelo de IA disponible y confirmar su alquiler. & El sistema registra el alquiler, establece su periodo de vigencia y actualiza los pipelines disponibles. \\
+		
+		\midrule
+		
+		CP-11 & CU-7 & El usuario ya tiene contratado el modelo seleccionado. & Intentar alquilar de nuevo el mismo modelo durante un periodo solapado. & El sistema rechaza la operación e informa de que ya existe una licencia activa o solapada. \\
+		
+		\midrule
+		
+		CP-12 & CU-8 & El usuario ha iniciado sesión y dispone de servicios contratados. & Acceder a la sección de compras o servicios activos. & El sistema muestra planes y alquileres con fechas, estado, renovación automática e importe. \\
+		
+		\midrule
+		
+		CP-13 & CU-8 & El usuario tiene un servicio activo o programado. & Modificar la renovación automática o activar inmediatamente un servicio programado. & El sistema actualiza la configuración del servicio y refleja el nuevo estado en la interfaz. \\
+		
+		\midrule
+		
+		CP-14 & CU-9 & El usuario ha iniciado sesión. & Acceder a la guía de compra. & El sistema muestra los pipelines, las IA requeridas por cada uno y cuáles están ya contratadas por el usuario. \\
+		
+		\bottomrule
+	\end{tabularx}
+	\caption{Casos de prueba manuales de tienda, planes y servicios contratados.}
+	\label{tab:pruebas_manuales_tienda}
+\end{table}
+
+\begin{table}[p]
+	\centering
+	\scriptsize
+	\renewcommand{\arraystretch}{1.25}
+	\begin{tabularx}{\linewidth}{p{0.10\linewidth} p{0.13\linewidth} X X X}
+		\toprule
+		\textbf{Caso} & \textbf{CU} & \textbf{Precondición} & \textbf{Entrada / procedimiento} & \textbf{Salida esperada} \\
+		\midrule
+		
+		CP-15 & CU-10 & El usuario ha iniciado sesión. & Acceder al panel principal con usuario básico, usuario Pro y administrador. & El sistema muestra a cada usuario únicamente los pipelines que puede ejecutar según su rol, plan o modelos contratados. \\
+		
+		\midrule
+		
+		CP-16 & CU-11 & El usuario ha seleccionado un pipeline permitido. & Solicitar la carga de configuración predeterminada del pipeline. & El sistema muestra la configuración de las etapas en formato editable. \\
+		
+		\midrule
+		
+		CP-17 & CU-11 & El usuario ha seleccionado un pipeline permitido. & Introducir una configuración personalizada con formato JSON incorrecto. & El sistema rechaza la ejecución e informa de que la configuración personalizada no es válida. \\
+		
+		\midrule
+		
+		CP-18 & CU-12 & El usuario ha iniciado sesión y tiene acceso al pipeline seleccionado. & Seleccionar pipeline, adjuntar una imagen \texttt{jpg}, \texttt{jpeg} o \texttt{png} y lanzar el análisis. & El sistema procesa la imagen, ejecuta las etapas, registra la ejecución y muestra los resultados generados. \\
+		
+		\midrule
+		
+		CP-19 & CU-12 & El usuario ha iniciado sesión. & Intentar ejecutar un pipeline subiendo un archivo con extensión no permitida. & El sistema rechaza la petición e informa de que el formato de archivo no está soportado. \\
+		
+		\midrule
+		
+		CP-20 & CU-12 & El usuario no tiene acceso al pipeline seleccionado. & Intentar ejecutar manualmente un pipeline para el que no tiene permisos. & El sistema impide la ejecución y muestra un mensaje de acceso insuficiente. \\
+		
+		\midrule
+		
+		CP-21 & CU-13 & Existe una ejecución completada con archivos disponibles. & Acceder a la pantalla de resultados de la ejecución. & El sistema muestra la imagen original, las etapas ejecutadas, las imágenes resultantes y los datos JSON asociados. \\
+		
+		\midrule
+		
+		CP-22 & CU-13 & Existe una ejecución completada y los archivos no han expirado. & Descargar una imagen o archivo JSON desde la pantalla de resultados. & El sistema permite la descarga mediante token temporal sin exponer rutas internas del servidor. \\
+		
+		\midrule
+		
+		CP-23 & CU-14 & El usuario ha realizado al menos una ejecución. & Acceder a la sección de historial. & El sistema muestra las ejecuciones del usuario con pipeline, fecha, estado, duración y disponibilidad de archivos. \\
+		
+		\midrule
+		
+		CP-24 & CU-14 & Existen ejecuciones de varios usuarios. & Intentar acceder al detalle de una ejecución perteneciente a otro usuario. & El sistema deniega el acceso y no muestra información de ejecuciones ajenas. \\
+		
+		\bottomrule
+	\end{tabularx}
+	\caption{Casos de prueba manuales de pipelines, ejecución, resultados e historial.}
+	\label{tab:pruebas_manuales_pipelines}
+\end{table}
+
+\begin{table}[p]
+	\centering
+	\scriptsize
+	\renewcommand{\arraystretch}{1.25}
+	\begin{tabularx}{\linewidth}{p{0.10\linewidth} p{0.13\linewidth} X X X}
+		\toprule
+		\textbf{Caso} & \textbf{CU} & \textbf{Precondición} & \textbf{Entrada / procedimiento} & \textbf{Salida esperada} \\
+		\midrule
+		
+		CP-25 & CU-15 & El usuario ha iniciado sesión con rol administrador. & Acceder al panel de administración. & El sistema permite el acceso y muestra las secciones administrativas disponibles. \\
+		
+		\midrule
+		
+		CP-26 & CU-15 & El usuario ha iniciado sesión con rol estándar. & Intentar acceder al panel de administración. & El sistema impide el acceso a las funciones administrativas. \\
+		
+		\midrule
+		
+		CP-27 & CU-16 & El administrador ha accedido al panel de administración. & Consultar el listado de usuarios y modificar el estado de una cuenta estándar. & El sistema actualiza el estado de la cuenta seleccionada y muestra la modificación. \\
+		
+		\midrule
+		
+		CP-28 & CU-16 & El administrador ha accedido al panel de administración. & Intentar realizar una operación no permitida, como modificar indebidamente su propia cuenta. & El sistema rechaza la operación y mantiene el estado anterior. \\
+		
+		\midrule
+		
+		CP-29 & CU-17 & El administrador ha iniciado sesión y existen modelos y modos registrados. & Crear un pipeline indicando nombre, descripción, visibilidad, estado y etapas válidas. & El sistema crea el pipeline, registra sus etapas y lo muestra en el catálogo administrativo. \\
+		
+		\midrule
+		
+		CP-30 & CU-17 & Existe un pipeline registrado. & Editar nombre, descripción, visibilidad, estado o etapas del pipeline. & El sistema actualiza la definición del pipeline y refleja los cambios en los listados correspondientes. \\
+		
+		\midrule
+		
+		CP-31 & CU-17 & El administrador está creando o editando un pipeline. & Introducir etapas vacías, modelos deshabilitados o modos que no pertenecen al modelo seleccionado. & El sistema rechaza la operación e informa del motivo de la validación fallida. \\
+		
+		\midrule
+		
+		CP-32 & CU-17 & Existen pipelines con y sin ejecuciones asociadas. & Eliminar un pipeline sin historial y otro con ejecuciones asociadas. & El sistema elimina físicamente el pipeline sin historial y deshabilita el que ya tiene ejecuciones asociadas. \\
+		
+		\midrule
+		
+		CP-33 & CU-18 & El administrador ha iniciado sesión. & Acceder al histórico global de ejecuciones. & El sistema muestra ejecuciones de distintos usuarios con usuario, pipeline, fecha, estado, duración y errores. \\
+		
+		\midrule
+		
+		CP-34 & CU-18 & Un usuario estándar ha iniciado sesión. & Intentar acceder al histórico global de ejecuciones. & El sistema deniega el acceso por falta de privilegios administrativos. \\
+		
+		\midrule
+		
+		CP-35 & CU-19 & Existen archivos temporales caducados, servicios vencidos o cuentas dadas de baja. & Provocar una nueva petición al sistema para activar las tareas automáticas de mantenimiento. & El sistema purga temporales caducados, renueva o desactiva servicios según corresponda y anonimiza cuentas cuando se cumple el periodo establecido. \\
+		
+		\bottomrule
+	\end{tabularx}
+	\caption{Casos de prueba manuales de administración y mantenimiento.}
+	\label{tab:pruebas_manuales_admin}
+\end{table}
