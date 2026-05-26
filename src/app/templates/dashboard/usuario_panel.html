@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Panel de Usuario - IA Explorer</title>
     <style>
         :root { --primary: #0056b3; --bg: #f4f7f6; }
@@ -50,21 +51,21 @@
         <h3>Procesar Imagen</h3>
         <form id="uploadForm">
             <div class="form-group">
-                <label>Selecciona Pipeline:</label>
+                <label for="id_pipeline">Selecciona Pipeline:</label>
                 <select id="id_pipeline" name="id_pipeline" required>
                     <option value="">Cargando pipelines...</option>
                 </select>
             </div>
             
             <div class="form-group">
-                <label>Configuración del Pipeline (Opcional):</label>
+                <label for="configEditor">Configuración del Pipeline (Opcional):</label>
                 <button type="button" id="btnCargarConfig" class="btn-secundario" style="margin-bottom:10px;">Cargar Configuración</button>
                 <textarea id="configEditor" name="config_personalizada" style="height: 150px; font-family: monospace; display: none;" placeholder="La configuración en formato JSON aparecerá aquí..."></textarea>
             </div>
 
             <div class="form-group">
-                <label>Imagen:</label>
-                <input type="file" name="imagen" accept="image/*" required>
+                <label for="imagen">Imagen:</label>
+                <input id="imagen" type="file" name="imagen" accept="image/*" required>
             </div>
             <button type="submit" class="btn-analizar" id="btnAnalizar">Ejecutar Análisis</button>
         </form>
@@ -98,7 +99,10 @@ async function cargarPipelines() {
 
         try {
             const response = await fetch('/api/v1/listado', {
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+                headers: { 
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                }
             });
             
             if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
@@ -150,7 +154,10 @@ async function cargarPipelines() {
         
         try {
             const response = await fetch(`/api/v1/configuracion_pipeline/${id}`, {
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+                headers: { 
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                }
             });
             const config = await response.json();
             const editor = document.getElementById('configEditor');
@@ -173,7 +180,10 @@ async function cargarPipelines() {
         try {
             const response = await fetch('/api/v1/analizar', {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') },
+                headers: { 
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                },
                 body: formData
             });
             const res = await response.json();

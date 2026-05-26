@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Mis Compras - IA Explorer</title>
     <style>
         :root { 
@@ -86,7 +87,7 @@
 
         try {
             const response = await fetch('/api/v1/shop/mis_compras', {
-                headers: { 'Authorization': 'Bearer ' + token }
+                headers: { 'Authorization': 'Bearer ' + token, 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             if (!response.ok) throw new Error("Error al cargar los datos");
             const data = await response.json();
@@ -175,7 +176,7 @@
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'), 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             
             if (response.ok) { 
@@ -201,7 +202,7 @@
         try {
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token') }
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'), 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             
             if (response.ok) { 

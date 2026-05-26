@@ -183,7 +183,7 @@ def suscribir_plan(id_plan):
         db.session.query(SuscripcionPlan).filter_by(id_usuario=usuario_id, activo=1).update({"activo": 0})
         
         precio = float(plan.precio_mensual) if plan.precio_mensual is not None else 0.00
-        fecha_fin = None if precio == 0.0 else fecha_inicio + timedelta(days=30)
+        fecha_fin = None if precio <= 0.0 else fecha_inicio + timedelta(days=30)
         
         nueva_sub = SuscripcionPlan(
             id_usuario=usuario_id,
@@ -211,56 +211,59 @@ def suscribir_plan(id_plan):
 @jwt_required()
 def mis_compras():
     """Consolida todos los activos lógicos (suscripciones y licencias) vinculados a la identidad."""
+    DATE_FORMAT = "%d/%m/%Y"
     try:
         usuario_id = get_jwt_identity()
         ahora_naive = ahora_utc_naive()
-        
-        # 1. Auditoría de Licencias de IA
+
         alquileres = db.session.query(Alquila).filter(
             Alquila.id_usuario == usuario_id,
             Alquila.activo == 1,
             (Alquila.periodo_fin >= ahora_naive) | (Alquila.periodo_fin.is_(None))
         ).all()
-        
-        datos_alquileres = []
-        for a in alquileres:
+
+        def map_alquiler(a):
             ia = db.session.get(IAModelo, a.id_ia)
-            if ia:
-                estado = "activo" if a.periodo_inicio <= ahora_naive else "programado"
-                datos_alquileres.append({
-                    "id_compra": a.id_compra,
-                    "nombre": ia.nombre.capitalize(),
-                    "fecha_inicio": formatear_fecha_local(a.periodo_inicio, "%d/%m/%Y"),
-                    "fecha_fin": formatear_fecha_local(a.periodo_fin, "%d/%m/%Y", "Vitalicio"),
-                    "estado": estado,
-                    "renovacion_auto": True if a.renovacion_auto == 1 else False,
-                    "importe": str(a.importe)
-                })
-                
-        # 2. Auditoría de Niveles de Servicio
+            if not ia:
+                return None
+            estado = "activo" if a.periodo_inicio <= ahora_naive else "programado"
+            return {
+                "id_compra": a.id_compra,
+                "nombre": ia.nombre.capitalize(),
+                "fecha_inicio": formatear_fecha_local(a.periodo_inicio, DATE_FORMAT),
+                "fecha_fin": formatear_fecha_local(a.periodo_fin, DATE_FORMAT, "Vitalicio"),
+                "estado": estado,
+                "renovacion_auto": True if a.renovacion_auto == 1 else False,
+                "importe": str(a.importe)
+            }
+
+        datos_alquileres = [x for x in (map_alquiler(a) for a in alquileres) if x]
+
         suscripciones = db.session.query(SuscripcionPlan).filter(
             SuscripcionPlan.id_usuario == usuario_id,
             SuscripcionPlan.activo == 1,
             (SuscripcionPlan.fecha_fin >= ahora_naive) | (SuscripcionPlan.fecha_fin.is_(None))
         ).all()
-        
-        datos_planes = []
-        for sub in suscripciones:
+
+        def map_suscripcion(sub):
             plan = db.session.get(TipoPlan, sub.id_plan)
-            if plan:
-                estado = "activo" if sub.fecha_inicio <= ahora_naive else "programado"
-                precio_float = float(sub.importe) if sub.importe is not None else 0.00
-                datos_planes.append({
-                    "id_suscripcion": sub.id_suscripcion,
-                    "nombre": plan.nombre,
-                    "fecha_inicio": formatear_fecha_local(sub.fecha_inicio, "%d/%m/%Y"),
-                    "fecha_fin": formatear_fecha_local(sub.fecha_fin, "%d/%m/%Y", "Vitalicio"),
-                    "estado": estado,
-                    "renovacion_auto": True if sub.renovacion_auto == 1 else False,
-                    "importe": str(precio_float),
-                    "es_gratis": precio_float == 0.00
-                })
-                
+            if not plan:
+                return None
+            estado = "activo" if sub.fecha_inicio <= ahora_naive else "programado"
+            precio_float = float(sub.importe) if sub.importe is not None else 0.00
+            return {
+                "id_suscripcion": sub.id_suscripcion,
+                "nombre": plan.nombre,
+                "fecha_inicio": formatear_fecha_local(sub.fecha_inicio, DATE_FORMAT),
+                "fecha_fin": formatear_fecha_local(sub.fecha_fin, DATE_FORMAT, "Vitalicio"),
+                "estado": estado,
+                "renovacion_auto": True if sub.renovacion_auto == 1 else False,
+                "importe": str(precio_float),
+                "es_gratis": precio_float <= 0.00
+            }
+
+        datos_planes = [x for x in (map_suscripcion(s) for s in suscripciones) if x]
+
         return jsonify({"status": "success", "alquileres": datos_alquileres, "planes": datos_planes}), 200
     except Exception as e:
         return jsonify({"status": "error", "mensaje": f"Fallo al recuperar activos: {str(e)}"}), 500
