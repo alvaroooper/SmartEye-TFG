@@ -84,7 +84,7 @@ def tareas_mantenimiento_automaticas():
         for u in usuarios_para_anonimizar:
             u.username = f"anon_{u.id_usuario}"
             u.email = f"deleted_{u.id_usuario}@explorer.local"
-            u.password_hash = "ACCOUNT_DELETED"
+            u.set_password(os.urandom(32).hex())
             u.estado = 'anonimizado'
             u.nombre_visible = "Identidad Anonimizada"
             cambios_realizados = True
