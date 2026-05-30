@@ -325,10 +325,10 @@
   % Título proyecto y escudo informática ----------------
   \colorbox{cpardoBox}{%
     \begin{minipage}{.8\textwidth}
-      \vspace{.5cm}\Large
+      \vspace{.5cm}\large
       \begin{center}
       \textbf{TFG del Grado en Ingeniería Informática}\vspace{.6cm}\\
-      \textbf{\LARGE\@title{}}
+      \textbf{\large\@title{}}
       \end{center}
       \vspace{.2cm}
     \end{minipage}
@@ -355,7 +355,7 @@
 \newcommand{\nombre}{Álvaro Pérez Mella} %%% cambio de comando
 
 % Datos de portada
-\title{Diseño e implementación de una plataforma web para el procesamiento de imágenes mediante pipelines de inteligencia artificial}
+\title{\HUGE SmartEye Flow\\[0.5cm]\Large Analizador de imágenes con flujos encadenados de inteligencia artificial.}
 \author{\nombre}
 \tutor{José Luis Garrido Labrador y José Miguel Ramírez Sanz}
 \date{\today}
@@ -378,7 +378,7 @@
 
 \noindent Expone:
 
-\noindent Que el alumno D. \nombre, con DNI 71956263G, ha realizado el Trabajo final de Grado en Ingeniería Informática titulado ``Diseño e implementación de una plataforma web para el procesamiento de imágenes mediante pipelines de inteligencia artificial''.
+\noindent Que el alumno D. \nombre, con DNI 71956263G, ha realizado el Trabajo final de Grado en Ingeniería Informática titulado ``SmartEye Flow - Analizador de imágenes con flujos encadenados de inteligencia artificial.''.
 
 \noindent Y que dicho trabajo ha sido realizado por el alumno bajo la dirección del que suscribe, en virtud de lo cual se autoriza su presentación y defensa.
 
@@ -441,11 +441,11 @@ El resultado es una base funcional y extensible para una plataforma de análisis
 % Abstract en inglés
 \renewcommand*\abstractname{Abstract}
 \begin{abstract}
-	This Final Degree Project presents the design and implementation of a web application for image processing using artificial intelligence models. The system allows authenticated users to select analysis workflows, upload images, execute computer vision models and obtain both a processed image or iamges and structured information in JSON format.
+	This Final Degree Project presents the design and implementation of a web application for image processing using artificial intelligence models. The system allows authenticated users to select analysis workflows, upload images, execute computer vision models and obtain both a processed image or images and structured information in JSON format.
 	
 	The project began with an experimental stage focused on validating the integration of models such as YOLO and MediaPipe, and later evolved into a more complete platform based on Flask, SQLAlchemy and JWT. The application follows a modular architecture organised into controllers, services, data models and web views, which improves separation of concerns and facilitates future extensions.
 	
-	The implemented features include user and role management, access control through plans and temporary AI model licences, execution of multi-stage processing pipelines, generation of temporary downloadable results through tokens, and separate interfaces for regular users and administrators.The project also includes automated tests to verify the backend, static code analysis through SonarCloud and a Docker Compose configuration that allows the application and the database to be deployed in a reproducible way.
+	The implemented features include user and role management, access control through plans and temporary AI model licences, execution of multi-stage processing pipelines, generation of temporary downloadable results through tokens, and separate interfaces for regular users and administrators. The project also includes automated tests to verify the backend, static code analysis through SonarCloud and a Docker Compose configuration that allows the application and the database to be deployed in a reproducible way.
 	
 	The result is a functional and extensible foundation for an artificial-intelligence-based image analysis platform, prepared to incorporate new models, execution modes and deployment improvements.
 \end{abstract}
@@ -461,7 +461,8 @@ El resultado es una base funcional y extensible para una plataforma de análisis
 \tableofcontents
 
 \clearpage
-
+\listoffigures
+\clearpage
 \listoftables
 \clearpage
 
@@ -470,13 +471,13 @@ El resultado es una base funcional y extensible para una plataforma de análisis
 
 \begin{description}
 	\item[TFG] Trabajo de Fin de Grado.
-	\item[API] \textit{Application Programming Interface}. Interfaz de programación de aplicaciones.
-	\item[CSS] \textit{Cascading Style Sheets}. Lenguaje de estilos utilizado para definir la presentación visual de páginas \textit{web}.
-	\item[HTML] \textit{HyperText Markup Language}. Lenguaje de marcado utilizado para definir la estructura de páginas \textit{web}.
-	\item[JSON] \textit{JavaScript Object Notation}. Formato ligero de intercambio de datos basado en texto.
-	\item[JWT] \textit{JSON Web Token}. Mecanismo basado en \textit{tokens} firmados para representar información de identidad o sesión.
-	\item[HTTP] \textit{HyperText Transfer Protocol}. Protocolo de comunicación utilizado en la \textit{web}.
-	\item[ORM] \textit{Object-Relational Mapping}. Técnica de mapeo objeto-relacional.
+	\item[API] \textit{Application Programming Interface}.
+	\item[CSS] \textit{Cascading Style Sheets}.
+	\item[HTML] \textit{HyperText Markup Language}.
+	\item[JSON] \textit{JavaScript Object Notation}.
+	\item[JWT] \textit{JSON Web Token}.
+	\item[HTTP] \textit{HyperText Transfer Protocol}.
+	\item[ORM] \textit{Object-Relational Mapping}.
 \end{description}
 
 \clearpage
