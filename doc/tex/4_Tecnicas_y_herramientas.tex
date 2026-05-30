@@ -1,107 +1,170 @@
 \capitulo{4}{Técnicas y herramientas}
 
-En este capítulo se recogen las principales técnicas, tecnologías y herramientas utilizadas durante el desarrollo del proyecto. No se pretende realizar una descripción exhaustiva de cada una de ellas, sino justificar su papel dentro del sistema construido.
+Este capítulo presenta las principales técnicas y herramientas mencionadas en la memoria y en los anexos.
 
-La selección de herramientas ha estado condicionada por el tipo de aplicación desarrollada: una plataforma web capaz de recibir imágenes, ejecutar modelos de visión por computador, gestionar usuarios y permisos, almacenar información persistente y validar su funcionamiento mediante pruebas automatizadas.
+\section{Técnicas}
 
-\section{Metodología y seguimiento del proyecto}
-
-El desarrollo se ha organizado siguiendo un enfoque iterativo e incremental. Esta forma de trabajo ha permitido avanzar por fases, validar primero los elementos de mayor incertidumbre técnica y, posteriormente, incorporar nuevas funcionalidades sobre una base ya comprobada.
-
-Para la planificación y seguimiento se ha utilizado Jira, organizando el trabajo en sprints y tareas. Esta herramienta ha permitido mantener una visión estructurada del avance del proyecto, registrar las actividades realizadas y relacionarlas con la planificación temporal del TFG \cite{jira_docs}.
-
-La comunicación con los tutores se ha realizado principalmente mediante Microsoft Teams, utilizado para reuniones, seguimiento del estado del proyecto y revisión de decisiones relevantes durante el desarrollo \cite{teams_docs}.
-
-El código fuente se ha gestionado mediante GitHub, lo que ha permitido mantener un histórico de cambios, respaldar el proyecto y facilitar el control de versiones durante su evolución \cite{github_docs}.
-
-\section{Lenguaje y entorno de desarrollo}
-
-El lenguaje principal utilizado ha sido Python. Su elección resulta adecuada para este proyecto por la disponibilidad de bibliotecas orientadas a desarrollo web, inteligencia artificial, visión por computador, persistencia de datos y pruebas automatizadas \cite{python_docs}.
-
-El desarrollo se ha realizado principalmente sobre Linux Debian. Esta decisión ha permitido trabajar en un entorno cercano al que podría encontrarse en un servidor real, facilitando la gestión de dependencias, rutas, permisos y servicios asociados a la aplicación \cite{debian_docs}.
-
-Como entorno de desarrollo se ha utilizado Visual Studio Code, apoyado por su terminal integrada y extensiones para Python. También se ha empleado DBeaver para inspeccionar visualmente la base de datos durante el diseño e implementación del modelo relacional \cite{vscode_docs,dbeaver_docs}.
-
-\section{Visión por computador e inteligencia artificial}
-
-La parte de procesamiento visual constituye uno de los elementos centrales del proyecto. Para cubrir distintos tipos de análisis se han utilizado modelos y bibliotecas orientadas tanto a detección de objetos como a estimación de puntos clave.
+\subsection{Gestión y control del trabajo}
 
 \begin{itemize}
-	\item \textbf{YOLOv8 y Ultralytics}: se han utilizado para la detección de objetos sobre imágenes. En el proyecto se emplea una versión ligera del modelo, \texttt{yolov8n}, adecuada para obtener resultados visuales mediante cajas delimitadoras, clases detectadas y niveles de confianza \cite{ultralytics_yolov8}.
+	\item \textbf{Metodologías ágiles.} Enfoques de gestión basados en desarrollo iterativo, entrega incremental y adaptación continua a los cambios.
 	
-	\item \textbf{MediaPipe}: Framework utilizado para el análisis mediante landmarks.
+	\item \textbf{Scrum.} Marco de trabajo ágil organizado en iteraciones llamadas \textit{sprints}. Cada \textit{sprint} parte de una lista priorizada de trabajo, denominada \textit{Product Backlog}, y finaliza con un incremento revisable del producto.
 	
-	\textit{Justificación:} MediaPipe se ha empleado para los modos de detección de manos y estimación de pose. A diferencia de YOLO, que trabaja principalmente con cajas delimitadoras, MediaPipe permite obtener puntos clave y conexiones anatómicas, proporcionando una representación más estructural del elemento analizado \cite{lugaresi2019mediapipe,google_mediapipe_docs}.
-	
-	En la implementación se utiliza la interfaz \textit{Tasks API} de MediaPipe para cargar modelos locales en formato \texttt{.task}. Los modelos \texttt{hand\_landmarker.task} y \texttt{pose\_landmarker\_full.task} se almacenan en la carpeta \texttt{models/mp}. Si no están disponibles, el sistema puede descargarlos la primera vez; una vez guardados, las ejecuciones posteriores se realizan de forma local, sin depender de una API remota para la inferencia.
-	
-	\item \textbf{OpenCV}: se ha utilizado como biblioteca de apoyo para leer imágenes desde disco, transformar espacios de color, redimensionar recortes, dibujar resultados y guardar imágenes procesadas \cite{opencv_docs}.
-	
-	\item \textbf{NumPy}: se ha empleado como soporte para el tratamiento matricial de imágenes, especialmente en combinación con OpenCV y en pruebas automatizadas donde se generan imágenes simuladas \cite{numpy_docs}.
+	\item \textbf{Control de versiones.} Técnica que registra la evolución de un conjunto de archivos, permite recuperar estados anteriores.
 \end{itemize}
 
-Esta combinación de herramientas permite trabajar con dos tipos de resultados complementarios: detecciones mediante cajas delimitadoras y análisis estructural mediante landmarks. Gracias a ello, la aplicación puede ofrecer tanto salidas visuales sencillas de interpretar como información estructurada asociada al procesamiento.
-
-\section{Desarrollo web y backend}
-
-El backend de la aplicación se ha construido utilizando \textbf{Flask}. Se ha elegido este framework por su ligereza y flexibilidad, ya que permite comenzar con una demo sencilla y evolucionar hacia una aplicación modular organizada mediante controladores, servicios, modelos de datos y vistas \cite{flask_docs}.
-
-La aplicación utiliza \textit{Blueprints} de Flask para separar las rutas según su responsabilidad. De este modo, funcionalidades como autenticación, tienda, pipelines o administración se encuentran organizadas en módulos diferenciados, evitando concentrar toda la lógica en un único archivo.
-
-Para la autenticación se ha empleado Flask-JWT-Extended. Esta biblioteca permite generar y validar tokens JWT, necesarios para proteger las rutas privadas y asociar cada petición a un usuario autenticado \cite{jwt_docs}.
-
-Werkzeug se ha utilizado en dos aspectos concretos: la generación y comprobación de hashes de contraseñas, y el tratamiento seguro de nombres de ficheros subidos por el usuario mediante \texttt{secure\_filename} \cite{werkzeug_docs}.
-
-También se ha utilizado \texttt{python-dotenv} para cargar variables de entorno desde un fichero \texttt{.env}. Esto permite separar del código valores como claves secretas, configuración de JWT o cadena de conexión a la base de datos \cite{dotenv_docs}.
-
-\section{Frontend e interfaz de usuario}
-
-Aunque el núcleo técnico del proyecto se encuentra en el backend y en el procesamiento de imágenes, se ha desarrollado una interfaz web para facilitar el uso y la demostración del sistema.
-
-La interfaz se ha construido con \textbf{YHTML, CSS y JavaScript}. HTML define la estructura de las vistas, CSS permite mantener una presentación visual uniforme y JavaScript se encarga de comunicar la interfaz con los endpoints del backend, gestionar respuestas y almacenar temporalmente el token de sesión en el navegador \cite{mdn_html,mdn_css,mdn_javascript}.
-
-Las vistas se sirven mediante plantillas de Flask. En el proyecto se utilizan para separar páginas públicas, vistas de usuario autenticado y zona de administración \cite{flask_docs}.
-
-\section{Persistencia y configuración}
-
-La aplicación necesita almacenar información relacionada con usuarios, roles, planes, licencias, modelos disponibles, modos de ejecución, pipelines, ejecuciones y archivos temporales. Para ello se ha utilizado \textbf{YMariaDB} como sistema gestor de base de datos relacional \cite{mariadb_docs}.
-
-El acceso a datos se ha implementado mediante \textbf{SQLAlchemy y Flask-SQLAlchemy}. Estas herramientas permiten representar las tablas como clases de Python y trabajar con las entidades del sistema de forma más integrada con el código de la aplicación \cite{sqlalchemy_docs}.
-
-En el entorno de pruebas se utiliza \textbf{SQLite} en memoria. Esta decisión permite ejecutar las pruebas de forma rápida y aislada, creando y destruyendo el esquema de datos sin afectar a la base de datos principal del proyecto \cite{sqlite_docs}.
-
-La configuración de los modos de ejecución se ha separado parcialmente del código mediante ficheros \textbf{JSON}. Estos archivos recogen parámetros por defecto de modos como detección con YOLO, recorte de personas, detección de manos o estimación de pose, facilitando su modificación sin alterar directamente las funciones de procesamiento \cite{json_docs}.
-
-Además, el proyecto incluye un script de inicialización, \texttt{seed.py}, que permite preparar datos de demostración: usuarios, roles, planes, modelos de inteligencia artificial, modos y pipelines preconfigurados. Su finalidad es facilitar la puesta en marcha de un entorno de prueba o defensa.
-
-\section{Pruebas y validación}
-
-La validación del sistema se ha realizado mediante pruebas automatizadas con \textbf{Pytest}. Estas pruebas cubren distintas partes del proyecto, como autenticación, tienda, pipelines, modelos de datos, factoría de inteligencia artificial, launchers y funciones de procesamiento \cite{pytest_docs}.
-
-Para evitar que todas las pruebas dependan de modelos reales o de operaciones costosas sobre disco, se ha utilizado \textbf{unittest.mock}. Esta herramienta permite simular lecturas de imágenes, escrituras de archivos, respuestas de modelos y errores controlados, comprobando la lógica del sistema de forma más rápida y aislada \cite{python_unittest_mock_docs}.
-
-También se ha empleado el cliente de pruebas de Flask, que permite simular peticiones HTTP directamente sobre la aplicación sin levantar un servidor real. Esto resulta útil para comprobar respuestas JSON, códigos de estado, validaciones y comportamiento de los controladores \cite{flask_docs}.
-
-\section{Diseño, documentación y herramientas auxiliares}
-
-Durante el diseño del sistema se han utilizado herramientas de apoyo para representar la estructura de datos y documentar la arquitectura del proyecto.
+\subsection{Diseño y arquitectura del software}
 
 \begin{itemize}
-	\item \textbf{dbdiagram.io}: utilizado para trabajar de forma ágil sobre el modelo relacional antes de trasladarlo a SQLAlchemy y MariaDB \cite{dbdiagram_docs}.
+	\item \textbf{Arquitectura modular.} Técnica que divide una aplicación en componentes con responsabilidades diferenciadas, reduciendo el acoplamiento entre partes del sistema.
 	
-	\item \textbf{Draw.io}: utilizado para elaborar diagramas de apoyo, especialmente representaciones visuales del modelo entidad-relación y otros esquemas del sistema \cite{drawio_docs}.
+	\item \textbf{Separación de responsabilidades.} Principio de diseño que asigna cada función del sistema a una capa concreta, evitando concentrar toda la lógica en un único módulo.
 	
-	\item \textbf{LaTeX}: utilizado para redactar la memoria y los anexos del TFG, generar índices, gestionar referencias y mantener una presentación adecuada para la documentación académica \cite{wiki:latex}.
+	\item \textbf{Modelo-Vista-Controlador.} Patrón arquitectónico que separa una aplicación en tres partes principales: modelo, vista y controlador. Esta separación facilita organizar la lógica de datos, la presentación y la gestión de peticiones.
+	
+	\item \textbf{Modelo.} Parte encargada de representar la información y las reglas asociadas a los datos. En una aplicación con persistencia, suele estar relacionado con las entidades, relaciones y operaciones sobre la base de datos.
+	
+	\item \textbf{Vista.} Parte responsable de presentar la información al usuario. En aplicaciones \textit{web}, suele materializarse mediante plantillas HTML, hojas de estilo y contenido generado para el navegador.
+	
+	\item \textbf{Controlador.} Parte encargada de recibir las peticiones del usuario, coordinar la lógica necesaria y devolver una respuesta. Actúa como intermediario entre la vista, el modelo y otros servicios de la aplicación.
+	
+	\item \textbf{Patrón factoría.} Patrón creacional que centraliza la creación o selección de objetos, delegando en un componente especializado la decisión de qué implementación utilizar \cite{gamma1994design}.
+	
+	\item \textbf{Modelo relacional.} Modelo de datos basado en tablas, filas, columnas, claves primarias, claves ajenas y restricciones de integridad.
+	
+	\item \textbf{Mapeo objeto-relacional.} Técnica que relaciona tablas de una base de datos con clases del lenguaje de programación, permitiendo trabajar con entidades en lugar de sentencias SQL directas.
 \end{itemize}
 
-\section{Asistencia mediante IA generativa}
+\subsection{Desarrollo web y seguridad}
 
-Durante el desarrollo y la redacción se han utilizado herramientas de IA generativa, principalmente \textbf{ChatGPT y Gemini}, como apoyo para contrastar ideas, revisar explicaciones, plantear alternativas de diseño, depurar errores y generar borradores de texto \cite{openai_chatgpt,google_gemini}.
+\begin{itemize}
+	\item \textbf{Arquitectura cliente-servidor.} Modelo en el que un cliente realiza peticiones y un servidor las procesa, ejecuta la lógica correspondiente y devuelve una respuesta.
+	
+	\item \textbf{\textit{Tokens} JWT.} Mecanismo que representa información firmada sobre una identidad o sesión, permitiendo validar peticiones protegidas \cite{jwt_docs}.
+	
+\end{itemize}
 
-Su uso ha sido auxiliar. Las decisiones de análisis, implementación, validación y redacción final han sido revisadas y adaptadas dentro del propio proceso de desarrollo del TFG.
+\subsection{Visión por computador e inteligencia artificial}
 
-\section{Síntesis}
+\begin{itemize}
+	\item \textbf{Detección de objetos.} Localiza entidades dentro de una imagen y les asigna una clase.
+	
+	\item \textbf{Estimación de puntos clave.} Localiza puntos relevantes de una estructura.
+	
+	\item \textbf{Segmentación de imágenes.} Divide una imagen en regiones o clases a nivel de píxel.
+	
+	\item \textbf{Clasificación de imágenes.} Asigna una o varias etiquetas a una imagen completa o a una región concreta.
+\end{itemize}
 
-Las herramientas utilizadas cubren las distintas necesidades del proyecto. Python, Flask, SQLAlchemy y MariaDB forman la base de la aplicación web y su persistencia. YOLO, MediaPipe, OpenCV y NumPy permiten abordar el procesamiento de imágenes y la integración de modelos de visión por computador. Pytest, \texttt{unittest.mock} y el cliente de pruebas de Flask aportan soporte para la validación automatizada del sistema.
+\subsection{Pruebas, calidad y despliegue}
 
-Junto a ellas, herramientas como Debian, Visual Studio Code, DBeaver, GitHub, Jira, Teams, dbdiagram.io, Draw.io y LaTeX han servido de apoyo para el desarrollo, seguimiento, diseño y documentación del proyecto. En conjunto, esta selección ha permitido construir una aplicación web modular, con usuarios, permisos, pipelines, resultados temporales y una base preparada para futuras ampliaciones.
+\begin{itemize}
+	\item \textbf{Pruebas unitarias.} Verifican componentes concretos de forma aislada.
+	
+	\item \textbf{\textit{Mocking}.} Sustituye temporalmente una dependencia por una respuesta controlada, permitiendo aislar pruebas o simular errores.
+	
+	\item \textbf{Cobertura de código.} Métrica que indica qué partes del código han sido ejecutadas durante las pruebas.
+	
+	\item \textbf{Análisis estático.} Revisión del código fuente sin ejecutarlo para detectar problemas de mantenibilidad, duplicación, complejidad, seguridad o estilo.
+	
+	\item \textbf{Contenerización.} Técnica que empaqueta una aplicación junto con sus dependencias en una unidad reproducible.
+\end{itemize}
+
+\section{Herramientas}
+
+\subsection{Gestión, lenguaje y entorno}
+
+\begin{itemize}
+	\item \textbf{Jira.} Herramienta de gestión de proyectos \cite{jira_docs}.
+	
+	\item \textbf{Git.} Sistema de control de versiones \cite{git_docs}.
+	
+	\item \textbf{GitHub.} Plataforma de alojamiento de repositorios Git \cite{github_docs}.
+	
+	\item \textbf{Python.} Lenguaje de programación multiplataforma y multiparadigma, con un amplio ecosistema de bibliotecas para desarrollo \textit{web}, procesamiento de datos, pruebas e inteligencia artificial \cite{python_docs}.
+	
+	\item \textbf{Linux.} Familia de sistemas operativos libres.
+	
+	\item \textbf{Debian.} Distribución GNU/Linux caracterizada por su estabilidad \cite{debian_docs}.
+	
+	\item \textbf{Visual Studio Code.} Editor de código. \cite{vscode_docs}.
+	
+	\item \textbf{DBeaver.} Herramienta gráfica de administración de bases de datos que permite inspeccionar esquemas, consultar tablas y ejecutar sentencias SQL \cite{dbeaver_docs}.
+\end{itemize}
+
+\subsection{Visión por computador e inteligencia artificial}
+
+\begin{itemize}
+	\item \textbf{YOLO.} Familia de modelos de detección de objetos cuyo nombre procede de \textit{You Only Look Once}. Su propuesta original fue presentada por Redmon, Divvala, Girshick y Farhadi, y plantea la detección como un único problema de regresión en el que una red predice cajas delimitadoras y probabilidades de clase en una sola pasada \cite{redmon2016yolo}.
+	\textbf{YOLOv8.} Versión de la familia YOLO desarrollada por Ultralytics. Soporta tareas de visión por computador como detección de objetos, segmentación de instancias, clasificación de imágenes, estimación de pose y detección con cajas orientadas \cite{ultralytics_yolov8,ultralytics_tasks}.
+	
+	\item \textbf{Ultralytics.} Biblioteca de Python asociada a modelos YOLO modernos. Proporciona una interfaz para predicción, entrenamiento, validación, exportación y uso de modelos preentrenados \cite{ultralytics_yolov8}.
+	
+	\item \textbf{MediaPipe.} \textit{Framework} desarrollado por Google para construir soluciones de percepción mediante aprendizaje automático. Incluye tareas de visión como detección de manos, estimación de pose, análisis facial, segmentación, detección de objetos y reconocimiento de gestos \cite{lugaresi2019mediapipe,google_mediapipe_docs}.
+	
+	\item \textbf{MediaPipe Tasks.} Interfaz de alto nivel de MediaPipe orientada a ejecutar tareas predefinidas de visión, audio y texto. En visión por computador incluye tareas como \textit{Hand Landmarker}, \textit{Pose Landmarker}, \textit{Face Landmarker}, \textit{Object Detector}, \textit{Image Segmenter} y \textit{Gesture Recognizer} \cite{google_mediapipe_docs}.
+	
+	\item \textbf{\textit{Hand Landmarker}.} Tarea de MediaPipe destinada a detectar puntos clave de las manos. Devuelve coordenadas de puntos de la mano, coordenadas del mundo y lateralidad de la mano detectada \cite{mediapipe_hand_landmarker}.
+	
+	\item \textbf{\textit{Pose Landmarker}.} Tarea de MediaPipe destinada a detectar puntos clave del cuerpo humano en imágenes o vídeo. Devuelve puntos de pose en coordenadas de imagen y coordenadas tridimensionales del mundo \cite{mediapipe_pose_landmarker}.
+	
+	\item \textbf{OpenCV.} Biblioteca de visión por computador y procesamiento de imágenes. Incluye funciones para lectura, escritura, transformación, filtrado y dibujo sobre imágenes \cite{opencv_docs}.
+	
+	\item \textbf{NumPy.} Biblioteca de Python para cálculo numérico basada en arreglos multidimensionales y operaciones matriciales eficientes \cite{numpy_docs}.
+\end{itemize}
+
+\subsection{Desarrollo web, persistencia y configuración}
+
+\begin{itemize}
+	\item \textbf{Flask.} \textit{Framework} ligero de desarrollo \textit{web} para Python. Permite definir rutas, procesar peticiones HTTP, devolver respuestas y estructurar aplicaciones mediante extensiones, este usa \textbf{\textit{Blueprints}.} que es un mecanismo de Flask para organizar rutas y vistas en módulos reutilizables dentro de una aplicación \cite{flask_docs}.
+	
+	\item \textbf{Jinja.} Motor de plantillas utilizado por Flask para generar HTML dinámico a partir de plantillas y datos del servidor \cite{flask_docs}.
+	
+	\item \textbf{HTML.} Lenguaje de marcado para páginas \textit{web} \cite{mdn_html}.
+	
+	\item \textbf{CSS.} Lenguaje de estilos para la presentación visual de HTML \cite{mdn_css}.
+	
+	\item \textbf{JavaScript.} Lenguaje de programación ejecutado principalmente en el navegador, utilizado para añadir interacción y comunicación con servicios \textit{web} \cite{mdn_javascript}.
+	
+	\item \textbf{Flask-JWT-Extended.} Extensión de Flask para crear, verificar y proteger rutas mediante \textit{tokens} JWT \cite{jwt_docs}.
+	
+	\item \textbf{Werkzeug.} Biblioteca usada por Flask. Incluye utilidades para peticiones, respuestas, seguridad, nombres de ficheros y contraseñas \cite{werkzeug_docs}.
+	
+	\item \textbf{python-dotenv.} Biblioteca que permite cargar variables de entorno desde ficheros \texttt{.env} \cite{dotenv_docs}.
+	
+	\item \textbf{MariaDB.} Sistema gestor de bases de datos relacional, derivado de MySQL \cite{mariadb_docs}.
+	
+	\item \textbf{SQLAlchemy.} Biblioteca de Python para acceso a bases de datos y mapeo objeto-relacional. Permite definir modelos, relaciones y consultas desde el código \cite{sqlalchemy_docs}.
+	
+	\item \textbf{Flask-SQLAlchemy.} Extensión que integra SQLAlchemy con Flask, simplifica la configuración de modelos y sesiones de base de datos \cite{sqlalchemy_docs}.
+	
+	\item \textbf{SQLite.} Sistema gestor de bases de datos relacional ligero, embebido y basado en ficheros \cite{sqlite_docs}.
+	
+	\item \textbf{JSON.} Formato ligero de intercambio de datos basado en texto \cite{json_docs}.
+\end{itemize}
+
+\subsection{Pruebas, calidad, despliegue y documentación}
+
+\begin{itemize}
+	\item \textbf{Pytest.} \textit{Framework} de pruebas para Python. Permite definir pruebas unitarias, utilizar \textit{fixtures}, parametrizar casos y generar informes. \cite{pytest_docs}.
+	
+	\item \textbf{unittest.mock.} Módulo de Python para crear objetos simulados y reemplazar dependencias durante una prueba \cite{python_unittest_mock_docs}.
+	
+	\item \textbf{GitHub Actions.} Plataforma de automatización de GitHub para definir flujos de integración continua, pruebas, análisis y despliegues \cite{githubactions}.
+	
+	\item \textbf{SonarCloud.} Servicio de análisis estático de código orientado a detectar problemas de mantenibilidad, duplicación, seguridad, complejidad y calidad general \cite{sonarcloud}.
+	
+	\item \textbf{Docker.} Plataforma para crear y ejecutar contenedores que empaquetan una aplicación con sus dependencias \cite{docker}. {Docker Compose.} Herramienta para definir y ejecutar aplicaciones formadas por varios contenedores relacionados mediante un archivo de configuración \cite{dockercompose}.
+	
+	\item \textbf{Kubernetes.} Plataforma de código abierto para la orquestación de contenedores. Permite automatizar el despliegue, escalado y gestión de aplicaciones contenedorizadas en entornos distribuidos \cite{kubernetes_docs}.
+	
+	\item \textbf{dbdiagram.io.} Herramienta \textit{web} para diseñar y representar modelos relacionales mediante una sintaxis textual \cite{dbdiagram_docs}.
+	
+	\item \textbf{Draw.io.} Herramienta para crear diagramas \cite{drawio_docs}.
+	
+	\item \textbf{LaTeX.} Sistema de composición tipográfica utilizado en documentación científica y académica \cite{wiki:latex}.
+	
+	\item \textbf{ChatGPT y Gemini.} Herramientas de inteligencia artificial generativa orientada a la generación, revisión y transformación de documentación, código, pruebas, explicaciones e imágenes \cite{google_gemini, openai_chatgpt}.
+	
+\end{itemize}
