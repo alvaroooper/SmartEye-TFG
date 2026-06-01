@@ -43,8 +43,7 @@ services:
       - "5000:5000"
 
     volumes:
-      - ./execution_data:/app/execution_data
-      - ./models:/app/models
+      - execution_data:/app/execution_data
 
     depends_on:
       db:
@@ -52,3 +51,4 @@ services:
 
 volumes:
   mariadb_data:
+  execution_data:

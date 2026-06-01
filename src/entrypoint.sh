@@ -2,9 +2,36 @@
 set -e
 
 echo "Preparando carpetas necesarias..."
+
 mkdir -p /app/execution_data
 mkdir -p /app/models/mp
 mkdir -p /app/models/yolo
+mkdir -p /tmp/matplotlib
+mkdir -p /tmp/ultralytics
+
+if ! mkdir -p /app/execution_data/.permiso_test; then
+    echo "ERROR: La aplicación no tiene permisos de escritura en /app/execution_data."
+    echo "Comprueba que docker-compose.yml use:"
+    echo "  - execution_data:/app/execution_data"
+    echo "Si el volumen ya existía con permisos incorrectos, ejecuta:"
+    echo "  docker compose down"
+    echo "  docker volume rm tfg_ai_execution_data"
+    echo "  docker compose up --build"
+    exit 1
+fi
+
+rmdir /app/execution_data/.permiso_test
+
+if [ ! -d "/app/models" ]; then
+    echo "ERROR: No existe la carpeta /app/models dentro del contenedor."
+    exit 1
+fi
+
+if [ ! -f "/app/models/yolo/yolov8n.pt" ]; then
+    echo "ERROR: No se ha encontrado /app/models/yolo/yolov8n.pt."
+    echo "Incluye el modelo YOLO dentro de la carpeta models/yolo antes de construir la imagen."
+    exit 1
+fi
 
 echo "Esperando a que MariaDB esté disponible..."
 

@@ -29,6 +29,7 @@ RUN python -m pip install --no-cache-dir --only-binary=:all: --require-hashes -r
 
 COPY app ./app
 COPY configs ./configs
+COPY models ./models
 COPY config.py run.py seed.py entrypoint.sh ./
 
 RUN mkdir -p /app/execution_data /app/models/mp /app/models/yolo /tmp/matplotlib /tmp/ultralytics \
