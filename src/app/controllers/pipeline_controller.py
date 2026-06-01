@@ -776,18 +776,64 @@ def historial_ejecuciones():
 
     return jsonify(resultado), 200
 
+def obtener_ids_query(nombre_parametro: str) -> list[int]:
+    valores = request.args.getlist(nombre_parametro)
+    ids = []
+
+    for valor in valores:
+        for parte in valor.split(","):
+            parte = parte.strip()
+            if parte:
+                ids.append(int(parte))
+
+    return ids
+
+
+def obtener_fecha_query(nombre_parametro: str):
+    valor = request.args.get(nombre_parametro)
+
+    if not valor:
+        return None
+
+    return datetime.strptime(valor, "%Y-%m-%d")
+
 @pipeline_bp.route('/ejecuciones_totales', methods=['GET'])
 @jwt_required()
 def ejecuciones_totales_admin():
     """
     Retorna el historial global de ejecuciones para el panel administrativo.
-    Solo es accesible por usuarios con rol admin.
+    Permite aplicar filtros opcionales por fecha, usuario y pipeline.
     """
     if "admin" not in get_jwt().get("roles", []):
         return jsonify({"mensaje": "Violación de acceso: Privilegios insuficientes"}), 403
 
     try:
-        ejecuciones = Ejecucion.query.order_by(Ejecucion.creado_en.desc()).all()
+        ids_usuarios = obtener_ids_query("id_usuario")
+        ids_pipelines = obtener_ids_query("id_pipeline")
+        fecha_desde = obtener_fecha_query("fecha_desde")
+        fecha_hasta = obtener_fecha_query("fecha_hasta")
+
+        if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
+            return jsonify({
+                "status": "error",
+                "mensaje": "La fecha inicial no puede ser posterior a la fecha final."
+            }), 400
+
+        query = Ejecucion.query
+
+        if fecha_desde:
+            query = query.filter(Ejecucion.creado_en >= fecha_desde)
+
+        if fecha_hasta:
+            query = query.filter(Ejecucion.creado_en < fecha_hasta + timedelta(days=1))
+
+        if ids_usuarios:
+            query = query.filter(Ejecucion.id_usuario.in_(ids_usuarios))
+
+        if ids_pipelines:
+            query = query.filter(Ejecucion.id_pipeline.in_(ids_pipelines))
+
+        ejecuciones = query.order_by(Ejecucion.creado_en.desc()).all()
 
         resultado = []
 
@@ -797,15 +843,24 @@ def ejecuciones_totales_admin():
 
             resultado.append({
                 "id": ej.id_ejecucion,
+                "id_usuario": ej.id_usuario,
+                "id_pipeline": ej.id_pipeline,
                 "usuario": usuario.username if usuario else "Usuario eliminado",
                 "pipeline": pipeline.nombre if pipeline else "Pipeline eliminado",
                 "fecha": formatear_fecha_local(ej.creado_en),
+                "fecha_iso": ej.creado_en.isoformat() if ej.creado_en else None,
                 "estado": ej.estado,
                 "duracion": f"{ej.duracion_ms} ms" if ej.duracion_ms else "-",
                 "error": ej.mensaje_error_user
             })
 
         return jsonify(resultado), 200
+
+    except ValueError:
+        return jsonify({
+            "status": "error",
+            "mensaje": "Los filtros recibidos no tienen un formato válido."
+        }), 400
 
     except Exception as e:
         return jsonify({

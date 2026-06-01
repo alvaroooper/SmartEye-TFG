@@ -646,19 +646,23 @@ def test_ejecuciones_totales_admin_rbac_y_contenido_global(client, app, db_sessi
             id_usuario=env["u_pro"],
             id_pipeline=env["p_pub"],
             estado="completado",
-            duracion_ms=120
+            duracion_ms=120,
+            creado_en=datetime(2026, 5, 15, 10, 0, 0)
         )
         ej_basic = Ejecucion(
             id_usuario=env["u_basic"],
             id_pipeline=env["p_pub"],
             estado="error",
-            mensaje_error_user="Error controlado"
+            mensaje_error_user="Error controlado",
+            creado_en=datetime(2026, 5, 16, 10, 0, 0)
         )
 
         db_session.add_all([ej_pro, ej_basic])
         db_session.commit()
 
-        ids_creadas = {ej_pro.id_ejecucion, ej_basic.id_ejecucion}
+        id_ej_pro = ej_pro.id_ejecucion
+        id_ej_basic = ej_basic.id_ejecucion
+        ids_creadas = {id_ej_pro, id_ej_basic}
 
     res_user = client.get(
         "/api/v1/ejecuciones_totales",
@@ -679,6 +683,166 @@ def test_ejecuciones_totales_admin_rbac_y_contenido_global(client, app, db_sessi
     assert any(e["estado"] == "completado" for e in res_admin.json)
     assert any(e["estado"] == "error" for e in res_admin.json)
 
+    ejecucion_pro = next(e for e in res_admin.json if e["id"] == id_ej_pro)
+
+    assert ejecucion_pro["id_usuario"] == env["u_pro"]
+    assert ejecucion_pro["id_pipeline"] == env["p_pub"]
+    assert ejecucion_pro["fecha_iso"] is not None
+
+def test_ejecuciones_totales_admin_filtra_por_fecha_usuario_y_pipeline(client, app, db_session):
+    """Comprueba que los filtros avanzados se combinan con lógica AND."""
+    env = setup_pipeline_env(app, db_session)
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    with app.app_context():
+        ej_valida = Ejecucion(
+            id_usuario=env["u_pro"],
+            id_pipeline=env["p_pub"],
+            estado="completado",
+            creado_en=datetime(2026, 5, 15, 12, 0, 0)
+        )
+
+        ej_otro_usuario = Ejecucion(
+            id_usuario=env["u_basic"],
+            id_pipeline=env["p_pub"],
+            estado="completado",
+            creado_en=datetime(2026, 5, 15, 12, 0, 0)
+        )
+
+        ej_otro_pipeline = Ejecucion(
+            id_usuario=env["u_pro"],
+            id_pipeline=env["p_priv"],
+            estado="completado",
+            creado_en=datetime(2026, 5, 15, 12, 0, 0)
+        )
+
+        ej_otra_fecha = Ejecucion(
+            id_usuario=env["u_pro"],
+            id_pipeline=env["p_pub"],
+            estado="completado",
+            creado_en=datetime(2026, 4, 15, 12, 0, 0)
+        )
+
+        db_session.add_all([
+            ej_valida,
+            ej_otro_usuario,
+            ej_otro_pipeline,
+            ej_otra_fecha
+        ])
+        db_session.commit()
+
+        id_valida = ej_valida.id_ejecucion
+
+    res = client.get(
+        (
+            "/api/v1/ejecuciones_totales"
+            "?fecha_desde=2026-05-01"
+            "&fecha_hasta=2026-05-31"
+            f"&id_usuario={env['u_pro']}"
+            f"&id_pipeline={env['p_pub']}"
+        ),
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 200
+
+    ids_respuesta = {e["id"] for e in res.json}
+
+    assert ids_respuesta == {id_valida}
+
+
+def test_ejecuciones_totales_admin_filtra_por_varios_usuarios_y_pipelines(client, app, db_session):
+    """Comprueba que se aceptan varios usuarios y varios pipelines en los filtros."""
+    env = setup_pipeline_env(app, db_session)
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    with app.app_context():
+        ej_pro_pub = Ejecucion(
+            id_usuario=env["u_pro"],
+            id_pipeline=env["p_pub"],
+            estado="completado",
+            creado_en=datetime(2026, 5, 10, 10, 0, 0)
+        )
+
+        ej_basic_priv = Ejecucion(
+            id_usuario=env["u_basic"],
+            id_pipeline=env["p_priv"],
+            estado="error",
+            creado_en=datetime(2026, 5, 11, 10, 0, 0)
+        )
+
+        ej_admin_pub = Ejecucion(
+            id_usuario=env["u_admin"],
+            id_pipeline=env["p_pub"],
+            estado="completado",
+            creado_en=datetime(2026, 5, 12, 10, 0, 0)
+        )
+
+        db_session.add_all([ej_pro_pub, ej_basic_priv, ej_admin_pub])
+        db_session.commit()
+
+        ids_esperadas = {
+            ej_pro_pub.id_ejecucion,
+            ej_basic_priv.id_ejecucion
+        }
+
+    res = client.get(
+        (
+            "/api/v1/ejecuciones_totales"
+            f"?id_usuario={env['u_pro']},{env['u_basic']}"
+            f"&id_pipeline={env['p_pub']}"
+            f"&id_pipeline={env['p_priv']}"
+        ),
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res.status_code == 200
+
+    ids_respuesta = {e["id"] for e in res.json}
+
+    assert ids_respuesta == ids_esperadas
+
+
+def test_ejecuciones_totales_admin_rechaza_filtros_invalidos(client, app, db_session):
+    """Comprueba que los filtros mal formados devuelven un error 400."""
+    env = setup_pipeline_env(app, db_session)
+
+    token = create_access_token(
+        identity=str(env["u_admin"]),
+        additional_claims={"roles": ["admin"]}
+    )
+
+    res_usuario_invalido = client.get(
+        "/api/v1/ejecuciones_totales?id_usuario=no-numerico",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_usuario_invalido.status_code == 400
+    assert "formato" in res_usuario_invalido.json["mensaje"].lower()
+
+    res_fecha_invalida = client.get(
+        "/api/v1/ejecuciones_totales?fecha_desde=2026-99-99",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_fecha_invalida.status_code == 400
+    assert "formato" in res_fecha_invalida.json["mensaje"].lower()
+
+    res_rango_invalido = client.get(
+        "/api/v1/ejecuciones_totales?fecha_desde=2026-06-01&fecha_hasta=2026-05-01",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert res_rango_invalido.status_code == 400
+    assert "fecha inicial" in res_rango_invalido.json["mensaje"].lower()
 
 # ==============================================================================
 # 7. PRUEBAS DE AUTORIZACIÓN SOBRE PIPELINES EJECUTABLES
