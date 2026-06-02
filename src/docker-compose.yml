@@ -44,6 +44,7 @@ services:
 
     volumes:
       - execution_data:/app/execution_data
+      - models_data:/app/models
 
     depends_on:
       db:
@@ -52,3 +53,4 @@ services:
 volumes:
   mariadb_data:
   execution_data:
+  models_data:

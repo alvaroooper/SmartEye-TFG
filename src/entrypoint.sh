@@ -11,27 +11,15 @@ mkdir -p /tmp/ultralytics
 
 if ! mkdir -p /app/execution_data/.permiso_test; then
     echo "ERROR: La aplicación no tiene permisos de escritura en /app/execution_data."
-    echo "Comprueba que docker-compose.yml use:"
-    echo "  - execution_data:/app/execution_data"
-    echo "Si el volumen ya existía con permisos incorrectos, ejecuta:"
-    echo "  docker compose down"
-    echo "  docker volume rm tfg_ai_execution_data"
-    echo "  docker compose up --build"
     exit 1
 fi
-
 rmdir /app/execution_data/.permiso_test
 
-if [ ! -d "/app/models" ]; then
-    echo "ERROR: No existe la carpeta /app/models dentro del contenedor."
+if ! mkdir -p /app/models/.permiso_test; then
+    echo "ERROR: La aplicación no tiene permisos de escritura en /app/models."
     exit 1
 fi
-
-if [ ! -f "/app/models/yolo/yolov8n.pt" ]; then
-    echo "ERROR: No se ha encontrado /app/models/yolo/yolov8n.pt."
-    echo "Incluye el modelo YOLO dentro de la carpeta models/yolo antes de construir la imagen."
-    exit 1
-fi
+rmdir /app/models/.permiso_test
 
 echo "Esperando a que MariaDB esté disponible..."
 
@@ -84,4 +72,3 @@ fi
 echo "Arrancando aplicación Flask con Gunicorn..."
 
 exec gunicorn --workers 1 --bind 0.0.0.0:5000 --timeout 300 run:app
-
