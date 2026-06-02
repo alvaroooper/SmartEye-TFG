@@ -234,7 +234,8 @@
             gap: 12px;
         }
 
-        label {
+        label,
+        .form-label {
             display: block;
             margin-bottom: 5px;
             color: var(--muted);
@@ -368,8 +369,47 @@
                     <button class="btn btn-light" onclick="cargarEjecuciones()">Refrescar</button>
                 </div>
 
-                <div class="field">
-                    <input id="filtroEjecuciones" placeholder="Filtrar por usuario o pipeline..." oninput="filtrarEjecuciones()">
+                <div class="row">
+                    <div class="field">
+                        <label for="filtroFechaDesde">Fecha desde</label>
+                        <input id="filtroFechaDesde" type="date">
+                    </div>
+
+                    <div class="field">
+                        <label for="filtroFechaHasta">Fecha hasta</label>
+                        <input id="filtroFechaHasta" type="date">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field">
+                        <label for="filtroUsuarioEjecucion">Usuarios</label>
+                        <select id="filtroUsuarioEjecucion" multiple size="4">
+                            <option value="">Todos los usuarios</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="filtroPipelineEjecucion">Pipelines</label>
+                        <select id="filtroPipelineEjecucion" multiple size="4">
+                            <option value="">Todos los pipelines</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="field">
+                        <label for="filtroEjecuciones">Búsqueda rápida</label>
+                        <input id="filtroEjecuciones" placeholder="Filtrar los resultados cargados..." oninput="filtrarEjecuciones()">
+                    </div>
+
+                    <div class="field">
+                        <span class="form-label">Acciones</span>
+                        <div class="actions" style="margin-top: 0;">
+                            <button class="btn btn-primary" onclick="cargarEjecuciones()">Aplicar filtros</button>
+                            <button class="btn" onclick="limpiarFiltrosEjecuciones()">Limpiar</button>
+                        </div>
+                    </div>
                 </div>
 
                 <table>
@@ -405,21 +445,28 @@
 
                     <div class="row">
                         <div class="field">
-                            <label>Nombre</label>
+                            <label for="pipelineNombre">Nombre</label>
                             <input id="pipelineNombre" placeholder="Ej: Detección + Pose">
                         </div>
 
                         <div class="field">
-                            <label>Visibilidad</label>
+                            <span class="form-label">Visibilidad</span>
                             <div class="checks">
-                                <label><input id="pipelinePublico" type="checkbox" checked> Público</label>
-                                <label><input id="pipelineActivo" type="checkbox" checked> Activo</label>
+                                <div>
+                                    <input id="pipelinePublico" type="checkbox" checked>
+                                    <label for="pipelinePublico">Público</label>
+                                </div>
+
+                                <div>
+                                    <input id="pipelineActivo" type="checkbox" checked>
+                                    <label for="pipelineActivo">Activo</label>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="field">
-                        <label>Descripción</label>
+                        <label for="pipelineDescripcion">Descripción</label>
                         <textarea id="pipelineDescripcion" placeholder="Descripción breve del pipeline"></textarea>
                     </div>
 
@@ -450,6 +497,8 @@
         let ejecuciones = [];
         let pipelines = [];
         let catalogoIA = [];
+        let usuariosAdmin = [];
+        let contadorEtapas = 0;
 
         document.addEventListener('DOMContentLoaded', () => {
             const token = sessionStorage.getItem('jwt_token');
@@ -510,9 +559,10 @@
                 const res = await fetch('/api/v1/auth/usuarios', { headers: auth() });
                 if (!res.ok) throw new Error();
 
-                const usuarios = await res.json();
+                usuariosAdmin = await res.json();
+                pintarFiltrosEjecuciones();
 
-                tabla.innerHTML = usuarios.map(u => `
+                tabla.innerHTML = usuariosAdmin.map(u => `
                     <tr>
                         <td>#${u.id}</td>
                         <td><b>${html(u.nombre || u.username)}</b><br><span class="muted">@${html(u.username)}</span></td>
@@ -555,15 +605,104 @@
             tabla.innerHTML = '<tr><td colspan="6">Cargando actividad...</td></tr>';
 
             try {
-                const res = await fetch('/api/v1/ejecuciones_totales', { headers: auth() });
-                if (!res.ok) throw new Error();
+                const params = new URLSearchParams();
+
+                const fechaDesde = document.getElementById('filtroFechaDesde')?.value;
+                const fechaHasta = document.getElementById('filtroFechaHasta')?.value;
+
+                if (fechaDesde) {
+                    params.append('fecha_desde', fechaDesde);
+                }
+
+                if (fechaHasta) {
+                    params.append('fecha_hasta', fechaHasta);
+                }
+
+                obtenerValoresSeleccionados('filtroUsuarioEjecucion').forEach(idUsuario => {
+                    params.append('id_usuario', idUsuario);
+                });
+
+                obtenerValoresSeleccionados('filtroPipelineEjecucion').forEach(idPipeline => {
+                    params.append('id_pipeline', idPipeline);
+                });
+
+                const query = params.toString();
+                const url = query
+                    ? `/api/v1/ejecuciones_totales?${query}`
+                    : '/api/v1/ejecuciones_totales';
+
+                const res = await fetch(url, { headers: auth() });
+
+                if (!res.ok) {
+                    const error = await res.json().catch(() => ({}));
+                    throw new Error(error.mensaje || 'Error al cargar ejecuciones.');
+                }
 
                 ejecuciones = await res.json();
-                pintarEjecuciones(ejecuciones);
+                filtrarEjecuciones();
 
-            } catch {
-                tabla.innerHTML = '<tr><td colspan="6">Fallo en enlace con la API de auditoría.</td></tr>';
+            } catch (error) {
+                tabla.innerHTML = `<tr><td colspan="6">${html(error.message || 'Fallo en enlace con la API de auditoría.')}</td></tr>`;
             }
+        }
+
+        function obtenerValoresSeleccionados(idSelect) {
+            const select = document.getElementById(idSelect);
+
+            if (!select) {
+                return [];
+            }
+
+            return [...select.selectedOptions]
+                .map(opcion => opcion.value)
+                .filter(valor => valor !== '');
+        }
+
+        function pintarFiltrosEjecuciones() {
+            const selectUsuarios = document.getElementById('filtroUsuarioEjecucion');
+            const selectPipelines = document.getElementById('filtroPipelineEjecucion');
+
+            if (selectUsuarios) {
+                const seleccionados = obtenerValoresSeleccionados('filtroUsuarioEjecucion');
+
+                selectUsuarios.innerHTML = `
+                    <option value="">Todos los usuarios</option>
+                    ${usuariosAdmin.map(u => `
+                        <option value="${u.id}" ${seleccionados.includes(String(u.id)) ? 'selected' : ''}>
+                            ${html(u.nombre || u.username)} (@${html(u.username)})
+                        </option>
+                    `).join('')}
+                `;
+            }
+
+            if (selectPipelines) {
+                const seleccionados = obtenerValoresSeleccionados('filtroPipelineEjecucion');
+
+                selectPipelines.innerHTML = `
+                    <option value="">Todos los pipelines</option>
+                    ${pipelines.map(p => `
+                        <option value="${p.id}" ${seleccionados.includes(String(p.id)) ? 'selected' : ''}>
+                            ${html(p.nombre)}
+                        </option>
+                    `).join('')}
+                `;
+            }
+        }
+
+        function limpiarFiltrosEjecuciones() {
+            document.getElementById('filtroFechaDesde').value = '';
+            document.getElementById('filtroFechaHasta').value = '';
+            document.getElementById('filtroEjecuciones').value = '';
+
+            [...document.getElementById('filtroUsuarioEjecucion').options].forEach(opcion => {
+                opcion.selected = false;
+            });
+
+            [...document.getElementById('filtroPipelineEjecucion').options].forEach(opcion => {
+                opcion.selected = false;
+            });
+
+            cargarEjecuciones();
         }
 
         function pintarEjecuciones(lista) {
@@ -608,6 +747,7 @@
                 catalogoIA = await resCatalogo.json();
 
                 pintarPipelines();
+                pintarFiltrosEjecuciones();
 
             } catch {
                 lista.innerHTML = '<div class="empty">No se pudo cargar el inventario técnico.</div>';
@@ -683,6 +823,13 @@
             const contenedor = document.getElementById('listaEtapas');
             const numero = contenedor.children.length + 1;
 
+            contadorEtapas += 1;
+
+            const idNombre = `etapaNombre_${contadorEtapas}`;
+            const idIA = `etapaIA_${contadorEtapas}`;
+            const idModo = `etapaModo_${contadorEtapas}`;
+            const idDescripcion = `etapaDescripcion_${contadorEtapas}`;
+
             const div = document.createElement('div');
             div.className = 'stage';
 
@@ -694,13 +841,13 @@
 
                 <div class="row">
                     <div class="field">
-                        <label>Nombre</label>
-                        <input class="etapaNombre" value="${html(etapa?.nombre_etapa || '')}" placeholder="Nombre de etapa">
+                        <label for="${idNombre}">Nombre</label>
+                        <input id="${idNombre}" class="etapaNombre" value="${html(etapa?.nombre_etapa || '')}" placeholder="Nombre de etapa">
                     </div>
 
                     <div class="field">
-                        <label>Modelo</label>
-                        <select class="etapaIA" onchange="actualizarModos(this)">
+                        <label for="${idIA}">Modelo</label>
+                        <select id="${idIA}" class="etapaIA" onchange="actualizarModos(this)">
                             <option value="">Selecciona modelo</option>
                             ${catalogoIA.map(ia => `
                                 <option value="${ia.id_ia}" ${Number(etapa?.id_ia) === Number(ia.id_ia) ? 'selected' : ''}>
@@ -713,15 +860,15 @@
 
                 <div class="row">
                     <div class="field">
-                        <label>Modo</label>
-                        <select class="etapaModo">
+                        <label for="${idModo}">Modo</label>
+                        <select id="${idModo}" class="etapaModo">
                             <option value="">Selecciona modo</option>
                         </select>
                     </div>
 
                     <div class="field">
-                        <label>Descripción</label>
-                        <input class="etapaDescripcion" value="${html(etapa?.descripcion || '')}" placeholder="Descripción breve">
+                        <label for="${idDescripcion}">Descripción</label>
+                        <input id="${idDescripcion}" class="etapaDescripcion" value="${html(etapa?.descripcion || '')}" placeholder="Descripción breve">
                     </div>
                 </div>
             `;

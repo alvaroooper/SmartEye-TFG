@@ -1,110 +1,149 @@
 \capitulo{3}{Conceptos teóricos}
 
-Para comprender el desarrollo del proyecto es necesario introducir una serie de conceptos relacionados con la visión por computador, el procesamiento de imágenes y la integración de modelos de inteligencia artificial dentro de una aplicación web. El objetivo de este capítulo no es describir en profundidad todas las tecnologías utilizadas, sino presentar los fundamentos que permiten entender el problema abordado y las decisiones de diseño tomadas durante el desarrollo.
+Este capítulo introduce los conceptos teóricos necesarios para comprender la base técnica del trabajo. Se presentan fundamentos de inteligencia artificial, minería de datos, redes neuronales, procesamiento de imágenes y visión por computador. También se explican tareas habituales en el análisis automático de imágenes, como la clasificación, la detección de objetos, la estimación de puntos clave y la segmentación.
 
-El sistema desarrollado combina dos ámbitos principales. Por una parte, utiliza modelos de visión por computador para extraer información de imágenes. Por otra, integra dichos modelos dentro de una plataforma web con usuarios, permisos, persistencia, pipelines y resultados temporales. Esta combinación hace necesario explicar tanto los conceptos asociados al análisis visual como los relacionados con la ejecución controlada de modelos dentro de una aplicación.
+\section{Inteligencia artificial, minería de datos y aprendizaje automático}
+
+La inteligencia artificial es el área de la informática que estudia la construcción de sistemas capaces de realizar tareas asociadas a la percepción, el razonamiento, el aprendizaje o la toma de decisiones \cite{russell2021artificial}. Dentro de este campo, el aprendizaje automático se centra en modelos que aprenden patrones a partir de datos, sin depender únicamente de reglas programadas de forma explícita \cite{bishop2006pattern}.
+
+La minería de datos busca descubrir información útil en conjuntos de datos. Incluye tareas como clasificación, agrupación, detección de anomalías y extracción de patrones frecuentes \cite{han2011data}. En el análisis de imágenes, estas técnicas permiten transformar datos visuales en información interpretable.
+
+La clasificación es una de las tareas más habituales. Consiste en asignar una entrada a una categoría o clase. En imágenes, puede aplicarse a la imagen completa o a regiones concretas, siempre que exista un conjunto de ejemplos etiquetados para entrenar el modelo \cite{witten2016data}.
+
+El aprendizaje automático puede ser supervisado, no supervisado o por refuerzo. En el aprendizaje supervisado se aprende a partir de ejemplos etiquetados. En el no supervisado se buscan estructuras internas sin etiquetas previas. En el aprendizaje por refuerzo, un agente aprende mediante recompensas o penalizaciones obtenidas al interactuar con un entorno \cite{russell2021artificial}.
+
+\section{Redes neuronales artificiales}
+
+Las redes neuronales artificiales son modelos formados por capas de unidades conectadas entre sí. Cada conexión tiene un peso asociado, y cada unidad transforma sus entradas para generar una salida. La combinación de muchas unidades permite aproximar funciones complejas \cite{goodfellow2016deep}.
+
+Una red neuronal suele organizarse en una capa de entrada, una o varias capas ocultas y una capa de salida. La Figura~\ref{fig:red_neuronal_artificial} muestra una representación simplificada de esta estructura, formada por nodos conectados entre capas.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.65\textwidth]{figuras/red_neuronal_artificial.png}
+	\caption[Ejemplo de red neuronal artificial.]{Ejemplo de red neuronal artificial con una capa oculta. Fuente: \href{https://commons.wikimedia.org/wiki/File:Artificial_neural_network.svg}{Cburnett, Wikimedia Commons}.}
+	\label{fig:red_neuronal_artificial}
+\end{figure}
+
+Durante el entrenamiento, la red ajusta sus pesos para reducir el error entre la salida estimada y la salida esperada. Este error se mide mediante una función de pérdida, y uno de los mecanismos más utilizados para actualizar los pesos es la retropropagación del error \cite{goodfellow2016deep}.
+
+Una vez entrenada, la red puede utilizarse en fase de inferencia. En esta fase, los pesos no se modifican: el modelo aplica lo aprendido a nuevas entradas. En visión por computador, la entrada suele ser una imagen representada numéricamente, y la salida puede ser una clase, una probabilidad, una caja delimitadora, un conjunto de puntos o una máscara de segmentación.
+
+\section{Redes neuronales convolucionales}
+
+Las redes neuronales convolucionales son redes especialmente adecuadas para trabajar con imágenes. Su operación principal es la convolución, que aplica filtros sobre regiones locales de la imagen para extraer características visuales \cite{lecun1998gradient}.
+
+En las primeras capas se suelen aprender patrones simples, como bordes, texturas o cambios de intensidad. En capas posteriores, esos patrones se combinan para representar formas y estructuras más complejas \cite{goodfellow2016deep}. La Figura~\ref{fig:red_convolucional} ilustra de forma esquemática esta transformación progresiva.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.85\textwidth]{figuras/red_convolucional.png}
+	\caption[Ejemplo de capas convolucionales.]{Representación simplificada de capas convolucionales en una red neuronal. Fuente: \href{https://commons.wikimedia.org/wiki/File:Convolutional_Layers_of_a_Convolutional_Neural_Network.svg}{Renanar2, Wikimedia Commons}.}
+	\label{fig:red_convolucional}
+\end{figure}
+
+\subsection{Capas habituales en redes convolucionales}
+
+Las redes convolucionales combinan distintos tipos de capas. Las más habituales son las siguientes:
+
+\begin{itemize}
+	\item \textbf{Capa convolucional.} Aplica filtros sobre la imagen o sobre mapas de características intermedios. Cada filtro aprende a detectar un patrón visual concreto \cite{lecun1998gradient}.
+	
+	\item \textbf{Función de activación.} Introduce no linealidad en la red y permite aprender relaciones más complejas que una transformación lineal \cite{goodfellow2016deep}.
+	
+	\item \textbf{Capa de agrupación.} Reduce la resolución espacial de los mapas de características, disminuyendo el coste computacional y conservando la información más relevante \cite{goodfellow2016deep}.
+	
+	\item \textbf{Capa totalmente conectada.} Relaciona las salidas de una capa con las unidades de la siguiente. Suele emplearse en fases finales de clasificación.
+	
+	\item \textbf{Capa de normalización.} Estabiliza las activaciones durante el entrenamiento y puede acelerar la convergencia del modelo \cite{ioffe2015batch}.
+\end{itemize}
+
+Estas capas permiten construir modelos capaces de extraer información visual de forma progresiva. Por ello, las redes convolucionales son una base habitual para clasificación de imágenes, detección de objetos, estimación de puntos clave y segmentación.
 
 \section{Procesamiento de imágenes y visión por computador}
 
-La visión por computador es una rama de la inteligencia artificial orientada a obtener información útil a partir de imágenes o secuencias de vídeo. Su finalidad no consiste únicamente en almacenar o mostrar imágenes, sino en interpretarlas computacionalmente para localizar objetos, reconocer patrones, identificar puntos relevantes o generar una descripción estructurada de una escena.
+Una imagen digital puede representarse como una matriz de píxeles. Cada píxel contiene valores numéricos que describen intensidad o color. En imágenes en escala de grises se utiliza un único canal, mientras que en imágenes a color se emplean varios canales \cite{gonzalez2018digital}.
 
-Desde el punto de vista interno, una imagen digital puede entenderse como una matriz de píxeles. Cada píxel contiene información numérica sobre intensidad o color y, en imágenes a color, suele representarse mediante varios canales. Esta representación matricial es importante porque los modelos de inteligencia artificial no procesan la imagen como la percibe una persona, sino como un conjunto de valores numéricos que deben adaptarse al formato esperado por cada modelo.
+El procesamiento de imágenes agrupa técnicas orientadas a modificar o preparar una imagen. Incluye operaciones como redimensionado, conversión de color, filtrado, normalización, reducción de ruido o transformación geométrica \cite{gonzalez2018digital}.
 
-En el proyecto, el flujo básico de procesamiento comienza con la recepción de una imagen subida por el usuario. A continuación, el servidor valida el fichero, lo almacena temporalmente, lo transforma si es necesario y lo entrega al modelo correspondiente. Una vez finalizado el análisis, el resultado se convierte en una salida interpretable, normalmente formada por una imagen anotada y una respuesta estructurada en formato JSON.
+La visión por computador busca extraer información útil a partir de imágenes o secuencias de vídeo. Para ello combina procesamiento de imágenes, aprendizaje automático y modelos matemáticos capaces de interpretar contenido visual \cite{szeliski2022computer}.
 
-Este proceso introduce una diferencia importante respecto a una prueba aislada ejecutada desde un script local. En una aplicación web no basta con llamar a un modelo sobre una imagen almacenada en el equipo del desarrollador. Es necesario controlar la subida del fichero, la ubicación de los archivos generados, la relación entre la ejecución y el usuario, la disponibilidad temporal de los resultados y la forma en la que estos se devuelven al navegador.
+Entre sus tareas más habituales se encuentran la clasificación de imágenes, la detección de objetos, la estimación de puntos clave, la segmentación y el seguimiento de elementos en vídeo. Cada una produce un tipo de salida diferente y permite analizar la imagen con distinto nivel de detalle.
 
-\section{Detección de objetos y estimación de puntos clave}
+\subsection{Clasificación de imágenes}
 
-Dentro de la visión por computador existen diferentes formas de analizar una imagen. En este proyecto destacan dos enfoques: la detección de objetos y la estimación de puntos clave o \textit{landmarks}.
+La clasificación de imágenes consiste en asignar una o varias etiquetas a una imagen completa. El modelo recibe la imagen como entrada y devuelve una clase o una distribución de probabilidades entre varias clases posibles \cite{bishop2006pattern}.
 
-La detección de objetos consiste en localizar elementos de interés dentro de una imagen y asignarles una clase. Su salida habitual incluye una caja delimitadora, una etiqueta y una puntuación de confianza. La caja indica la posición aproximada del objeto, la clase expresa qué tipo de elemento ha sido detectado y la confianza representa la seguridad asociada a la predicción.
+Esta tarea es útil cuando interesa conocer la categoría global de una imagen. Sin embargo, no proporciona información precisa sobre la posición de los elementos que aparecen en ella.
 
-La estimación de puntos clave aborda el problema desde otra perspectiva. En lugar de delimitar un objeto completo mediante una caja, localiza puntos significativos de una estructura. En el caso de una mano, estos puntos pueden corresponder a articulaciones y extremos de los dedos. En el caso de una pose corporal, pueden corresponder a hombros, codos, muñecas, rodillas u otras partes del cuerpo. A partir de estos puntos es posible reconstruir visualmente una postura o una estructura anatómica.
+\subsection{Detección de objetos}
 
-Ambos enfoques son complementarios. La detección de objetos permite saber qué aparece en una imagen y dónde se encuentra, mientras que los \textit{landmarks} permiten describir con más detalle la estructura interna de determinados elementos. Esta diferencia es relevante en el proyecto porque permite combinar modelos con salidas distintas dentro de una misma aplicación.
+La detección de objetos consiste en localizar entidades dentro de una imagen y asignarles una clase. Su salida habitual incluye una caja delimitadora, una etiqueta y una puntuación de confianza \cite{szeliski2022computer}.
 
-La Tabla~\ref{tabla:deteccion-landmarks} resume las diferencias principales entre ambos enfoques y muestra cómo se aplican dentro del proyecto.
+La Figura~\ref{fig:deteccion_objetos} muestra un ejemplo de detección mediante cajas delimitadoras, donde cada objeto se representa con una región rectangular asociada.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.75\textwidth]{figuras/deteccion_objetos.png}
+	\caption[Ejemplo de detección de objetos.]{Ejemplo de detección de objetos mediante cajas delimitadoras. Fuente: \href{https://commons.wikimedia.org/wiki/File:ObjectDetectionExample.png}{Hughesperreault, Wikimedia Commons}.}
+	\label{fig:deteccion_objetos}
+\end{figure}
+
+A diferencia de la clasificación, la detección no solo indica qué aparece en la imagen, sino también dónde se encuentra. Por ello, resulta adecuada cuando una escena puede contener varios elementos de interés.
+
+\subsection{Estimación de puntos clave}
+
+La estimación de puntos clave, también denominados \textit{landmarks}, consiste en localizar posiciones relevantes dentro de una estructura. En lugar de delimitar un objeto completo mediante una caja, identifica puntos concretos, como articulaciones, extremos o referencias anatómicas \cite{szeliski2022computer}.
+
+Este enfoque permite representar estructuras con mayor detalle. En una mano, los puntos clave pueden corresponder a nudillos y extremos de los dedos. En una pose corporal, pueden representar hombros, codos, muñecas, caderas, rodillas o tobillos.
+
+La Tabla~\ref{tabla:deteccion-puntos-clave} recoge las diferencias principales entre la detección de objetos y la estimación de puntos clave.
 
 \begin{table}[htbp]
 	\centering
 	\small
-	\begin{tabular}{p{0.28\textwidth} p{0.30\textwidth} p{0.30\textwidth}}
+	\begin{tabular}{p{0.25\textwidth} p{0.31\textwidth} p{0.31\textwidth}}
 		\toprule
-		\textbf{Aspecto} & \textbf{Detección de objetos} & \textbf{Estimación de landmarks} \\
+		\textbf{Aspecto} & \textbf{Detección de objetos} & \textbf{Estimación de puntos clave} \\
 		\midrule
-		Resultado principal & Caja delimitadora, clase y confianza. & Puntos clave y conexiones entre ellos. \\
+		Finalidad & Localizar y clasificar entidades visibles en una imagen. & Localizar puntos relevantes de una estructura concreta. \\
 		\midrule
-		Utilidad & Localizar objetos o personas en la imagen. & Describir la estructura de manos o cuerpo. \\
+		Salida habitual & Caja delimitadora, clase y confianza. & Coordenadas de puntos clave y posibles conexiones entre ellos. \\
 		\midrule
-		Representación visual & Rectángulos y etiquetas sobre la imagen. & Esqueleto o malla de puntos sobre la imagen. \\
+		Representación visual & Rectángulos y etiquetas sobre la imagen. & Puntos, esqueleto o malla sobre la imagen. \\
 		\midrule
-		Uso en el proyecto & Detección general y recorte de personas mediante YOLO. & Detección de manos y estimación de pose mediante MediaPipe. \\
+		Nivel de detalle & Describe la posición global del objeto. & Describe la estructura interna del elemento analizado. \\
 		\bottomrule
 	\end{tabular}
-	\caption{Comparación entre detección de objetos y estimación de puntos clave.}
-	\label{tabla:deteccion-landmarks}
+	\caption[Comparación entre detección de objetos y puntos clave.]{Comparación entre detección de objetos y estimación de puntos clave.}
+	\label{tabla:deteccion-puntos-clave}
 \end{table}
-Como se observa en la Tabla~\ref{tabla:deteccion-landmarks}, ambos enfoques producen salidas diferentes, pero compatibles. Esta compatibilidad es la que permite plantear pipelines en los que una primera etapa localiza regiones de interés y una etapa posterior realiza un análisis más detallado sobre ellas.
 
-\section{Modelos utilizados: YOLO y MediaPipe}
+\subsection{Segmentación de imágenes}
 
-El proyecto utiliza dos familias de modelos con objetivos diferentes: YOLO y MediaPipe. La elección de ambos responde a la intención de integrar técnicas complementarias dentro de una misma plataforma.
+La segmentación de imágenes consiste en dividir una imagen en regiones significativas. A diferencia de la detección de objetos, que utiliza cajas delimitadoras, la segmentación trabaja a nivel de píxel. Cada píxel puede asignarse a una región, una clase o una instancia concreta \cite{gonzalez2018digital,szeliski2022computer}.
 
-YOLO, acrónimo de \textit{You Only Look Once}, es una familia de modelos de detección de objetos. Su principal característica es que realiza la localización y clasificación de objetos en una única pasada sobre la imagen, lo que lo convierte en una opción adecuada cuando se buscan resultados visuales rápidos y fáciles de interpretar \cite{ultralytics_yolov8}.
+Existen distintos tipos de segmentación. La segmentación semántica asigna una clase a cada píxel sin distinguir objetos diferentes de la misma clase. La segmentación de instancias diferencia cada objeto individual. La segmentación panóptica combina ambas aproximaciones \cite{long2015fully,kirillov2019panoptic}.
 
-De forma general, un detector YOLO recibe una imagen, extrae características visuales mediante una red neuronal y predice posibles cajas delimitadoras junto con sus clases y niveles de confianza. Posteriormente se aplican filtros para eliminar detecciones poco fiables o redundantes. El resultado puede representarse de dos formas: gráficamente, mediante cajas dibujadas sobre la imagen, y estructuralmente, mediante datos como clase, confianza y coordenadas.
+La Figura~\ref{fig:segmentacion_imagen} muestra un ejemplo visual en el que la imagen queda dividida en varias zonas diferenciadas.
 
-En este proyecto, YOLO se utiliza para la detección general de objetos y también para localizar personas dentro de una imagen. En este segundo caso, las cajas detectadas permiten generar recortes individuales que pueden ser utilizados por etapas posteriores del pipeline. Es importante señalar que este proceso no constituye una segmentación semántica mediante máscaras, sino un aislamiento basado en las coordenadas de las cajas delimitadoras.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.75\textwidth]{figuras/segmentacion_imagen.png}
+	\caption[Ejemplo de segmentación de imágenes.]{Ejemplo de segmentación de imágenes a nivel de regiones. Fuente: \href{https://commons.wikimedia.org/wiki/File:Image-segmentation-example-segmented.png}{Martin Thoma, Wikimedia Commons}.}
+	\label{fig:segmentacion_imagen}
+\end{figure}
 
-MediaPipe, por su parte, es un framework de percepción desarrollado para construir soluciones de análisis multimodal, especialmente en tareas como manos, rostro o pose corporal \cite{lugaresi2019mediapipe,google_mediapipe_docs}. A diferencia de un detector de objetos convencional, MediaPipe resulta especialmente útil cuando interesa obtener una representación estructural mediante puntos clave.
+La segmentación proporciona una descripción más precisa que la detección mediante cajas, ya que permite delimitar la forma real de los elementos. Sin embargo, suele requerir modelos más específicos y conjuntos de datos anotados con mayor detalle.
 
-En el proyecto se utiliza MediaPipe para los modos de manos y pose. En ambos casos se trabaja con modelos locales en formato \texttt{.task}, que permiten realizar la inferencia en el propio servidor. El resultado no se limita a indicar que existe una mano o una persona, sino que proporciona landmarks con coordenadas y, en algunos casos, información adicional como visibilidad o presencia.
+\section{Arquitecturas de detección de objetos en una etapa}
 
-La combinación de YOLO y MediaPipe permite que la aplicación no dependa de un único tipo de análisis. YOLO aporta capacidad de localización general mediante cajas, mientras que MediaPipe aporta análisis estructural mediante landmarks. Esta complementariedad es la base de algunos pipelines del proyecto, especialmente aquellos en los que primero se localizan personas y después se aplica un análisis más específico sobre la imagen o sobre los recortes generados.
+Las arquitecturas de detección de objetos pueden clasificarse, de forma general, en detectores de dos etapas y detectores de una etapa. Los detectores de dos etapas generan primero regiones candidatas y después las clasifican. Los detectores de una etapa realizan la localización y la clasificación de forma directa \cite{redmon2016yolo}.
 
-\section{Pipelines y factoría de modelos}
+La familia de modelos YOLO pertenece al grupo de detectores de una etapa. Su planteamiento original formula la detección como un único problema de regresión, en el que una red predice cajas delimitadoras y probabilidades de clase en una sola evaluación de la imagen \cite{redmon2016yolo}.
 
-Un pipeline puede entenderse como una secuencia ordenada de etapas que se ejecutan sobre una entrada. En el contexto de este proyecto, cada etapa representa una operación de procesamiento de imagen asociada a un modelo de inteligencia artificial y a un modo concreto de ejecución.
+De forma simplificada, una arquitectura de detección en una etapa incluye tres bloques: extracción de características visuales, combinación de información a distintas escalas y generación de predicciones finales. Estas predicciones contienen coordenadas de cajas, puntuaciones de confianza y clases asociadas.
 
-La utilización de pipelines permite superar la idea de ejecutar únicamente un modelo aislado. En lugar de limitarse a aplicar siempre una única inferencia sobre una imagen, el sistema puede definir flujos de análisis formados por varias etapas. Por ejemplo, una etapa puede detectar personas en una imagen, otra puede generar recortes a partir de esas detecciones y una etapa posterior puede aplicar estimación de pose sobre cada recorte.
+Tras obtener las predicciones, se aplica un posprocesado para eliminar detecciones redundantes o poco fiables. Una técnica habitual es la supresión de máximos no máximos, que conserva la caja más representativa cuando varias predicciones se solapan sobre el mismo objeto \cite{szeliski2022computer}.
 
-Este planteamiento introduce una característica importante: el flujo no siempre es estrictamente lineal. Algunas etapas pueden generar una única salida, mientras que otras pueden producir varias. Si en una imagen aparecen varias personas, una etapa de recorte puede generar varios archivos, y cada uno de ellos puede ser procesado después de forma independiente. Por tanto, el sistema debe contemplar tanto ejecuciones secuenciales como ejecuciones ramificadas.
-
-Para que este funcionamiento sea mantenible, la selección de modelos no debe quedar mezclada con la lógica principal de la aplicación. Si cada nuevo modelo obligara a modificar directamente el ejecutor de pipelines o los controladores web, el sistema sería difícil de ampliar. Por ello se utiliza un mecanismo de factoría.
-
-Una factoría permite recibir un identificador de modelo y devolver el componente encargado de ejecutarlo. En el proyecto, esta idea se aplica mediante una factoría de inteligencia artificial y distintos \textit{launchers}. Cada familia de modelos dispone de un componente especializado: YOLO tiene su propio lanzador para resolver sus modos de ejecución, y MediaPipe dispone de otro para sus modos de manos y pose.
-
-Esta organización aporta desacoplamiento. El ejecutor de pipelines no necesita conocer los detalles internos de cada biblioteca ni llamar directamente a funciones concretas de YOLO o MediaPipe. Su responsabilidad es recorrer las etapas del pipeline, solicitar el motor adecuado y coordinar las entradas y salidas. De esta forma, el sistema queda preparado para incorporar nuevos modelos o modos sin rediseñar la arquitectura principal.
-
-\section{Integración en una aplicación web}
-
-La integración de modelos de inteligencia artificial dentro de una aplicación web requiere resolver aspectos que no aparecen cuando el modelo se ejecuta de forma aislada. Además del procesamiento visual, es necesario gestionar usuarios, permisos, datos persistentes, archivos generados y comunicación entre cliente y servidor.
-
-En el proyecto, la aplicación web actúa como punto de entrada para el usuario. Desde el navegador se realizan acciones como registrarse, iniciar sesión, consultar pipelines disponibles, subir una imagen, ejecutar un análisis y visualizar los resultados. El backend recibe estas peticiones, valida los datos, comprueba permisos y coordina la ejecución del procesamiento.
-
-La persistencia de datos resulta necesaria porque el sistema maneja información que debe conservarse más allá de una petición concreta. La base de datos representa usuarios, roles, planes, modelos de inteligencia artificial, modos de ejecución, pipelines, etapas, ejecuciones y archivos temporales. De esta forma, la aplicación no depende de configuraciones fijas en el código, sino de entidades relacionadas que reflejan la lógica del sistema.
-
-El control de acceso es otro concepto clave. La autenticación permite identificar al usuario que realiza una petición, mientras que la autorización determina si puede ejecutar una acción concreta. En este proyecto, el acceso a determinados pipelines depende del rol del usuario, de su plan y de las licencias activas que tenga asociadas. Por tanto, la disponibilidad de un análisis no depende solo de que el modelo exista, sino también de que el usuario tenga permiso para utilizarlo.
-
-También resulta importante la gestión de resultados temporales. El procesamiento de imágenes genera archivos que deben estar disponibles para el usuario durante un tiempo limitado, pero no necesariamente de forma indefinida. Para evitar exponer rutas internas del servidor, los archivos generados se asocian a tokens de descarga. Así, el usuario accede al resultado mediante un identificador temporal, mientras que el servidor mantiene el control sobre la ubicación real del archivo, su disponibilidad y su expiración.
-
-Esta integración convierte el proyecto en algo más amplio que una demo de inteligencia artificial. El sistema no solo ejecuta modelos, sino que organiza su uso dentro de una aplicación con reglas de acceso, persistencia, trazabilidad y gestión temporal de recursos.
-
-\section{Pruebas automatizadas en sistemas con modelos de IA}
-
-Las pruebas automatizadas permiten comprobar que el sistema funciona de forma correcta y que los cambios introducidos durante el desarrollo no rompen funcionalidades existentes. En una aplicación web, estas pruebas pueden validar modelos de datos, controladores, servicios, autenticación, permisos y tratamiento de errores.
-
-Cuando una aplicación integra modelos de inteligencia artificial aparece una dificultad adicional: ejecutar inferencias reales en cada prueba puede ser lento, costoso y dependiente de archivos externos. Además, algunos errores que interesa validar no tienen que ver con el modelo en sí, sino con la lógica de aplicación que lo rodea.
-
-Por este motivo, en este tipo de proyectos resulta útil emplear técnicas de simulación o \textit{mocking}. Mediante estas técnicas se sustituyen temporalmente determinadas dependencias por respuestas controladas. Así es posible comprobar que un controlador valida correctamente una petición, que una función responde ante una imagen inválida, que un fallo de escritura se propaga o que una etapa de pipeline se comporta de forma adecuada, sin depender siempre de una inferencia real.
-
-En el proyecto, las pruebas automatizadas ayudan a validar el comportamiento de la autenticación, la tienda, los pipelines, la factoría de inteligencia artificial, los launchers, los modelos de datos y las funciones de procesamiento. Esto aporta confianza sobre el funcionamiento del sistema y permite tratar de forma más segura una aplicación que combina lógica web, persistencia, permisos y procesamiento de imágenes.
-
-\section{Síntesis}
-
-Los conceptos expuestos en este capítulo permiten entender la base teórica del proyecto sin entrar en una descripción exhaustiva de cada tecnología. La visión por computador proporciona el marco necesario para comprender cómo una imagen puede convertirse en una entrada procesable por modelos de inteligencia artificial. Dentro de ese ámbito, YOLO y MediaPipe representan dos enfoques complementarios: detección de objetos mediante cajas delimitadoras y análisis estructural mediante landmarks.
-
-Sobre esa base se construye la idea de pipeline, que permite encadenar varias etapas de procesamiento y reutilizar la salida de una como entrada de otra. La factoría de modelos y los launchers permiten ejecutar esos modelos de forma desacoplada, manteniendo la aplicación preparada para futuras ampliaciones.
-
-Finalmente, la integración web añade conceptos propios de una aplicación real: autenticación, autorización, persistencia, control de acceso, gestión temporal de resultados y pruebas automatizadas. La combinación de todos estos elementos explica el alcance del TFG: no se trata únicamente de ejecutar modelos de inteligencia artificial, sino de construir una plataforma web modular capaz de organizarlos, controlarlos y ofrecer sus resultados de forma usable y trazable.
+Este tipo de arquitectura permite resolver detección y clasificación en una misma fase de inferencia. Por ello, es una aproximación habitual en aplicaciones que requieren detección visual eficiente.

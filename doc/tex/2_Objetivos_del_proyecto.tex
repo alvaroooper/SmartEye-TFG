@@ -1,75 +1,37 @@
 \capitulo{2}{Objetivos del proyecto}
 
-El presente Trabajo de Fin de Grado tiene como finalidad desarrollar una aplicación web orientada al procesamiento de imágenes mediante modelos de inteligencia artificial. La idea principal es que un usuario pueda acceder a la plataforma, subir una imagen, seleccionar un flujo de análisis y obtener un resultado comprensible, tanto en forma de imagen procesada como mediante información estructurada.
-
-Al inicio, el trabajo se planteó como una forma de comprobar si era viable integrar modelos de visión por computador dentro de un servidor web. A medida que el desarrollo avanzó, esa primera idea fue creciendo hasta convertirse en una aplicación más completa, con autenticación de usuarios, gestión de roles, control de acceso a modelos, persistencia de datos, ejecución de pipelines y una zona de administración.
-
-Por este motivo, los objetivos del proyecto no se limitan únicamente a ejecutar un modelo de inteligencia artificial sobre una imagen. También se busca construir una base organizada y ampliable, que permita añadir nuevos modelos, definir distintos modos de ejecución y controlar qué usuarios pueden acceder a cada funcionalidad.
-
-A partir de esta finalidad general, los objetivos se dividen en tres bloques: el objetivo general del proyecto, los objetivos funcionales del software y los objetivos técnicos necesarios para llevar a cabo su diseño e implementación.
+A continuación, se detallan los objetivos que han guiado la realización del proyecto, diferenciando entre el objetivo general, los objetivos propios del \textit{software}, los objetivos técnicos y los objetivos personales.
 
 \section{Objetivo general}
 
-El objetivo general del proyecto es diseñar e implementar una aplicación web capaz de ejecutar flujos de procesamiento de imágenes mediante modelos de inteligencia artificial, devolviendo al usuario una salida visual y una respuesta estructurada que permitan interpretar el resultado del análisis realizado.
+El objetivo general del proyecto es desarrollar una plataforma \textit{web} modular y extensible capaz de ejecutar flujos de procesamiento de imágenes mediante inteligencia artificial, devolviendo al usuario resultados visuales y datos estructurados que faciliten la interpretación del análisis realizado.
 
-Este objetivo incluye la integración de modelos como YOLO y MediaPipe, pero también la organización del sistema para que dichos modelos puedan utilizarse dentro de una aplicación web con usuarios, permisos, configuraciones y resultados temporales asociados.
-
-\section{Objetivos del software}
-
-Los principales objetivos funcionales del software son los siguientes:
+\section{Objetivos del \textit{software}}
 
 \begin{itemize}
-	\item Permitir el registro, inicio de sesión y gestión básica de cuentas de usuario.
-	\item Diferenciar entre usuarios normales y administradores mediante un sistema de roles.
-	\item Ofrecer una interfaz web desde la que el usuario pueda acceder al panel principal de análisis.
-	\item Permitir la carga de imágenes desde el navegador para su procesamiento en el servidor.
-	\item Mostrar al usuario únicamente los pipelines y modelos a los que tenga acceso según su plan o sus licencias activas.
-	\item Integrar distintos modelos de inteligencia artificial dentro de una misma aplicación, como YOLO y MediaPipe.
-	\item Permitir la ejecución de pipelines formados por una o varias etapas de procesamiento.
-	\item Devolver resultados comprensibles mediante una imagen procesada y datos estructurados en formato JSON.
-	\item Gestionar los resultados generados de forma temporal, mediante enlaces de descarga asociados a tokens.
-	\item Evitar la exposición directa de rutas internas del servidor al usuario final.
-	\item Incorporar un historial de ejecuciones que permita consultar los análisis realizados mientras sus archivos asociados sigan disponibles.
-	\item Incluir una zona de tienda o catálogo desde la que se puedan consultar modelos y planes disponibles.
-	\item Permitir la simulación funcional de suscripciones y alquileres temporales de modelos de inteligencia artificial.
-	\item Proporcionar una interfaz de administración para consultar usuarios, revisar ejecuciones y gestionar pipelines.
-	\item Separar la lógica de interfaz web de los endpoints utilizados para la comunicación entre cliente y servidor, permitiendo ejecutar determinadas funcionalidades mediante peticiones HTTP.
+	\item Permitir que los usuarios se registren, inicien sesión y accedan a un panel propio.
+	\item Ofrecer una interfaz desde la que el usuario pueda consultar los \textit{pipelines} disponibles y seleccionar el análisis que desea realizar.
+	\item Permitir la subida de imágenes y la ejecución del procesamiento correspondiente en el servidor.
+	\item Mostrar al usuario los resultados obtenidos de forma clara, incluyendo la imagen procesada y la información generada por el análisis.
+	\item Incorporar funciones de administración para gestionar usuarios, permisos, servicios disponibles y \textit{pipelines}.
 \end{itemize}
 
 \section{Objetivos técnicos}
 
-Además de los objetivos funcionales, el proyecto plantea una serie de objetivos técnicos relacionados con la organización interna del sistema y con la forma en la que se integran sus distintos componentes:
-
 \begin{itemize}
-	\item Diseñar una arquitectura modular que separe la lógica de presentación, los controladores, los servicios de procesamiento y el modelo de datos.
-	\item Utilizar Flask como base para construir la aplicación y organizar sus rutas principales.
-	\item Definir un modelo de datos capaz de representar usuarios, roles, planes, suscripciones, modelos de inteligencia artificial, modos de ejecución, pipelines, ejecuciones y archivos temporales.
-	\item Aplicar autenticación mediante tokens JWT para proteger las rutas privadas de la aplicación.
-	\item Incorporar una capa de persistencia mediante SQLAlchemy, facilitando la interacción entre la aplicación y la base de datos.
-	\item Organizar la ejecución de modelos de inteligencia artificial de forma desacoplada, permitiendo incorporar nuevos modelos sin modificar la lógica general de procesamiento.
-	\item Implementar un ejecutor de pipelines capaz de recorrer las etapas definidas y encadenar el resultado de una etapa con la siguiente.
-	\item Gestionar configuraciones específicas para cada modo de ejecución mediante ficheros JSON.
-	\item Controlar errores frecuentes, como imágenes inválidas, configuraciones incorrectas, falta de permisos o fallos durante el procesamiento.
-	\item Mantener los archivos generados como recursos temporales, aplicando una política de expiración.
-	\item Preparar datos iniciales de prueba que permitan demostrar el funcionamiento del sistema con usuarios, planes, modelos y pipelines ya configurados.
-	\item Desarrollar pruebas automatizadas para comprobar el funcionamiento de la autenticación, la tienda, los modelos de datos, la factoría de inteligencia artificial, los launchers y la ejecución de pipelines.
-	\item Mantener una estructura de proyecto clara, que facilite la comprensión del código y su posible despliegue posterior.
+	\item Diseñar una arquitectura modular que separe la interfaz, la lógica de control, la lógica de procesamiento y la persistencia de datos.
+	\item Definir un modelo de datos que permita representar usuarios, permisos, servicios contratados, modelos, modos de ejecución, \textit{pipelines} y resultados.
+	\item Organizar la ejecución de los análisis de forma desacoplada, permitiendo añadir nuevos modelos y modos sin modificar el flujo principal del sistema.
+	\item Gestionar de forma segura las imágenes recibidas y los resultados generados, evitando la exposición directa de rutas internas del servidor.
+	\item Validar el funcionamiento del sistema mediante pruebas automatizadas sobre los componentes principales de la aplicación.
 \end{itemize}
 
 \section{Objetivos personales}
 
-Además de los objetivos funcionales y técnicos, el proyecto ha perseguido varios objetivos personales relacionados con la formación adquirida durante el grado:
-
 \begin{itemize}
-	\item Aplicar de forma integrada conocimientos de desarrollo web, bases de datos, ingeniería del software e inteligencia artificial.
-	\item Profundizar en el desarrollo de aplicaciones backend con Python y Flask.
-	\item Comprender cómo integrar modelos de visión por computador dentro de una aplicación web real.
-	\item Diseñar una arquitectura modular que facilite la mantenibilidad y ampliación del sistema.
-	\item Trabajar con una metodología incremental, documentando la evolución del proyecto mediante sprints.
-	\item Reforzar el uso de pruebas automatizadas para validar funcionalidades críticas.
-	\item Preparar una base técnica cercana a un entorno profesional, con separación de capas, persistencia, control de acceso y despliegue reproducible.
+	\item Aplicar de forma integrada los conocimientos adquiridos durante el grado en desarrollo \textit{web}, bases de datos, ingeniería del \textit{software} e inteligencia artificial.
+	\item Profundizar en el diseño de aplicaciones modulares, mantenibles y preparadas para crecer de forma progresiva.
+	\item Mejorar la capacidad de planificación, organización y documentación de un proyecto completo de desarrollo de \textit{software}.
+	\item Reforzar el uso de pruebas como mecanismo para comprobar el correcto funcionamiento del sistema.
+	\item Acercar el desarrollo del proyecto a una estructura propia de un entorno profesional.
 \end{itemize}
-
-En conjunto, el proyecto busca construir una aplicación funcional que vaya más allá de una simple prueba aislada de modelos de inteligencia artificial. La solución desarrollada permite validar la integración de técnicas de visión por computador dentro de una aplicación web, incorporando además mecanismos de acceso, persistencia, administración, ejecución por etapas y pruebas automatizadas.
-
-De esta forma, el resultado obtenido sirve como base para una plataforma ampliable de análisis de imágenes, en la que podrían incorporarse nuevos modelos, nuevos tipos de procesamiento y mejoras relacionadas con el despliegue o la explotación del sistema en un entorno más real.

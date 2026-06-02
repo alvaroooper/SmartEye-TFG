@@ -13,10 +13,85 @@
 \RequirePackage[table]{xcolor}
 \RequirePackage{xtab}
 \RequirePackage{multirow}
+\usepackage{xltabular}
+\usepackage{xurl}
 
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{eurosym}
+\usepackage{fvextra}
+% Bloques compactos para comandos y código en anexos
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{listings,breakable,skins}
+
+\lstdefinestyle{tfgcodigo}{
+	basicstyle=\ttfamily\footnotesize,
+	breaklines=true,
+	breakatwhitespace=false,
+	columns=fullflexible,
+	keepspaces=true,
+	showstringspaces=false,
+	tabsize=2,
+	inputencoding=utf8,
+	extendedchars=true,
+	literate=
+	{á}{{\'a}}1
+	{é}{{\'e}}1
+	{í}{{\'i}}1
+	{ó}{{\'o}}1
+	{ú}{{\'u}}1
+	{Á}{{\'A}}1
+	{É}{{\'E}}1
+	{Í}{{\'I}}1
+	{Ó}{{\'O}}1
+	{Ú}{{\'U}}1
+	{ñ}{{\~n}}1
+	{Ñ}{{\~N}}1
+	{ü}{{\"u}}1
+	{Ü}{{\"U}}1
+	{¿}{{?`}}1
+	{¡}{{!`}}1
+}
+\newtcblisting{bloqueCodigo}[1][]{
+	enhanced,
+	breakable,
+	listing only,
+	colback=gray!4,
+	colframe=gray!45,
+	boxrule=0.35pt,
+	arc=1.5mm,
+	left=2mm,
+	right=2mm,
+	top=1mm,
+	bottom=1mm,
+	before skip=0.45em,
+	after skip=0.55em,
+	fonttitle=\bfseries\footnotesize,
+	listing options={style=tfgcodigo},
+	#1
+}
+
+\newtcblisting{bloqueTerminal}[1][]{
+	enhanced,
+	breakable,
+	listing only,
+	colback=gray!6,
+	colframe=gray!55,
+	boxrule=0.35pt,
+	arc=1.5mm,
+	left=2mm,
+	right=2mm,
+	top=1mm,
+	bottom=1mm,
+	before skip=0.45em,
+	after skip=0.55em,
+	fonttitle=\bfseries\footnotesize,
+	listing options={style=tfgcodigo, language=bash},
+	#1
+}
+
+
 % Links
 \PassOptionsToPackage{hyphens}{url}\usepackage[colorlinks]{hyperref}
 \hypersetup{
@@ -327,7 +402,7 @@
   % Título proyecto y escudo informática ----------------
   \colorbox{cpardoBox}{%
     \begin{minipage}{.8\textwidth}
-      \vspace{.5cm}\Large
+      \vspace{.5cm}\large
       \begin{center}
       \textbf{TFG del Grado en Ingeniería Informática}\vspace{.6cm}\\
       \textbf{\LARGE\@title{}}
@@ -355,9 +430,9 @@
 \makeatother
 
 % Datos de portada
-\title{Diseño e implementación de una plataforma web para el procesamiento de imágenes mediante pipelines de inteligencia artificial}
+\title{\HUGE SmartEye Flow\\[0.5cm]\Large Analizador de imágenes con flujos encadenados de inteligencia artificial.}
 \author{Álvaro Pérez Mella}
-\tutor{Jose Luis Garrido Labrador y Jose Miguel Ramirez Sanz}
+\tutor{José Luis Garrido Labrador y José Miguel Ramírez Sanz}
 \date{\today}
 
 \begin{document}

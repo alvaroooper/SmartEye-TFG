@@ -2,9 +2,24 @@
 set -e
 
 echo "Preparando carpetas necesarias..."
+
 mkdir -p /app/execution_data
 mkdir -p /app/models/mp
 mkdir -p /app/models/yolo
+mkdir -p /tmp/matplotlib
+mkdir -p /tmp/ultralytics
+
+if ! mkdir -p /app/execution_data/.permiso_test; then
+    echo "ERROR: La aplicación no tiene permisos de escritura en /app/execution_data."
+    exit 1
+fi
+rmdir /app/execution_data/.permiso_test
+
+if ! mkdir -p /app/models/.permiso_test; then
+    echo "ERROR: La aplicación no tiene permisos de escritura en /app/models."
+    exit 1
+fi
+rmdir /app/models/.permiso_test
 
 echo "Esperando a que MariaDB esté disponible..."
 
@@ -57,4 +72,3 @@ fi
 echo "Arrancando aplicación Flask con Gunicorn..."
 
 exec gunicorn --workers 1 --bind 0.0.0.0:5000 --timeout 300 run:app
-

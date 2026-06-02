@@ -2,10 +2,66 @@
 
 \section{Introducción}
 
+Este apéndice recoge la documentación orientada al usuario final de la aplicación desarrollada en este Trabajo de Fin de Grado. A diferencia de la documentación técnica de programación, esta sección no describe la instalación interna del sistema, la configuración de Docker, la base de datos ni las dependencias del proyecto.
+
+Desde el punto de vista del usuario, la aplicación se utiliza como una plataforma web. Por tanto, una vez desplegada por el personal técnico o por el administrador del sistema, el usuario solo necesita acceder a la dirección proporcionada mediante un navegador web.
+
+El objetivo de este apéndice es explicar los requisitos básicos de acceso y dejar preparada la sección posterior del manual de usuario, donde se describirá el uso funcional de la aplicación: registro, inicio de sesión, ejecución de pipelines, consulta de resultados, gestión de compras y funciones de administración.
+
 \section{Requisitos de usuarios}
+
+Para utilizar la aplicación no es necesario instalar Python, MariaDB, Docker, Docker Compose ni ninguna dependencia interna del proyecto. Todos esos elementos forman parte del despliegue técnico y se documentan en el apéndice de documentación técnica de programación.
+
+El usuario únicamente necesita disponer de:
+
+\begin{itemize}
+	\item \textbf{Navegador web actualizado}: necesario para acceder a la interfaz de la aplicación.
+	\item \textbf{Conexión a Internet}: o acceso a la red en la que esté desplegada la plataforma.
+	\item \textbf{Dirección de acceso}: URL proporcionada por el administrador o responsable técnico.
+\end{itemize}
+
+En un entorno local de demostración, la aplicación puede estar disponible en:
+
+\begin{bloqueCodigo}[title={url de acceso}]
+	http://localhost:5000
+\end{bloqueCodigo}
+
+En caso de acceder desde otro equipo de la misma red, deberá utilizarse la dirección IP o URL proporcionada por el administrador del sistema.
+
+En un despliegue real, el acceso se realizaría mediante la URL pública o privada configurada para la plataforma.
 
 \section{Instalación}
 
+Desde el punto de vista del usuario final, no es necesario instalar la aplicación ni preparar ningún componente técnico en su equipo.
+
+La aplicación se utiliza directamente desde un navegador web, accediendo a la dirección proporcionada por el administrador o responsable del sistema. La instalación, configuración y despliegue de la plataforma corresponden al personal técnico y se describen en la documentación técnica de programación.
+
+Por tanto, el usuario solo necesita disponer de un navegador web actualizado, conexión a Internet o acceso a la red donde esté desplegada la aplicación, y una cuenta válida para iniciar sesión.
+
+La aplicación se ejecuta escuchando en \texttt{0.0.0.0:5000} para permitir conexiones desde fuera del contenedor. Sin embargo, cuando se accede desde el propio equipo anfitrión, la URL habitual de acceso es \texttt{http://localhost:5000}.
+
 \section{Manual del usuario}
 
+\subsection{Problemas frecuentes de acceso}
 
+Los problemas más habituales desde el punto de vista del usuario se resumen en la Tabla~\ref{tabla:problemas_acceso_usuario}.
+
+\begin{table}[H]
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabularx}{\linewidth}{p{0.35\linewidth}X}
+		\toprule
+		\textbf{Situación} & \textbf{Posible causa o solución} \\
+		\midrule
+		La página no carga & Comprobar la conexión a Internet y que la URL introducida sea correcta. \\
+		La URL no es válida & Solicitar al administrador la dirección actual de la aplicación. \\
+		No se puede iniciar sesión & Revisar usuario y contraseña. Si el problema continúa, contactar con el administrador. \\
+		La cuenta aparece como no activa & La cuenta puede estar suspendida, dada de baja o pendiente de revisión. \\
+		No aparecen pipelines disponibles & Puede que el usuario no tenga contratado el plan o modelo necesario. \\
+		No se pueden descargar resultados & El archivo puede haber caducado o no estar disponible. \\
+		\bottomrule
+	\end{tabularx}
+	\caption[Problemas frecuentes de acceso]{Problemas frecuentes de acceso para el usuario.}
+	\label{tabla:problemas_acceso_usuario}
+\end{table}

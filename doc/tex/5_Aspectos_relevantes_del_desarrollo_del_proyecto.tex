@@ -1,319 +1,193 @@
 \capitulo{5}{Aspectos relevantes del desarrollo del proyecto}
 
-En este capítulo se recogen los aspectos más relevantes del desarrollo del proyecto. No se pretende realizar una descripción cronológica exhaustiva de todas las tareas realizadas, ya que esa información se detalla con mayor precisión en los anexos de planificación y seguimiento. El objetivo de este capítulo es explicar las decisiones técnicas que han condicionado el diseño de la aplicación y que aportan mayor valor al resultado final.
+En este capítulo se recogen los aspectos más importantes del desarrollo del proyecto, desde la validación técnica inicial hasta la consolidación de una plataforma \textit{web} modular y extensible. Se explican las decisiones que marcaron el diseño final, los problemas más relevantes encontrados durante el desarrollo y las soluciones aplicadas.
 
-El aspecto más importante del proyecto no es únicamente la ejecución de modelos de inteligencia artificial sobre imágenes, sino la construcción de una aplicación web escalable desde el punto de vista funcional. Es decir, una aplicación preparada para añadir nuevos flujos de procesamiento, modificar pipelines existentes, incorporar nuevos modos de ejecución y gestionar el acceso de los usuarios sin tener que rehacer el núcleo del sistema.
+La aportación principal del proyecto no está únicamente en ejecutar modelos sobre imágenes, sino en haber construido una base capaz de organizar modelos, modos de ejecución, \textit{pipelines}, permisos, resultados temporales y tareas de administración de forma coherente. Para explicar esta evolución, el desarrollo se resume en tres fases:
 
-Esta idea de escalabilidad ha guiado buena parte del desarrollo. La aplicación no se ha planteado como una demo cerrada con dos o tres botones fijos, sino como una plataforma en la que los modelos, los modos, los pipelines, los permisos y los resultados temporales quedan organizados mediante una arquitectura modular y una base de datos relacional.
+\begin{itemize}
+	\item \textbf{Validación técnica inicial.} Construcción de una demo para comprobar la ejecución de modelos de visión por computador desde una aplicación \textit{web}.
+	\item \textbf{Diseño de la aplicación escalable.} Definición de la arquitectura modular, el modelo de datos, la factoría de modelos, los \textit{pipelines}, la configuración por etapas y la lógica de acceso.
+	\item \textbf{Consolidación funcional.} Implementación de la administración de \textit{pipelines}, resultados temporales, pruebas automatizadas, análisis estático, datos iniciales y despliegue reproducible.
+\end{itemize}
 
-\section{Inicio del proyecto y validación de la idea}
+\section{Validación técnica inicial}
 
-El punto de partida del TFG fue construir una aplicación web capaz de procesar imágenes mediante modelos de inteligencia artificial. Desde el inicio se planteó que el sistema no debía limitarse a ejecutar un script local, sino que debía permitir a un usuario subir una imagen desde el navegador, seleccionar un análisis y obtener un resultado interpretable.
+El primer objetivo fue comprobar si el flujo básico de procesamiento era viable dentro de una aplicación \textit{web}. Antes de diseñar usuarios, planes, permisos o administración, era necesario validar la parte de mayor riesgo técnico: recibir una imagen desde el navegador, procesarla en el servidor y devolver un resultado interpretable.
 
-La primera decisión importante fue validar cuanto antes la parte de mayor incertidumbre técnica: la integración de modelos de visión por computador en un servidor web. Antes de desarrollar la lógica completa de usuarios, permisos, planes o administración, era necesario comprobar que el flujo básico funcionaba de extremo a extremo.
-
-Ese flujo inicial estaba formado por los siguientes pasos:
+El flujo validado fue el siguiente:
 
 \begin{enumerate}
 	\item Subida de una imagen desde el navegador.
 	\item Recepción y almacenamiento temporal en el servidor.
 	\item Selección del modelo y modo de procesamiento.
-	\item Ejecución del análisis mediante el motor correspondiente.
+	\item Ejecución del análisis en el \textit{backend}.
 	\item Generación de una imagen procesada.
-	\item Devolución de una respuesta visual y estructurada.
+	\item Devolución de una salida visual y estructurada.
 \end{enumerate}
 
-Esta primera validación permitió comprobar que el planteamiento era viable y, al mismo tiempo, identificar varios problemas que después influirían en la aplicación final: gestión de rutas, separación entre interfaz y backend, tratamiento de errores, generación de resultados y necesidad de desacoplar la selección del modelo de la lógica HTTP.
-
-\section{Metodología de trabajo y evolución incremental}
-
-El desarrollo se realizó siguiendo un enfoque iterativo e incremental, se trabajó mediante ciclos de avance, revisión y ampliación funcional. Esta forma de trabajo resultó adecuada porque el proyecto combinaba varias áreas diferentes: desarrollo web, visión por computador, bases de datos, autenticación, control de acceso, diseño de pipelines y pruebas automatizadas.
-
-La evolución del proyecto puede resumirse en tres grandes fases:
-
-\begin{itemize}
-	\item \textbf{Validación técnica inicial}: construcción de una demo para comprobar la ejecución de YOLO y MediaPipe desde una aplicación web.
-	\item \textbf{Diseño de la aplicación escalable}: definición del modelo de datos, roles, planes, modelos de IA, modos, pipelines, ejecuciones y resultados temporales.
-	\item \textbf{Consolidación funcional}: implementación de la aplicación completa, administración de pipelines, panel de usuario, control de acceso, pruebas automatizadas y datos iniciales de demostración.
-\end{itemize}
-
-Esta evolución fue importante porque evitó diseñar una plataforma completa sin haber validado antes la parte más crítica: la ejecución real de modelos sobre imágenes enviadas desde el navegador. Una vez comprobado ese flujo, el trabajo se centró en convertir la demo en una aplicación organizada, mantenible y ampliable.
-
-\section{Demo inicial de procesamiento de imágenes}
-
-La demo inicial tuvo como finalidad comprobar la viabilidad del procesamiento de imágenes desde un servidor web. Para ello se integraron dos familias de modelos: YOLO y MediaPipe. La elección de ambas permitió validar dos tipos de salida diferentes.
-
-YOLO ofrecía detección de objetos mediante cajas delimitadoras, clases y niveles de confianza. Esta salida era adecuada para comprobar visualmente qué elementos reconocía el modelo y en qué posición de la imagen se encontraban.
-
-MediaPipe, por su parte, permitía trabajar con landmarks en modos como manos y pose corporal. Esta salida era diferente a la de YOLO, ya que no se centraba en cajas, sino en puntos clave y conexiones anatómicas. Gracias a ello, la demo permitía probar no solo detección de objetos, sino también análisis estructural de una imagen.
-
-La demo permitió validar tres decisiones que se mantuvieron después en la aplicación final:
-
-\begin{itemize}
-	\item \textbf{Resultado visual como salida principal}: la imagen procesada permite comprobar rápidamente si el análisis ha funcionado.
-	\item \textbf{JSON como salida complementaria}: los datos estructurados permiten conservar información técnica sobre detecciones, coordenadas, confianza o landmarks.
-	\item \textbf{Separación entre interfaz y procesamiento}: la vista web no debía contener la lógica de inferencia, sino comunicarse con componentes especializados del backend.
-\end{itemize}
-
-Las Figuras~\ref{fig:AppDemoMediapipe1}, \ref{fig:AppDemoMediapipePose} y \ref{fig:AppDemoYolo} muestran algunos resultados representativos de esta fase inicial.
+La demo permitió comprobar dos tipos de análisis: detección de objetos mediante cajas delimitadoras y estimación de puntos clave mediante \textit{landmarks}. La Figura~\ref{fig:AppDemoMediapipe1} muestra una de las capturas de esta fase inicial, suficiente para representar el alcance de la demo: una imagen enviada desde la interfaz, procesada en el servidor y devuelta con anotaciones visuales.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.52\textwidth]{AppDemoMediapipe1.png}
-	\caption{Resultado de la ejecución de MediaPipe en modo \texttt{hands}, con representación de landmarks y conexiones sobre ambas manos detectadas.}
+	\includegraphics[width=0.40\textwidth]{AppDemoMediapipe1.png}
+	\caption[Demo inicial con MediaPipe.]{Resultado de la demo inicial con MediaPipe en modo manos, mostrando \textit{landmarks} y conexiones sobre las manos detectadas.}
 	\label{fig:AppDemoMediapipe1}
 \end{figure}
 
-\begin{figure}[htbp]
-	\centering
-	\begin{minipage}[t]{0.56\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{AppDemoMediapipe2.png}
-		
-		\vspace{0.3em}
-		\small (a) Interfaz de la demo durante una ejecución de MediaPipe en modo \texttt{pose}.
-	\end{minipage}
-	\hfill
-	\begin{minipage}[t]{0.34\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{AppDemoMediapipe3.png}
-		
-		\vspace{0.3em}
-		\small (b) Salida JSON generada por MediaPipe en modo \texttt{pose}.
-	\end{minipage}
-	\caption{Capturas asociadas a MediaPipe en modo \texttt{pose}. En (a) se muestra la interfaz de la demo con la imagen de entrada y los landmarks corporales detectados. En (b) se presenta la salida JSON generada, con información de landmarks, visibilidad y ruta de la imagen procesada.}
-	\label{fig:AppDemoMediapipePose}
-\end{figure}
+Esta demo no se consideró un producto final. Su valor estuvo en reducir incertidumbre técnica y en ayudar al diseño de la aplicación final. A partir de ella se identificaron las partes que debían formalizarse: modelo de datos, permisos, factoría de modelos, \textit{pipelines}, almacenamiento temporal, trazabilidad y administración.
+
+\section{Diseño de la aplicación escalable}
+
+La segunda fase consistió en transformar la demo en una plataforma extensible. El objetivo fue evitar una aplicación cerrada, con modelos y flujos fijados directamente en el código. Para ello, el diseño se apoyó en tres ideas: arquitectura modular, modelo de datos extensible y ejecución desacoplada de modelos.
+
+\subsection{Arquitectura modular}
+
+La arquitectura se organizó siguiendo una adaptación práctica del patrón Modelo-Vista-Controlador, incorporando una capa adicional de servicios. Esta capa resulta especialmente importante porque evita que los controladores acumulen lógica de procesamiento de imágenes, selección de modelos o ejecución de \textit{pipelines}.
+
+La Figura~\ref{fig:mvc-adaptado} representa esta organización general. La arquitectura no se limita al patrón clásico, sino que añade varios elementos propios del sistema:
+
+\begin{itemize}
+	\item \textbf{Factoría de aplicación Flask.} Centraliza la creación de la aplicación Flask, la configuración y el registro de módulos, funciona mediante \textbf{\textit{blueprints}} que separan rutas públicas, autenticación, tienda, \textit{pipelines} y administración.
+	\item \textbf{Capa de servicios.} Contiene la lógica de negocio, ejecución de \textit{pipelines} y procesamiento de imágenes, en ella se encuentra una \textbf{factoría de inteligencia artificial.} Esta selecciona el motor de procesamiento adecuado sin acoplar los controladores a modelos concretos utilizando \textbf{\textit{Launchers}} que encapsulan la ejecución específica de cada familia de modelos.
+\end{itemize}
 
 \begin{figure}[htbp]
 	\centering
-	\begin{minipage}[t]{0.56\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{AppDemoYolo1.png}
-		
-		\vspace{0.3em}
-		\small (a) Interfaz de la demo con ejecución de YOLO en modo \texttt{default}.
-	\end{minipage}
-	\hfill
-	\begin{minipage}[t]{0.34\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{AppDemoYolo2.png}
-		
-		\vspace{0.3em}
-		\small (b) Salida JSON asociada a la ejecución de YOLO.
-	\end{minipage}
-	\caption{Capturas asociadas al modelo YOLO. En (a) se observa la interfaz de la demo mostrando la imagen procesada con cajas delimitadoras sobre los objetos detectados. En (b) se presenta la salida JSON correspondiente, incluyendo detecciones, confianza, coordenadas y ruta de la imagen generada.}
-	\label{fig:AppDemoYolo}
-\end{figure}
-
-La demo no se consideró un producto final, sino una prueba técnica sobre la que construir la aplicación completa. Su valor estuvo en reducir incertidumbre y en mostrar qué partes del diseño debían formalizarse: modelo de datos, permisos, factoría de modelos, pipelines, almacenamiento temporal, trazabilidad y administración.
-
-\section{Arquitectura modular orientada a la escalabilidad}
-
-Uno de los aspectos más relevantes del desarrollo ha sido la consolidación de una arquitectura modular. Esta decisión se tomó para evitar que la lógica web, la lógica de negocio y la ejecución concreta de modelos de inteligencia artificial quedaran mezcladas.
-
-La organización del proyecto se aproxima al patrón Modelo-Vista-Controlador, aunque no se trata de una aplicación MVC pura en sentido estricto. Se ha seguido una adaptación práctica de este patrón al ecosistema Flask, incorporando además una capa de servicios para separar la lógica de procesamiento de imágenes y de inteligencia artificial de las rutas HTTP.
-
-En esta organización, los modelos se corresponden con las clases definidas mediante SQLAlchemy, responsables de representar entidades persistentes como usuarios, roles, planes, modelos de IA, modos, pipelines, ejecuciones y archivos temporales. Las vistas se materializan principalmente en las plantillas HTML de la aplicación y, en el caso de la API, en las respuestas JSON devueltas al cliente. Los controladores se organizan mediante \textit{blueprints} de Flask, encargados de recibir las peticiones, validar entradas, comprobar permisos y coordinar la respuesta.
-
-No obstante, la lógica de inferencia y orquestación de modelos no se ha ubicado directamente en los controladores. Para evitar controladores monolíticos, se ha incorporado una capa de servicios que contiene el ejecutor de pipelines, la factoría de inteligencia artificial y los \textit{launchers} específicos de cada familia de modelos. Esta decisión permite que los controladores actúen como punto de entrada de la aplicación, mientras que los servicios concentran la lógica técnica de procesamiento.
-
-Como se muestra en la Figura~\ref{fig:mvc-adaptado}, la aplicación mantiene una organización inspirada en MVC, pero incorpora una capa de servicios para separar la lógica de procesamiento de imágenes y de inteligencia artificial de los controladores HTTP.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.85\textwidth]{mvc_adaptado.png}
-	\caption{Organización arquitectónica inspirada en MVC con una capa adicional de servicios.}
+	\includegraphics[width=0.78\textwidth]{mvc_adaptado.png}
+	\caption[Arquitectura modular de la aplicación.]{Organización arquitectónica inspirada en Modelo-Vista-Controlador, con una capa adicional de servicios para separar la lógica de procesamiento.}
 	\label{fig:mvc-adaptado}
 \end{figure}
 
-La arquitectura final se apoya en dos ideas principales. La primera es la factoría de aplicación de Flask, mediante la función \texttt{create\_app}, encargada de inicializar la configuración, las extensiones y los módulos principales. La segunda es la factoría de inteligencia artificial, encargada de seleccionar el motor adecuado según el modelo y el modo de ejecución.
+Esta separación permite que la lógica de entrada, la persistencia, la interfaz y la ejecución de modelos evolucionen de forma independiente.
 
-Esta separación permite distinguir responsabilidades:
+\subsection{Modelo de datos como base de la escalabilidad}
 
-\begin{itemize}
-	\item \textbf{Modelos}: representan la información persistente mediante SQLAlchemy y definen la estructura de datos del sistema.
-	\item \textbf{Vistas}: proporcionan la interfaz web mediante plantillas HTML y reciben también respuestas JSON desde la API.
-	\item \textbf{Controladores}: reciben peticiones HTTP, validan entradas, comprueban permisos y coordinan la respuesta.
-	\item \textbf{Servicios}: concentran la lógica de negocio, la orquestación de pipelines y el procesamiento de imágenes.
-	\item \textbf{Factoría de IA}: selecciona el motor de procesamiento adecuado según el modelo solicitado.
-	\item \textbf{Launchers}: encapsulan la ejecución concreta de cada familia de modelos.
-\end{itemize}
+El modelo de datos fue una de las partes clave del diseño, ya que permite escalar la aplicación sin depender de valores fijos en el código. La base de datos no solo representa usuarios, sino también roles, planes, suscripciones, alquileres de modelos, modelos de inteligencia artificial, modos de ejecución, \textit{pipelines}, etapas, ejecuciones y archivos temporales.
 
-Esta organización aporta escalabilidad funcional. La aplicación puede incorporar nuevos modelos, modos o pipelines sin modificar de forma significativa el flujo principal. Si se añade una nueva familia de modelos, el cambio se concentra en implementar su launcher, registrarlo en la factoría y definir sus modos. Si se desea crear un nuevo pipeline a partir de modelos y modos ya existentes, el administrador puede hacerlo desde la propia aplicación, sin modificar código fuente.
-
-La Tabla~\ref{tabla:escalabilidad-arquitectura} resume cómo se afrontan distintos tipos de ampliación dentro del sistema.
-
-\begin{table}[htbp]
-	\centering
-	\small
-	\begin{tabular}{p{0.28\textwidth} p{0.55\textwidth}}
-		\toprule
-		\textbf{Necesidad de ampliación} & \textbf{Respuesta de la arquitectura} \\
-		\midrule
-		Crear un nuevo pipeline & Puede realizarse desde administración seleccionando etapas, modelos y modos disponibles. \\
-		\midrule
-		Modificar un pipeline existente & El administrador puede editar sus etapas sin cambiar el código de ejecución. \\
-		\midrule
-		Eliminar o deshabilitar un pipeline & Puede gestionarse desde la zona de administración, afectando a su disponibilidad para los usuarios. \\
-		\midrule
-		Añadir un nuevo modo a un modelo existente & Requiere registrar el modo y asociarlo al launcher correspondiente, sin rediseñar el flujo principal. \\
-		\midrule
-		Añadir una nueva familia de modelos & Requiere implementar un launcher específico y registrarlo en la factoría de IA. \\
-		\midrule
-		Cambiar permisos de acceso & Se controla mediante roles, planes, licencias y estado de los pipelines/modelos. \\
-		\bottomrule
-	\end{tabular}
-	\caption{Decisiones orientadas a la escalabilidad funcional de la aplicación.}
-	\label{tabla:escalabilidad-arquitectura}
-\end{table}
-
-Esta arquitectura es uno de los puntos fuertes del proyecto, ya que demuestra que la aplicación no se limita a integrar librerías externas, sino que construye una capa propia para organizarlas, combinarlas y ejecutarlas de forma controlada.
-
-\section{Modelo de datos como base de la extensibilidad}
-
-El modelo de datos fue una de las partes más importantes del desarrollo. La aplicación no necesitaba guardar únicamente usuarios o credenciales, sino representar una lógica más amplia: roles, planes, suscripciones, alquileres de modelos, modelos de IA, modos de ejecución, pipelines, etapas, ejecuciones y archivos temporales.
-
-La persistencia se diseñó con dos objetivos principales. Por un lado, permitir que la aplicación dejara de depender de datos fijos en el código. Por otro, garantizar que las relaciones importantes quedaran controladas mediante restricciones de base de datos.
-
-Una decisión especialmente relevante fue modelar por separado los modelos de inteligencia artificial y sus modos de ejecución. De esta forma, una IA puede tener varios modos asociados y cada etapa de un pipeline debe indicar tanto el modelo como el modo utilizado. Esta decisión evita representar el procesamiento mediante cadenas de texto libres y permite aplicar validaciones más estrictas.
-
-La relación entre \texttt{IAModelo}, \texttt{IAModo} y \texttt{PipelineEtapa} es especialmente importante para la escalabilidad del sistema. La tabla de etapas utiliza una clave foránea compuesta sobre \texttt{id\_modo} e \texttt{id\_ia}, lo que impide guardar una etapa en la que el modo seleccionado no pertenezca al modelo indicado. Así, la coherencia del pipeline no depende únicamente de la interfaz o del controlador, sino que también queda reforzada en el modelo relacional.
-
-Gracias a este diseño, los pipelines no se definen como código cerrado, sino como datos persistentes. Esta diferencia es fundamental: un pipeline puede crearse, editarse, deshabilitarse o eliminarse sin modificar las funciones de inferencia. El código mantiene la lógica general de ejecución, mientras que la base de datos almacena qué flujos existen y qué etapas los componen.
-
-También se diferenció entre la ejecución lógica y los archivos físicos generados. La entidad \texttt{Ejecucion} permite conservar información histórica del procesamiento, como usuario, pipeline, estado, duración o errores. La entidad \texttt{TemporalArchivo}, en cambio, representa archivos concretos asociados a una ejecución, con ruta interna, token de descarga y fecha de expiración.
-
-Esta separación permite conservar trazabilidad sin obligar a mantener indefinidamente todos los archivos generados. La ejecución puede seguir formando parte del historial aunque sus archivos temporales hayan expirado.
-
-
-\section{Pipelines de procesamiento y ejecución ramificada}
-
-La incorporación de pipelines es una de las aportaciones más importantes del proyecto. En la demo inicial, el usuario ejecutaba un modelo y un modo de forma aislada. En la aplicación final, el procesamiento se organiza mediante pipelines formados por etapas ordenadas.
-
-Cada etapa indica qué modelo y qué modo deben ejecutarse. Esta estructura permite definir flujos simples, como una detección directa con YOLO o una estimación de pose con MediaPipe, y también flujos más complejos en los que se combinan varias operaciones.
-
-Un caso especialmente relevante es la ejecución ramificada. Algunas etapas pueden producir una única salida, pero otras pueden generar varias. Por ejemplo, el modo de recorte de personas puede detectar varios sujetos dentro de una imagen y generar un archivo independiente para cada uno. A continuación, una etapa posterior puede aplicar MediaPipe sobre cada recorte de forma individual.
-
-Este comportamiento hace que el pipeline no sea siempre una secuencia estricta de una entrada y una salida. En determinados casos, una etapa produce varias ramas de procesamiento. Esta característica aporta valor al proyecto porque permite construir análisis más ricos que una inferencia aislada.
-
-Desde el punto de vista de implementación, esta decisión obligó a tratar las rutas generadas como colecciones de archivos y no como un único resultado. También hizo necesario conservar información de cada etapa para que el usuario pudiera interpretar qué se había ejecutado y qué salidas se habían generado.
-
-Algunos ejemplos de pipelines contemplados por el sistema son:
-
-\begin{itemize}
-	\item Detección de objetos mediante YOLO.
-	\item Recorte de personas mediante YOLO.
-	\item Detección de manos mediante MediaPipe.
-	\item Estimación directa de pose mediante MediaPipe.
-	\item Detección de personas y posterior estimación de pose.
-	\item Recorte de personas y análisis posterior de pose o manos sobre cada recorte.
-\end{itemize}
-
-Esta estructura muestra que el proyecto no consiste únicamente en llamar a modelos externos, sino en construir una capa propia de orquestación de análisis visual.
-
-\section{Factoría de IA y launchers}
-
-La factoría de inteligencia artificial es una pieza esencial para mantener la aplicación ampliable. Su objetivo es evitar que el ejecutor de pipelines o los controladores tengan dependencias directas con cada modelo concreto.
-
-En lugar de escribir lógica específica para YOLO o MediaPipe en todos los puntos del sistema, la aplicación delega la selección del motor en una factoría. Esta factoría devuelve el launcher correspondiente, y cada launcher se encarga de resolver los modos propios de su familia de modelos.
-
-La Figura~\ref{fig:flujo-factory-pipeline} muestra el flujo interno seguido durante la ejecución de un pipeline. Cuando el usuario solicita un análisis, el controlador no ejecuta directamente ningún modelo de inteligencia artificial, sino que valida la petición, comprueba los permisos y delega la ejecución en \texttt{PipelineRunner}. Este componente consulta la definición del pipeline en la base de datos, obtiene sus etapas ordenadas y ejecuta cada una de ellas de forma secuencial.
-
-En cada etapa, el sistema identifica el modelo de inteligencia artificial y el modo asociado. A partir de esa información, la factoría de IA selecciona el \textit{launcher} correspondiente. De esta manera, el ejecutor de pipelines no necesita conocer los detalles internos de YOLO o MediaPipe, sino únicamente trabajar con una interfaz común de ejecución.
-
-Esta organización resulta especialmente importante para la escalabilidad del proyecto. Si se añade una nueva familia de modelos, no es necesario modificar el controlador ni rehacer la lógica general del pipeline. El cambio se concentra en implementar un nuevo \textit{launcher}, registrarlo en la factoría y asociar sus modos en la base de datos.
-
-Además, el flujo contempla salidas ramificadas. Una etapa puede generar una única imagen procesada o varias imágenes intermedias, como ocurre en los recortes de personas. En ese caso, las rutas generadas pasan a ser la entrada de la siguiente etapa, permitiendo aplicar nuevos análisis sobre cada resultado intermedio.
+La Figura~\ref{fig:modelo-er} muestra el modelo entidad-relación del sistema. Su importancia está en que convierte los flujos de procesamiento en datos gestionables, no en funciones cerradas del código fuente.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.95\textwidth]{flujo_factory_pipeline.png}
-	\caption{Flujo de ejecución de pipelines y resolución dinámica mediante la factoría de IA.}
+	\includegraphics[width=0.92\textwidth]{DiagramaModeloER.png}
+	\caption[Modelo entidad-relación del sistema.]{Modelo entidad-relación de la aplicación, utilizado como base para representar usuarios, permisos, modelos, modos, \textit{pipelines}, ejecuciones y archivos temporales.}
+	\label{fig:modelo-er}
+\end{figure}
+
+La decisión más relevante fue separar los modelos de inteligencia artificial de sus modos de ejecución. De esta forma, un modelo puede disponer de varios modos, y cada etapa de un \textit{pipeline} debe indicar tanto el modelo como el modo utilizado. Esto permite validar que una etapa no combine un modo con un modelo al que no pertenece.
+
+También se separó la ejecución lógica de los archivos físicos generados. La entidad de ejecución conserva la trazabilidad del análisis, mientras que los archivos temporales mantienen rutas internas, \textit{tokens} de descarga y fecha de expiración. Así, el historial puede conservarse aunque los archivos generados ya no estén disponibles.
+
+\subsection{Pipelines de procesamiento}
+
+Los \textit{pipelines} permiten pasar de una ejecución aislada de modelos a flujos formados por etapas. Cada etapa define qué modelo y qué modo deben ejecutarse, y en qué orden.
+
+Esta estructura permite tres tipos de análisis:
+
+\begin{itemize}
+	\item \textbf{Análisis simples.} Una única etapa, como detección de objetos, manos o pose.
+	\item \textbf{Análisis compuestos.} Varias etapas encadenadas sobre una misma imagen.
+	\item \textbf{Análisis ramificados.} Una etapa genera varias imágenes intermedias y la siguiente se aplica sobre cada una de ellas.
+\end{itemize}
+
+El caso más representativo de ejecución ramificada es el recorte de personas. Una etapa puede localizar varios sujetos y generar un archivo por cada uno. Después, una etapa posterior puede aplicar estimación de pose o detección de manos sobre cada recorte. Esto obligó a tratar las salidas como colecciones de archivos, no como una única imagen final.
+
+\subsection{Factoría de inteligencia artificial y launchers}
+
+La factoría de inteligencia artificial evita que el ejecutor de \textit{pipelines} y los controladores dependan directamente de cada modelo concreto. Su objetivo es seleccionar el \textit{launcher} adecuado según el modelo y el modo solicitados, manteniendo el sistema preparado para poder escalarlo.
+
+La Figura~\ref{fig:flujo-factory-pipeline} muestra el flujo de ejecución. El controlador valida la petición y delega en el ejecutor de \textit{pipelines}. Este recupera las etapas desde la base de datos y, para cada una, solicita a la factoría el \textit{launcher} correspondiente.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.90\textwidth]{flujo_factory_pipeline.png}
+	\caption[Flujo de ejecución de pipelines.]{Flujo de ejecución de \textit{pipelines} y resolución dinámica de modelos mediante la factoría de inteligencia artificial.}
 	\label{fig:flujo-factory-pipeline}
 \end{figure}
 
-El launcher de YOLO gestiona modos como detección o recorte de personas. El launcher de MediaPipe gestiona modos como manos o pose. Esta separación reduce el acoplamiento y permite que cada familia de modelos evolucione de forma independiente.
+Esta decisión reduce el acoplamiento. Añadir una nueva familia de modelos no exige reescribir los controladores ni el ejecutor principal. El cambio se concentra en implementar un nuevo \textit{launcher}, registrarlo en la factoría y asociar sus modos en la base de datos.
 
-La existencia de una interfaz común para los launchers también aporta valor al diseño. Obliga a que las nuevas implementaciones respeten una forma común de ejecución. Gracias a ello, el sistema puede tratar distintos motores de IA de forma homogénea, aunque internamente cada uno utilice librerías, parámetros o estructuras de salida diferentes.
+\subsection{Configuración por etapas}
 
-Esta decisión es clave para la escalabilidad del proyecto. Añadir una nueva familia de modelos no exige reescribir el ejecutor de pipelines ni los controladores principales. El cambio se concentra en un nuevo launcher y en su registro dentro de la factoría. Del mismo modo, añadir nuevos modos a una familia existente puede resolverse ampliando su launcher y registrando el modo correspondiente en la base de datos y en la configuración.
+Cada modo dispone de una configuración predeterminada en formato JSON. Estos valores actúan como plantilla inicial para ejecutar una etapa, pero pueden modificarse antes de lanzar el análisis.
 
-\section{Configuración por etapas y separación del código}
-
-Otra decisión relevante fue separar parte de la configuración de los modos de ejecución mediante ficheros JSON. En lugar de fijar todos los parámetros directamente dentro del código, cada modo dispone de una configuración predeterminada que se carga automáticamente cuando el usuario selecciona un pipeline.
-
-Esta configuración predeterminada permite que el sistema pueda utilizarse sin que el usuario tenga que conocer los parámetros internos de cada modelo. Es decir, la aplicación ofrece unos valores iniciales razonables para cada modo de procesamiento, de forma que el análisis pueda ejecutarse directamente. No obstante, el usuario también puede modificar dicha configuración antes de lanzar la ejecución si desea alterar el comportamiento del modelo.
-
-Esta posibilidad resulta especialmente útil porque algunos parámetros influyen directamente en el resultado obtenido. Por ejemplo, en un modelo de detección puede modificarse el umbral de confianza para controlar qué detecciones se aceptan como válidas. De forma similar, en modelos basados en landmarks pueden ajustarse valores relacionados con la confianza mínima de detección o seguimiento. Así, dos ejecuciones sobre una misma imagen y un mismo pipeline pueden producir resultados distintos si se modifican sus parámetros de configuración.
-
-Desde el punto de vista de diseño, la aplicación distingue entre la configuración predeterminada asociada al modo y la configuración concreta utilizada en una ejecución. La primera actúa como plantilla inicial, mientras que la segunda representa los valores realmente aplicados cuando el usuario ejecuta el pipeline. Esta separación permite ofrecer una experiencia sencilla para usuarios que no quieran modificar parámetros y, al mismo tiempo, mantener flexibilidad para usuarios que deseen ajustar el análisis.
-
-Esta decisión encaja con el objetivo de escalabilidad. Separar estos valores del código permite modificar o ampliar configuraciones sin alterar directamente las funciones de procesamiento. El código define cómo se ejecutan los modelos, la base de datos define qué pipelines existen y los ficheros JSON contienen valores configurables para los modos de procesamiento. De esta forma, el pipeline no solo es configurable en cuanto a sus etapas, sino también en cuanto al comportamiento concreto de cada etapa durante la inferencia.
-
-\section{Administración de pipelines sin modificar código}
-
-Una de las funcionalidades más relevantes desde el punto de vista de escalabilidad, fue la gestión de pipelines desde la zona de administración. Esta funcionalidad permite que un administrador pueda crear, editar, deshabilitar o eliminar pipelines desde la propia interfaz de la aplicación.
-
-Este aspecto es importante porque evita que cada nuevo flujo de análisis tenga que programarse manualmente. En una versión más rígida del sistema, añadir un pipeline habría supuesto modificar código, crear una nueva ruta o escribir una función específica. En la versión actual, los pipelines se construyen a partir de modelos y modos existentes registrados en la base de datos.
-
-La interfaz de administración obtiene el catálogo de modelos y modos disponibles. A partir de esa información, el administrador puede definir las etapas del pipeline, su orden y su descripción. Antes de guardar el pipeline, el backend valida que las etapas sean correctas, que los modelos y modos existan, que estén habilitados y que cada modo pertenezca realmente al modelo seleccionado.
-
-Esta validación es doble. Por un lado, se realiza desde la lógica de aplicación, devolviendo errores claros si una etapa no es válida. Por otro, se refuerza desde la base de datos mediante la clave foránea compuesta entre modo e IA. De esta manera, incluso aunque llegara una petición incorrecta, el modelo relacional impediría persistir combinaciones incoherentes.
-
-Esta funcionalidad convierte la aplicación en una plataforma más flexible. Los pipelines dejan de ser una lista fija escrita en el código y pasan a ser configuraciones gestionables desde administración. Esto facilita la evolución del sistema y permite adaptar los flujos disponibles sin modificar la lógica principal de procesamiento.
-
-\section{Usuarios, permisos y lógica de acceso}
-
-Otro aspecto relevante del proyecto es la incorporación de una lógica de acceso a modelos y pipelines. El sistema distingue entre usuarios normales y administradores, y permite controlar qué funcionalidades puede utilizar cada tipo de usuario.
-
-La aplicación incorpora autenticación mediante tokens JWT. Esto permite proteger rutas privadas y asociar cada petición a un usuario autenticado. A partir de esa identidad, el sistema puede comprobar roles, plan activo y licencias temporales de modelos.
-
-La lógica de planes y alquileres añade una capa de complejidad sobre una demo convencional de inteligencia artificial. Un usuario con plan Pro puede acceder a todos los pipelines públicos mientras su suscripción esté activa además de poder mantener los archivos de sus ejecuciones durante una semana. En cambio, un usuario básico accede a los pipelines en función de las IAs que tenga alquiladas y vigentes en ese momento.
-
-Esta decisión permite simular un escenario cercano a una plataforma real, aunque sin integrar una pasarela de pago. La tienda y la guía de pipelines no se limitan a mostrar modelos disponibles, sino que ayudan al usuario a entender qué modelos necesita para ejecutar cada flujo y qué acceso tiene en ese momento.
-
-El control de acceso también está relacionado con la escalabilidad. Si se añaden nuevos pipelines o modelos, estos pueden integrarse dentro de la lógica existente de planes, licencias y roles. Por tanto, el sistema no solo permite ampliar los flujos de análisis, sino también controlar quién puede utilizarlos.
-
-\section{Gestión de resultados temporales y ciclo de vida de los datos}
-
-La gestión de archivos generados fue uno de los puntos que más evolucionó respecto a la demo inicial. En una primera prueba habría sido suficiente con guardar una imagen procesada y devolver su ruta. Sin embargo, en una aplicación con usuarios, historial y permisos, exponer rutas internas del servidor no resulta adecuado.
-
-Por este motivo se incorporó una gestión de resultados temporales mediante tokens de descarga. Cada archivo generado puede quedar asociado a una ejecución y disponer de un token que permite acceder a él sin revelar su ubicación real en el servidor.
-
-Esta decisión aporta varias ventajas:
+Esta separación permite distinguir entre:
 
 \begin{itemize}
-	\item Evita exponer rutas internas de la aplicación.
-	\item Permite asociar cada archivo a una ejecución concreta.
-	\item Facilita controlar la expiración de resultados.
-	\item Permite mostrar al usuario si un archivo sigue disponible.
-	\item Separa el historial lógico de la conservación física de archivos.
+	\item \textbf{Configuración predeterminada.} Valores asociados al modo de ejecución.
+	\item \textbf{Configuración aplicada.} Valores concretos utilizados en una ejecución.
 \end{itemize}
 
-Además, el sistema contempla tareas de mantenimiento relacionadas con el ciclo de vida de los datos. Estas tareas permiten eliminar archivos expirados, renovar suscripciones o alquileres cuando corresponde y anonimizar usuarios dados de baja tras un periodo determinado.
+Gracias a ello, el comportamiento de una etapa puede ajustarse sin modificar la función de procesamiento. Por ejemplo, puede cambiarse un umbral de confianza o un parámetro de detección manteniendo el mismo \textit{pipeline}.
 
-Este punto resulta relevante porque demuestra que el proyecto no solo contempla el caso ideal de uso, sino también qué ocurre después de la ejecución: cuánto tiempo se conservan los resultados, cómo se accede a ellos, cuándo dejan de estar disponibles y cómo se mantiene la coherencia de los datos.
+\subsection{Permisos y lógica de acceso}
 
-\section{Validación de entradas, tratamiento de errores y robustez}
+La aplicación incorpora autenticación mediante \textit{tokens} JWT y autorización mediante roles, planes y licencias temporales. Esta lógica permite controlar qué usuarios pueden acceder a cada funcionalidad y qué \textit{pipelines} tienen disponibles.
 
-Durante el desarrollo se prestó atención al tratamiento de errores y a la validación de entradas. En una aplicación que procesa archivos enviados por usuarios, este aspecto es importante porque pueden producirse situaciones no válidas: imágenes corruptas, extensiones no permitidas, configuraciones incorrectas, ausencia de permisos, modelos no disponibles o fallos al escribir resultados en disco.
+La plataforma diferencia entre:
 
-Una decisión concreta fue comprobar explícitamente el resultado de operaciones de escritura con OpenCV. Algunas funciones, como \texttt{cv2.imwrite}, pueden devolver \texttt{False} si no consiguen guardar el archivo, sin lanzar necesariamente una excepción. Por ello, el código debe comprobar ese valor y transformar el fallo en un error controlado.
+\begin{itemize}
+	\item \textbf{Administradores.} Acceden a funcionalidades de gestión y revisión global.
+	\item \textbf{Usuarios con plan Pro.} Acceden a todos los \textit{pipelines} públicos y tienen una persistencia de archivos durante 30 días.
+	\item \textbf{Usuarios básicos.} Acceden a \textit{pipelines} según los modelos contratados y vigentes, y sus archivos se almacenan 5 minutos.
+\end{itemize}
 
-También se validan parámetros de configuración antes de ejecutar los modelos. Esto evita que una configuración mal formada llegue directamente al motor de inferencia y produzca un fallo más difícil de interpretar. En el caso de pipelines, se valida que las etapas sean coherentes, que los modelos y modos existan y que estén habilitados.
+Esta lógica convierte la aplicación en algo más completo que una demo de inferencia. Los modelos y \textit{pipelines} no solo existen en el sistema, sino que también están sujetos a reglas de acceso.
 
-Estas validaciones no siempre son visibles desde la interfaz, pero mejoran la robustez de la aplicación y facilitan la depuración. Además, en estas situaciones se han incorporado a las pruebas automatizadas para comprobar que el sistema responde correctamente ante errores.
+\section{Consolidación funcional}
 
-\section{Pruebas automatizadas y calidad del sistema}
+La última fase consistió en completar la aplicación alrededor del diseño anterior: administración de \textit{pipelines}, resultados temporales, pruebas automatizadas, análisis estático y preparación de un entorno reproducible.
 
-La incorporación de pruebas automatizadas ha sido una parte importante del desarrollo. En un proyecto que combina aplicación web, base de datos, permisos, procesamiento de imágenes y modelos de inteligencia artificial, las pruebas permiten validar el comportamiento del sistema sin depender únicamente de comprobaciones manuales.
+\subsection{Administración de pipelines sin modificar código}
 
-Las pruebas se han realizado con Pytest y utilizan una base de datos SQLite en memoria para aislar el entorno de pruebas de la base de datos principal. Además, se emplean técnicas de \textit{mocking} para simular dependencias pesadas o externas, como modelos de inteligencia artificial, lectura y escritura de imágenes o errores controlados.
+Una de las funcionalidades más importantes fue permitir la creación y edición de \textit{pipelines} desde la zona de administración. La Figura~\ref{fig:admin-pipelines} muestra esta parte de la interfaz, desde la que se pueden gestionar flujos formados por modelos y modos existentes.
 
-Esta estrategia permite comprobar la lógica del sistema sin ejecutar inferencias reales en cada prueba. Esto es importante porque los modelos pueden ser pesados, depender de archivos externos o hacer que las pruebas sean demasiado lentas.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.86\textwidth]{admin_pipelines.png}
+	\caption[Administración de pipelines.]{Interfaz de administración para crear y editar \textit{pipelines} a partir de modelos y modos registrados.}
+	\label{fig:admin-pipelines}
+\end{figure}
 
-La Tabla~\ref{tabla:pruebas-automatizadas} resume los principales bloques de pruebas realizados.
+Esta funcionalidad es relevante porque los \textit{pipelines} dejan de ser una lista fija escrita en el código. El administrador puede definir etapas, ordenarlas, habilitar o deshabilitar flujos y modificar su disponibilidad sin cambiar la lógica principal de procesamiento.
+
+Antes de guardar un \textit{pipeline}, el \textit{backend} valida que:
+
+\begin{itemize}
+	\item El modelo exista y esté habilitado.
+	\item El modo exista y esté habilitado.
+	\item El modo pertenezca realmente al modelo indicado.
+	\item Las etapas tengan una estructura válida.
+	\item El \textit{pipeline} pueda guardarse sin romper restricciones de base de datos.
+\end{itemize}
+
+Esta doble validación, desde aplicación y desde base de datos, refuerza la coherencia del sistema.
+
+\subsection{Resultados temporales y ciclo de vida de los datos}
+
+El procesamiento de imágenes genera archivos que no deben exponerse mediante rutas internas del servidor. Para resolverlo, cada archivo generado se asocia a una ejecución y a un \textit{token} de descarga.
+
+Este diseño aporta varias ventajas:
+
+\begin{itemize}
+	\item Oculta las rutas reales del servidor.
+	\item Relaciona cada archivo con una ejecución concreta.
+	\item Permite controlar la expiración de resultados.
+	\item Mantiene trazabilidad aunque el archivo temporal desaparezca.
+\end{itemize}
+
+Además, se incorporaron tareas de mantenimiento para eliminar archivos expirados, renovar servicios cuando corresponde y anonimizar cuentas dadas de baja tras el periodo definido.
+
+\subsection{Reproducibilidad: datos iniciales y Docker}
+
+Para que la aplicación pueda probarse sin configurar manualmente todos los datos, se incorporó un \textit{script} de inicialización. Este \textit{script} prepara un entorno de demostración con usuarios, roles, planes, modelos de inteligencia artificial, modos y \textit{pipelines} ya configurados.
+
+Junto a los datos iniciales, se preparó un despliegue reproducible mediante Docker Compose. La aplicación se organiza en un contenedor para Flask y otro para MariaDB. De este modo, el entorno de ejecución queda definido de forma más controlada y se reducen errores derivados de diferencias entre equipos, versiones de dependencias o configuración del sistema operativo.
+
+\subsection{Pruebas automatizadas, errores corregidos y análisis estático}
+
+Las \texttt{pruebas automatizadas} se incorporaron para encontrar errores y comprobar que el sistema mantenía un comportamiento correcto. Se utilizó Pytest con una base de datos SQLite en memoria y técnicas de \textit{mocking} para simular modelos, lectura de imágenes, escritura de archivos y fallos controlados.
+
+La Tabla~\ref{tabla:pruebas-automatizadas} resume los bloques cubiertos por las pruebas.
 
 \begin{table}[htbp]
 	\centering
@@ -322,41 +196,44 @@ La Tabla~\ref{tabla:pruebas-automatizadas} resume los principales bloques de pru
 		\toprule
 		\textbf{Bloque probado} & \textbf{Aspectos validados} \\
 		\midrule
-		Autenticación y usuarios & Registro, inicio de sesión, perfil, cambio de contraseña, roles y baja lógica. \\
+		Autenticación y usuarios & Registro, inicio de sesión, perfil, roles y baja lógica. \\
 		\midrule
-		Tienda y acceso & Planes, alquileres, renovaciones, compras programadas y disponibilidad de IAs. \\
+		Tienda y acceso & Planes, alquileres, renovaciones y disponibilidad de modelos. \\
 		\midrule
-		Pipelines & Listado, configuración, ejecución, historial, resultados y archivos temporales. \\
+		Pipelines & Listado, configuración, ejecución, historial y resultados. \\
 		\midrule
-		Administración de pipelines & Creación, edición, eliminación y validación de etapas, modelos y modos. \\
+		Administración & Creación, edición, eliminación y validación de etapas. \\
 		\midrule
-		Factoría de IA y launchers & Selección del motor adecuado y ejecución de modos de YOLO y MediaPipe. \\
+		Procesamiento & Imágenes, configuraciones, recortes, manos, pose y errores controlados. \\
 		\midrule
-		Procesamiento de imágenes & Validación de imágenes, configuraciones, recortes, manos, pose y fallos de escritura. \\
-		\midrule
-		Mantenimiento & Expiración de temporales, renovación de servicios y anonimización de cuentas. \\
+		Mantenimiento & Expiración de temporales, renovación de servicios y anonimización. \\
 		\bottomrule
 	\end{tabular}
-	\caption{Resumen de bloques cubiertos mediante pruebas automatizadas.}
+	\caption[Resumen de pruebas automatizadas.]{Resumen de bloques cubiertos mediante pruebas automatizadas.}
 	\label{tabla:pruebas-automatizadas}
 \end{table}
 
-El valor de estas pruebas no está únicamente en cubrir casos correctos. También se comprueban situaciones de error, como imágenes inexistentes, configuraciones corruptas, usuarios sin permisos, archivos expirados, fallos de escritura o excepciones en operaciones de base de datos. Esto ayuda a construir una aplicación más fiable y preparada para comportamientos reales.
+Estas pruebas ayudaron a detectar y corregir errores relacionados con entradas inválidas o nulas, configuraciones JSON mal formadas, datos fuera de rango, usuarios sin permisos, combinaciones incorrectas de modelo y modo, archivos expirados, archivos físicos inexistentes y fallos de escritura de imágenes.
 
-\section{Datos iniciales y reproducibilidad de la demostración}
+Además, se incorporó \texttt{análisis estático} mediante SonarCloud integrado con GitHub Actions. Esta revisión permitió detectar mas problemas, especialmente incidencias de fiabilidad, mantenibilidad y seguridad.
 
-Para facilitar la puesta en marcha del sistema se incorporó un script de inicialización de datos. Este script permite crear un entorno coherente de demostración con roles, usuarios, planes, modelos de inteligencia artificial, modos de ejecución y pipelines ya configurados.
+Durante este proceso se corrigieron avisos relacionados con:
 
-Sin datos iniciales, sería necesario crear manualmente usuarios, planes, modelos, modos y pipelines antes de poder probar el flujo completo. Con el script de inicialización, la aplicación puede arrancar con un conjunto de datos preparado para demostrar los casos principales.
+\begin{itemize}
+	\item \textbf{Fiabilidad}: tratamiento de errores y control de situaciones que podían provocar fallos no controlados.
+	
+	\item \textbf{Mantenibilidad}: simplificación de código, reducción de duplicidades y mejora de fragmentos señalados por la herramienta.
+	
+	\item \textbf{Seguridad}: revisión del 100 \% de los \textit{hotspots} detectados, especialmente los relacionados con el \texttt{tratamiento de \textit{tokens}} y el envío de \texttt{cabeceras de autorización} desde la interfaz hacia rutas protegidas del \textit{backend} además de corrección del \texttt{Dockerfile} para mejorar la seguridad y reproducibilidad de la imagen ya que se ajustó la instalación de dependencias para utilizar un entorno virtual interno, se incorporó un fichero \texttt{requirements.lock} con versiones fijadas y se revisaron los permisos de los directorios que requieren escritura, evitando depender innecesariamente del usuario \textit{root}.
+\end{itemize}
 
-Entre los datos preparados se incluyen usuarios con distintos perfiles, modelos como YOLO y MediaPipe, modos como detección, recorte de personas, manos y pose, y pipelines de una o varias etapas. Esto permite probar tanto ejecuciones simples como flujos más complejos.
+La Figura~\ref{fig:sonarcloud-report} muestra el resultado del análisis en SonarCloud, donde se alcanzó una valoración A en seguridad, fiabilidad y mantenibilidad, se revisó el 100 \% de los \textit{hotspots} de seguridad y se obtuvo una cobertura del 92,9 \%.
 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.90\textwidth]{sonarcloud_report.png}
+	\caption[Informe de calidad en SonarCloud.]{Informe de calidad del proyecto en SonarCloud.}
+	\label{fig:sonarcloud-report}
+\end{figure}
 
-
-\section{Síntesis}
-
-Los aspectos más relevantes del desarrollo se concentran en la evolución desde una demo de procesamiento de imágenes hasta una aplicación web modular y escalable funcionalmente. La demo inicial permitió validar la ejecución de modelos sobre imágenes enviadas desde el navegador. A partir de ahí, el proyecto incorporó arquitectura por capas, persistencia, autenticación, control de acceso, pipelines, administración de flujos, resultados temporales y pruebas automatizadas.
-
-La decisión más importante ha sido evitar que los pipelines y los modelos quedasen fijados de forma rígida en el código. Gracias al modelo de datos, a la factoría de inteligencia artificial, a los launchers y a la zona de administración, la aplicación permite crear y modificar flujos de análisis con menor dependencia del código fuente. Esta característica es la que convierte el proyecto en una plataforma ampliable y no en una simple demo cerrada.
-
-En conjunto, el trabajo desarrollado demuestra una integración completa de varias áreas de la ingeniería informática: desarrollo web, visión por computador, bases de datos, seguridad básica, arquitectura software, pruebas y documentación. La aportación principal no está únicamente en utilizar YOLO o MediaPipe, sino en construir una plataforma capaz de organizar, controlar y ampliar flujos de análisis visual de forma mantenible.
+La combinación de pruebas automatizadas, cobertura y análisis estático permitió validar tanto el comportamiento funcional del \textit{backend} como aspectos internos de calidad del código antes de la entrega final.

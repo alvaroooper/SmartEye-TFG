@@ -38,7 +38,7 @@ def procesar_recortes_personas(imagen_path: str, config: Dict[str, Any] = None, 
         # Tamaño de imagen para la inferencia (se recomienda 1280 para un mejor balance entre precisión y velocidad)
         imgsz = int(config.get("imgsz", 1280))
         # Factor de escalado para compensar la pérdida de resolución en recortes pequeños
-        scale_factor = float(config.get("scale_factor", 3.0))
+        scale_factor = float(config.get("scale_factor", 1.0))
     except (ValueError, TypeError):
         raise ValueError("Excepción de tipo: Los hiperparámetros de recorte (conf, iou, imgsz, scale_factor) deben ser numéricos.")
     print(f"[YOLO RECORTES] conf={confianza_minima}, iou={iou}, imgsz={imgsz}, scale_factor={scale_factor}")
