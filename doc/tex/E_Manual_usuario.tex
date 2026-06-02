@@ -2,401 +2,66 @@
 
 \section{Introducción}
 
-Este apéndice describe los requisitos necesarios para instalar y ejecutar la aplicación desarrollada en este Trabajo de Fin de Grado. El objetivo es que un usuario pueda desplegar el sistema completo de forma reproducible, sin tener que instalar manualmente Python, MariaDB ni las dependencias internas del proyecto.
+Este apéndice recoge la documentación orientada al usuario final de la aplicación desarrollada en este Trabajo de Fin de Grado. A diferencia de la documentación técnica de programación, esta sección no describe la instalación interna del sistema, la configuración de Docker, la base de datos ni las dependencias del proyecto.
 
-La aplicación se distribuye preparada para su ejecución mediante Docker Compose. Esta solución permite levantar de forma conjunta los dos servicios principales del sistema: el contenedor de la aplicación web Flask y el contenedor de la base de datos MariaDB. De esta manera, el entorno queda aislado del sistema operativo anfitrión y se reducen los problemas derivados de diferencias entre versiones de Python, librerías de visión por computador o configuración de la base de datos.
+Desde el punto de vista del usuario, la aplicación se utiliza como una plataforma web. Por tanto, una vez desplegada por el personal técnico o por el administrador del sistema, el usuario solo necesita acceder a la dirección proporcionada mediante un navegador web.
 
-El código fuente del proyecto se encuentra disponible en el repositorio:
-
-\begin{verbatim}
-	https://github.com/alvaroooper/TFG.git
-\end{verbatim}
-
-Dentro del repositorio, el proyecto ejecutable se encuentra en el directorio \texttt{src}. Por tanto, los comandos de instalación y ejecución deben lanzarse desde dicha carpeta.
+El objetivo de este apéndice es explicar los requisitos básicos de acceso y dejar preparada la sección posterior del manual de usuario, donde se describirá el uso funcional de la aplicación: registro, inicio de sesión, ejecución de pipelines, consulta de resultados, gestión de compras y funciones de administración.
 
 \section{Requisitos de usuarios}
 
-Para ejecutar la aplicación mediante Docker, el usuario únicamente necesita disponer de las siguientes herramientas instaladas en su equipo:
+Para utilizar la aplicación no es necesario instalar Python, MariaDB, Docker, Docker Compose ni ninguna dependencia interna del proyecto. Todos esos elementos forman parte del despliegue técnico y se documentan en el apéndice de documentación técnica de programación.
+
+El usuario únicamente necesita disponer de:
 
 \begin{itemize}
-	\item \textbf{Git:} necesario para clonar el repositorio del proyecto desde GitHub.
-	\item \textbf{Docker:} necesario para construir y ejecutar los contenedores de la aplicación.
-	\item \textbf{Docker Compose:} necesario para levantar conjuntamente la aplicación web y la base de datos.
-	\item \textbf{Navegador web:} necesario para acceder a la interfaz de usuario de la aplicación.
-	\item \textbf{Conexión a Internet:} necesaria para descargar el repositorio, las imágenes Docker base y las dependencias durante la construcción inicial.
+	\item \textbf{Navegador web actualizado}: necesario para acceder a la interfaz de la aplicación.
+	\item \textbf{Conexión a Internet}: o acceso a la red en la que esté desplegada la plataforma.
+	\item \textbf{Dirección de acceso}: URL proporcionada por el administrador o responsable técnico.
 \end{itemize}
 
-No es necesario instalar manualmente Python, MariaDB, Flask, SQLAlchemy, OpenCV, MediaPipe, YOLO ni el resto de dependencias del proyecto, ya que todas ellas se instalan dentro de los contenedores Docker.
+En un entorno local de demostración, la aplicación puede estar disponible en:
 
-En sistemas GNU/Linux basados en Debian o Ubuntu, Git puede instalarse con:
+\begin{bloqueCodigo}[title={url de acceso}]
+	http://localhost:5000
+\end{bloqueCodigo}
 
-\begin{verbatim}
-	sudo apt update
-	sudo apt install -y git
-\end{verbatim}
+En caso de acceder desde otro equipo de la misma red, deberá utilizarse la dirección IP o URL proporcionada por el administrador del sistema.
 
-La instalación de Docker puede realizarse mediante Docker Engine o Docker Desktop, según el sistema operativo utilizado. Una vez instalado, se recomienda comprobar que Docker y Docker Compose están disponibles ejecutando:
-
-\begin{verbatim}
-	docker --version
-	docker compose version
-\end{verbatim}
-
-En sistemas Linux, si el usuario no puede ejecutar Docker sin permisos de administrador, puede ser necesario añadir el usuario actual al grupo \texttt{docker}:
-
-\begin{verbatim}
-	sudo usermod -aG docker $USER
-\end{verbatim}
-
-Después de ejecutar este comando, es necesario cerrar sesión y volver a iniciarla para que el cambio tenga efecto.
-
-Además, se recomienda disponer de espacio suficiente en disco, ya que durante la construcción del contenedor se descargan librerías de visión por computador y dependencias relacionadas con modelos de inteligencia artificial. También es recomendable contar con varios GB de memoria RAM disponibles, especialmente durante la ejecución de pipelines que utilicen modelos de IA.
-
-De forma opcional, el usuario puede instalar DBeaver u otro cliente compatible con MariaDB si desea consultar manualmente el contenido de la base de datos.
+En un despliegue real, el acceso se realizaría mediante la URL pública o privada configurada para la plataforma.
 
 \section{Instalación}
 
-\subsection{Obtención del proyecto}
+Desde el punto de vista del usuario final, no es necesario instalar la aplicación ni preparar ningún componente técnico en su equipo.
 
-El primer paso consiste en clonar el repositorio desde GitHub. Para ello, se debe abrir una terminal y ejecutar:
+La aplicación se utiliza directamente desde un navegador web, accediendo a la dirección proporcionada por el administrador o responsable del sistema. La instalación, configuración y despliegue de la plataforma corresponden al personal técnico y se describen en la documentación técnica de programación.
 
-\begin{verbatim}
-	git clone https://github.com/alvaroooper/TFG.git
-\end{verbatim}
+Por tanto, el usuario solo necesita disponer de un navegador web actualizado, conexión a Internet o acceso a la red donde esté desplegada la aplicación, y una cuenta válida para iniciar sesión.
 
-A continuación, se debe acceder al directorio del proyecto ejecutable:
-
-\begin{verbatim}
-	cd TFG/src
-\end{verbatim}
-
-Desde este punto deben ejecutarse los comandos de Docker, ya que en esta carpeta se encuentran los archivos de configuración necesarios para construir y levantar el sistema.
-
-La estructura esperada de esta carpeta debe incluir, entre otros, los siguientes elementos:
-
-\begin{verbatim}
-	Dockerfile
-	docker-compose.yml
-	entrypoint.sh
-	requirements.txt
-	.env.example
-	.dockerignore
-	run.py
-	seed.py
-	config.py
-	app/
-	configs/
-	models/
-	execution_data/
-\end{verbatim}
-
-\subsection{Configuración de variables de entorno}
-
-La aplicación utiliza un archivo \texttt{.env} para definir las claves de seguridad y los parámetros de conexión con la base de datos. Este archivo no debe subirse al repositorio, ya que puede contener contraseñas o claves privadas.
-
-Si el proyecto incluye un archivo \texttt{.env.example}, se puede generar el archivo real mediante:
-
-\begin{verbatim}
-	cp .env.example .env
-\end{verbatim}
-
-En Windows, el comando equivalente es:
-
-\begin{verbatim}
-	copy .env.example .env
-\end{verbatim}
-
-El archivo \texttt{.env} debe contener una configuración equivalente a la siguiente:
-
-\begin{verbatim}
-	SECRET_KEY=clave-general-flask-tfg-123
-	JWT_SECRET_KEY=super-clave-jwt-tfg-2026-indescifrable
-	
-	MARIADB_ROOT_PASSWORD=ContrasennaRootTfg2026
-	MARIADB_DATABASE=ia_orquestada_db
-	MARIADB_USER=usuarioIAOrquestadaDB
-	MARIADB_PASSWORD=ContrasennaUsuarioTfg2026
-	
-	DATABASE_URL=mysql+pymysql://usuarioIAOrquestadaDB:ContrasennaUsuarioTfg2026@db:3306/ia_orquestada_db?charset=utf8mb4
-\end{verbatim}
-
-Los valores de \texttt{MARIADB\_DATABASE}, \texttt{MARIADB\_USER} y \texttt{MARIADB\_PASSWORD} son utilizados por el contenedor de MariaDB para crear la base de datos inicial y el usuario de acceso. Por su parte, \texttt{DATABASE\_URL} es utilizada por la aplicación Flask para conectarse a dicha base de datos.
-
-Es importante que los datos coincidan entre sí. Por ejemplo, si se define:
-
-\begin{verbatim}
-	MARIADB_DATABASE=ia_orquestada_db
-	MARIADB_USER=usuarioIAOrquestadaDB
-	MARIADB_PASSWORD=ContrasennaUsuarioTfg2026
-\end{verbatim}
-
-la URL de conexión debe utilizar esos mismos valores:
-
-\begin{verbatim}
-	DATABASE_URL=mysql+pymysql://usuarioIAOrquestadaDB:ContrasennaUsuarioTfg2026@db:3306/ia_orquestada_db?charset=utf8mb4
-\end{verbatim}
-
-El nombre \texttt{db} que aparece en la URL no debe cambiarse por \texttt{localhost}, ya que representa el nombre del servicio de MariaDB dentro de la red interna de Docker Compose.
-
-\subsection{Carpetas persistentes del proyecto}
-
-El proyecto incluye la estructura de carpetas necesaria para almacenar los modelos de inteligencia artificial y los archivos generados durante las ejecuciones. En concreto, la carpeta \texttt{models} contiene los subdirectorios asociados a los modelos utilizados por la aplicación, como \texttt{models/mp} y \texttt{models/yolo}. Por su parte, la carpeta \texttt{execution\_data} se utiliza para almacenar los archivos temporales generados durante la ejecución de los pipelines, como imágenes originales, imágenes procesadas y resultados en formato JSON.
-
-Estas carpetas se montan dentro del contenedor mediante Docker Compose:
-
-\begin{verbatim}
-	volumes:
-	- ./execution_data:/app/execution_data
-	- ./models:/app/models
-\end{verbatim}
-
-De esta forma, los recursos de modelos y los resultados generados quedan fuera del sistema de archivos interno del contenedor y se mantienen en el directorio del proyecto. Esto permite reconstruir o reiniciar el contenedor sin perder dichos archivos locales.
-
-No es necesario crear manualmente estas carpetas tras clonar el repositorio, ya que forman parte de la estructura entregada del proyecto.
-
-\subsection{Script de arranque del contenedor}
-
-El proyecto incluye un script de entrada, \texttt{entrypoint.sh}, utilizado por el contenedor de la aplicación web. Este script prepara las carpetas necesarias, espera a que MariaDB acepte conexiones y, posteriormente, arranca la aplicación Flask mediante Gunicorn.
-
-Los permisos de ejecución de este script se asignan durante la construcción de la imagen Docker mediante el archivo \texttt{Dockerfile}, por lo que el usuario no necesita ejecutar manualmente ningún comando adicional sobre este fichero.
-
-\subsection{Validación de la configuración de Docker Compose}
-
-Antes de construir los contenedores, se recomienda validar el archivo \texttt{docker-compose.yml}:
-
-\begin{verbatim}
-	docker compose config
-\end{verbatim}
-
-Si el comando finaliza sin errores, Docker Compose ha interpretado correctamente la configuración y las variables de entorno.
-
-\subsection{Primera ejecución}
-
-La primera ejecución debe realizarse en tres pasos: levantar la base de datos, inicializar las tablas y datos de prueba, y arrancar la aplicación web.
-
-En primer lugar, se construye el servicio de base de datos y se levanta MariaDB:
-
-\begin{verbatim}
-	docker compose up -d --build db
-\end{verbatim}
-
-A continuación, se puede comprobar el estado de los contenedores con:
-
-\begin{verbatim}
-	docker compose ps
-\end{verbatim}
-
-Cuando el servicio \texttt{db} aparezca en ejecución y en estado saludable, se inicializa la base de datos mediante el script \texttt{seed.py}:
-
-\begin{verbatim}
-	docker compose run --rm web python seed.py
-\end{verbatim}
-
-Este script crea las tablas necesarias y carga datos iniciales para poder utilizar la aplicación en un entorno de demostración.
-
-Finalmente, se levanta la aplicación web:
-
-\begin{verbatim}
-	docker compose up -d web
-\end{verbatim}
-
-Una vez iniciado el servicio, la aplicación estará disponible en:
-
-\begin{verbatim}
-	http://localhost:5000
-\end{verbatim}
-
-\subsection{Usuarios iniciales de prueba}
-
-Tras ejecutar el script de inicialización, se crean usuarios de prueba para acceder a la aplicación. Los principales usuarios son:
-
-\begin{itemize}
-	\item \textbf{Administrador:}
-	\begin{itemize}
-		\item Usuario: \texttt{admin}
-		\item Contraseña: \texttt{Admin123}
-	\end{itemize}
-	
-	\item \textbf{Usuario básico:}
-	\begin{itemize}
-		\item Usuario: \texttt{pepe}
-		\item Contraseña: \texttt{User123}
-	\end{itemize}
-	
-	\item \textbf{Usuario Pro:}
-	\begin{itemize}
-		\item Usuario: \texttt{ramon}
-		\item Contraseña: \texttt{User123}
-	\end{itemize}
-\end{itemize}
-
-Estos usuarios permiten comprobar el funcionamiento de la autenticación, el acceso diferenciado por roles, la consulta de pipelines disponibles y las funcionalidades asociadas a planes o servicios activos.
-
-\subsection{Uso habitual de la aplicación}
-
-Una vez inicializada la base de datos, en posteriores ejecuciones no es necesario volver a ejecutar \texttt{seed.py}. Para arrancar todos los servicios basta con ejecutar:
-
-\begin{verbatim}
-	docker compose up -d
-\end{verbatim}
-
-Para detener la aplicación y la base de datos:
-
-\begin{verbatim}
-	docker compose down
-\end{verbatim}
-
-Este comando detiene y elimina los contenedores, pero no borra el volumen de MariaDB ni las carpetas locales \texttt{models} y \texttt{execution\_data}.
-
-Para ver los logs de la aplicación web:
-
-\begin{verbatim}
-	docker compose logs -f web
-\end{verbatim}
-
-Para ver los logs de MariaDB:
-
-\begin{verbatim}
-	docker compose logs -f db
-\end{verbatim}
-
-Para reiniciar únicamente la aplicación web:
-
-\begin{verbatim}
-	docker compose restart web
-\end{verbatim}
-
-\subsection{Reinicialización de la base de datos}
-
-Si se desea volver a cargar los datos iniciales de demostración, se puede ejecutar de nuevo:
-
-\begin{verbatim}
-	docker compose run --rm web python seed.py
-\end{verbatim}
-
-Este comando recrea la estructura de datos definida por la aplicación y vuelve a insertar la información inicial. Debe utilizarse con precaución, ya que puede eliminar datos existentes de la base de datos.
-
-Si se desea borrar completamente el volumen de MariaDB y partir desde cero, puede ejecutarse:
-
-\begin{verbatim}
-	docker compose down -v
-	docker compose up -d --build db
-	docker compose run --rm web python seed.py
-	docker compose up -d web
-\end{verbatim}
-
-El parámetro \texttt{-v} elimina los volúmenes gestionados por Docker, incluido el volumen de MariaDB. No obstante, no elimina las carpetas locales \texttt{models} ni \texttt{execution\_data}, ya que estas se montan como directorios del proyecto.
-
-\subsection{Consulta de la base de datos con DBeaver}
-
-Aunque la base de datos se ejecuta dentro de Docker, puede consultarse desde DBeaver u otro cliente compatible con MariaDB. Para ello, debe utilizarse la conexión expuesta por Docker Compose hacia el equipo anfitrión.
-
-La configuración habitual de conexión es:
-
-\begin{itemize}
-	\item \textbf{Tipo de base de datos:} MariaDB.
-	\item \textbf{Host:} \texttt{localhost}.
-	\item \textbf{Puerto:} \texttt{3307}.
-	\item \textbf{Base de datos:} \texttt{ia\_orquestada\_db}.
-	\item \textbf{Usuario:} \texttt{usuarioIAOrquestadaDB}.
-	\item \textbf{Contraseña:} \texttt{ContrasennaUsuarioTfg2026}.
-\end{itemize}
-
-Desde la aplicación Flask, la conexión se realiza internamente contra \texttt{db:3306}. Sin embargo, desde el equipo anfitrión debe utilizarse \texttt{localhost:3307}, ya que el nombre \texttt{db} solo existe dentro de la red interna de Docker Compose.
-
-\subsection{Problemas frecuentes durante la instalación}
-
-\subsubsection{El puerto 5000 ya está ocupado}
-
-Si al levantar la aplicación aparece un error indicando que el puerto 5000 ya está en uso, significa que existe otro proceso utilizando ese puerto en la máquina anfitriona. Puede tratarse de otra instancia de Flask u otro servicio local.
-
-Una solución consiste en modificar el mapeo de puertos del servicio \texttt{web} en \texttt{docker-compose.yml}:
-
-\begin{verbatim}
-	ports:
-	- "5001:5000"
-\end{verbatim}
-
-En este caso, la aplicación pasaría a estar disponible en:
-
-\begin{verbatim}
-	http://localhost:5001
-\end{verbatim}
-
-El puerto interno del contenedor sigue siendo el 5000, pero el acceso desde el navegador se realiza mediante el puerto externo 5001.
-
-\subsubsection{El puerto 3307 ya está ocupado}
-
-Si el puerto 3307 está ocupado, puede cambiarse el puerto externo de MariaDB en \texttt{docker-compose.yml}:
-
-\begin{verbatim}
-	ports:
-	- "3308:3306"
-\end{verbatim}
-
-En ese caso, la conexión desde DBeaver debería utilizar el puerto 3308. La aplicación Flask no requiere cambios, ya que dentro de Docker continúa conectándose a MariaDB mediante \texttt{db:3306}.
-
-\subsubsection{Error de acceso a MariaDB}
-
-Si durante el arranque aparecen mensajes de tipo \texttt{Access denied}, normalmente se debe a una incoherencia entre las variables de entorno utilizadas por MariaDB y la URL de conexión utilizada por Flask.
-
-Debe comprobarse que los valores de:
-
-\begin{verbatim}
-	MARIADB_DATABASE
-	MARIADB_USER
-	MARIADB_PASSWORD
-\end{verbatim}
-
-coinciden exactamente con los incluidos en:
-
-\begin{verbatim}
-	DATABASE_URL
-\end{verbatim}
-
-También puede ocurrir que se haya modificado el archivo \texttt{.env} después de haber creado ya el volumen de MariaDB. En ese caso, MariaDB no recrea automáticamente el usuario ni la base de datos. Para aplicar los cambios desde cero, puede eliminarse el volumen:
-
-\begin{verbatim}
-	docker compose down -v
-\end{verbatim}
-
-Después debe repetirse el proceso de inicialización.
-
-\subsubsection{MariaDB tarda en estar disponible}
-
-Durante el arranque inicial, MariaDB puede tardar unos segundos en estar lista. El script \texttt{entrypoint.sh} espera a que la base de datos acepte conexiones antes de ejecutar la aplicación o el comando solicitado.
-
-Si el mensaje de espera se repite durante demasiado tiempo, se recomienda revisar los logs del servicio de base de datos:
-
-\begin{verbatim}
-	docker compose logs -f db
-\end{verbatim}
-
-\subsubsection{Problemas con el script de entrada}
-
-Si el contenedor web no arranca y muestra errores relacionados con \texttt{entrypoint.sh}, se debe comprobar que el archivo tiene permisos de ejecución:
-
-\begin{verbatim}
-	chmod +x entrypoint.sh
-\end{verbatim}
-
-Si el error se debe a saltos de línea incompatibles, puede corregirse con:
-
-\begin{verbatim}
-	dos2unix entrypoint.sh
-\end{verbatim}
-
-\subsubsection{Reconstrucción tras cambios en dependencias}
-
-Si se modifica el archivo \texttt{requirements.txt} o el \texttt{Dockerfile}, es necesario reconstruir la imagen de la aplicación:
-
-\begin{verbatim}
-	docker compose build --no-cache web
-	docker compose up -d web
-\end{verbatim}
-
-Si solo se modifican archivos de configuración o datos persistidos, normalmente no es necesario reconstruir la imagen.
+La aplicación se ejecuta escuchando en \texttt{0.0.0.0:5000} para permitir conexiones desde fuera del contenedor. Sin embargo, cuando se accede desde el propio equipo anfitrión, la URL habitual de acceso es \texttt{http://localhost:5000}.
 
 \section{Manual del usuario}
 
-% Esta sección se desarrolla de forma independiente.
+\subsection{Problemas frecuentes de acceso}
+
+Los problemas más habituales desde el punto de vista del usuario se resumen en la Tabla~\ref{tabla:problemas_acceso_usuario}.
+
+\begin{table}[H]
+	\centering
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\begin{tabularx}{\linewidth}{p{0.35\linewidth}X}
+		\toprule
+		\textbf{Situación} & \textbf{Posible causa o solución} \\
+		\midrule
+		La página no carga & Comprobar la conexión a Internet y que la URL introducida sea correcta. \\
+		La URL no es válida & Solicitar al administrador la dirección actual de la aplicación. \\
+		No se puede iniciar sesión & Revisar usuario y contraseña. Si el problema continúa, contactar con el administrador. \\
+		La cuenta aparece como no activa & La cuenta puede estar suspendida, dada de baja o pendiente de revisión. \\
+		No aparecen pipelines disponibles & Puede que el usuario no tenga contratado el plan o modelo necesario. \\
+		No se pueden descargar resultados & El archivo puede haber caducado o no estar disponible. \\
+		\bottomrule
+	\end{tabularx}
+	\caption[Problemas frecuentes de acceso]{Problemas frecuentes de acceso para el usuario.}
+	\label{tabla:problemas_acceso_usuario}
+\end{table}

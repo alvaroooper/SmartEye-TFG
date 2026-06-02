@@ -1,869 +1,770 @@
 \apendice{Especificación de diseño}
 
+
+
 \section{Introducción}
 
-En este apéndice se describe el diseño técnico del sistema, estructurado en tres apartados: diseño de datos, diseño arquitectónico y diseño procedimental.
-
-El objetivo de este anexo es justificar las decisiones adoptadas durante el diseño de la solución. En particular, en el diseño de datos no solo se presenta la estructura final de la base de datos, sino también el motivo por el que se han definido determinados atributos, restricciones y relaciones. De este modo, el modelo no se plantea como una simple colección de tablas, sino como una propuesta coherente con los requisitos del sistema, la trazabilidad de la información y la posibilidad de ampliación futura.
+En este apéndice se recoge el diseño técnico del sistema, el objetivo es mostrar la estructura interna de la aplicación.
 
 \section{Diseño de datos}
 
-El modelo de datos se ha diseñado para su implantación en MariaDB utilizando el motor \texttt{InnoDB}, lo que permite trabajar con claves foráneas, integridad referencial y soporte transaccional. Además, se utiliza \texttt{utf8mb4} con colación \texttt{utf8mb4\_unicode\_ci} para permitir el almacenamiento correcto de caracteres Unicode.
-
-De manera general, el diseño se ha construido siguiendo varios criterios:
-
-\begin{itemize}
-	\item \textbf{Separación de responsabilidades}: cada tabla representa una entidad o una asociación con significado propio.
-	\item \textbf{Evitar redundancia innecesaria}: se distinguen claramente conceptos como usuarios, roles, planes, suscripciones, modelos IA, modos, pipelines y ejecuciones.
-	\item \textbf{Preservar la integridad}: se emplean claves primarias, claves foráneas, restricciones \texttt{UNIQUE} y restricciones \texttt{CHECK} para evitar valores incoherentes en importes, fechas, duraciones y orden de ejecución.
-	\item \textbf{Conservar la trazabilidad}: se evita el borrado automático en cascada en aquellas tablas cuyo contenido forma parte del histórico del sistema.
-	\item \textbf{Facilitar la escalabilidad}: la estructura permite añadir nuevos planes, nuevos modelos IA, nuevos modos o nuevos pipelines sin modificar la base del modelo.
-\end{itemize}
-
-Antes de justificar cada una de las tablas del modelo, se incluyen dos representaciones complementarias del diseño de datos. En primer lugar, se presenta el diagrama entidad-relación, que permite comprender la estructura conceptual del sistema, sus entidades principales y las asociaciones existentes entre ellas. En segundo lugar, se muestra el diagrama del modelo relacional, donde dicha propuesta conceptual queda traducida a tablas, claves y relaciones concretas para su implantación en la base de datos.
+El modelo de datos se ha diseñado para representar de forma separada las entidades principales del sistema: usuarios, roles, planes, modelos de IA, pipelines, ejecuciones y archivos temporales. Esta división reduce redundancias, mantiene la trazabilidad de las operaciones y facilita futuras ampliaciones de la aplicación.
 
 \subsection{Diagrama entidad-relación}
 
-La Figura~\ref{fig:diagrama_er} recoge el diagrama entidad-relación del sistema. En él se representa la visión conceptual del modelo de datos, identificando las entidades principales, sus atributos más relevantes y las relaciones que se establecen entre ellas.
+La Figura~\ref{fig:diagrama_er} muestra el diagrama entidad-relación del sistema, donde se representan las entidades principales y sus asociaciones.
 
-\begin{figure}[H]
+\begin{figure}
 	\centering
 	\includegraphics[width=\textwidth]{img/DiagramaModeloER.png}
-	\caption{Diagrama entidad-relación del sistema}
+	\caption[Diagrama entidad-relación del sistema]{Diagrama entidad-relación del sistema.}
 	\label{fig:diagrama_er}
 \end{figure}
 
-Este diagrama permite observar que \texttt{USUARIO} actúa como entidad central del sistema, ya que se relaciona con la asignación de roles, la contratación de planes, el acceso individual a modelos de inteligencia artificial, la creación de pipelines y la realización de ejecuciones. Asimismo, se distingue la parte funcional asociada a los modelos IA, sus modos de uso y su composición dentro de pipelines, junto con la gestión de los archivos temporales generados durante las ejecuciones. Esta representación resulta especialmente útil para comprender el significado semántico de cada relación antes de su transformación al esquema relacional definitivo.
+En el modelo, \texttt{USUARIO} actúa como entidad central, al relacionarse con roles, suscripciones, alquileres, pipelines y ejecuciones.
 
 \subsection{Diagrama del modelo relacional}
 
-La Figura~\ref{fig:diagrama_modelo_relacional} muestra la transformación del modelo conceptual al modelo relacional. En este nivel, las entidades y relaciones anteriores pasan a expresarse mediante tablas con sus claves primarias, claves foráneas y restricciones principales.
+La Figura~\ref{fig:diagrama_modelo_relacional} recoge el modelo relacional final, con las tablas, claves y relaciones utilizadas para implementar la persistencia.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{img/DiagramaModeloRelacional.png}
-	\caption{Diagrama del modelo relacional del sistema}
+	\caption[Diagrama del modelo relacional del sistema]{Diagrama del modelo relacional del sistema.}
 	\label{fig:diagrama_modelo_relacional}
 \end{figure}
 
-En este diagrama puede apreciarse con mayor precisión cómo se implementan las relaciones entre las distintas tablas. Por ejemplo, las relaciones de muchos a muchos se materializan mediante tablas intermedias como \texttt{USUARIO\_ROL}, mientras que otras asociaciones se resuelven a través de claves foráneas directas, como sucede en \texttt{SUSCRIPCION\_PLAN}, \texttt{ALQUILA}, \texttt{EJECUCION} o \texttt{PIPELINE\_ETAPA}. Además, esta representación permite comprobar de forma más clara la estructura final sobre la que se aplican las restricciones de unicidad, integridad referencial y consistencia que se justifican a continuación.
+Las relaciones muchos a muchos se resuelven mediante tablas intermedias, como \texttt{USUARIO\_ROL}. El resto de asociaciones se implementan mediante claves foráneas directas.
 
-A continuación se justifica cada una de las tablas del modelo..
+\subsection{Diccionario de datos}
 
-\subsection{Tabla USUARIO}
+A continuación se resumen las tablas principales del modelo relacional. Para evitar una extensión excesiva, se recoge únicamente la finalidad de cada atributo y las anotaciones más relevantes de diseño.
 
-La tabla \texttt{USUARIO} representa la cuenta de cada persona registrada en el sistema. Se trata de una tabla central, ya que gran parte del resto de entidades se relacionan directa o indirectamente con ella. Sus atributos se muestran en la Tabla~\ref{tabla:usuario_atributos}.
-
-\tablaSmall{Atributos de la tabla USUARIO}{l p{10cm}}{usuario_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_usuario} & Identificador interno del usuario. Se define como clave primaria autoincremental para disponer de una referencia estable e independiente de los datos funcionales.\\
-	\texttt{email} & Correo electrónico del usuario. Es \texttt{NOT NULL} porque constituye un dato esencial para identificar la cuenta y se declara \texttt{UNIQUE} para impedir duplicidades.\\
-	\texttt{username} & Nombre de usuario del sistema. También es \texttt{NOT NULL} y \texttt{UNIQUE} porque debe existir siempre y no puede repetirse sin generar ambigüedad.\\
-	\texttt{password\_hash} & Contraseña almacenada en formato hash. Es obligatoria porque forma parte de la autenticación y no se guarda en texto plano por seguridad.\\
-	\texttt{nombre\_visible} & Nombre mostrado en la interfaz. Se permite \texttt{NULL} porque no es imprescindible para el funcionamiento interno del sistema.\\
-	\texttt{estado} & Estado lógico de la cuenta. Es obligatorio y tiene el valor por defecto \texttt{activa} para evitar insertar usuarios sin estado definido.\\
-	\texttt{creado\_en} & Fecha de creación del registro. Se marca como obligatoria y con valor por defecto para asegurar trazabilidad desde el alta.\\
-	\texttt{actualizado\_en} & Fecha de última modificación. Se actualiza automáticamente para facilitar auditoría y seguimiento de cambios.\\
-	\texttt{borrado\_en} & Fecha de borrado lógico. Se permite \texttt{NULL} porque solo debe informarse cuando el usuario deja de estar operativo sin eliminarse físicamente.\\
+% Tabla compacta no flotante para evitar grandes espacios en blanco.
+\newcommand{\tablaDiccionario}[3]{%
+	\begingroup
+	\footnotesize
+	\renewcommand{\arraystretch}{0.95}
+	\setlength{\tabcolsep}{4pt}
+	\vspace{-0.4em}
+	\begin{center}
+		\bottomcaption{#1.}
+		\begin{xtabular}{@{}p{0.25\linewidth}p{0.65\linewidth}@{}}
+			\toprule
+			\textbf{Atributo} & \textbf{Descripción} \\
+			\midrule
+			#3
+			\bottomrule
+		\end{xtabular}
+		\label{tabla:#2}
+	\end{center}
+	\vspace{-0.8em}
+	\endgroup
 }
 
-La clave primaria sobre \texttt{id\_usuario} garantiza una identificación interna única y estable. Las restricciones \texttt{UNIQUE} sobre \texttt{email} y \texttt{username} se introducen porque ambos campos tienen significado funcional dentro del sistema: el primero evita que dos cuentas compartan el mismo correo electrónico y el segundo impide colisiones en el identificador visible del usuario. Por su parte, los campos obligatorios se han limitado a los estrictamente necesarios para operar, mientras que otros como \texttt{nombre\_visible} o \texttt{borrado\_en} se mantienen opcionales para no forzar información que no siempre debe existir.
+\noindent\textbf{Tabla \texttt{USUARIO}.} Se describe en la Tabla~\ref{tabla:usuario_atributos}.
 
-\subsection{Tabla ROL}
-
-La tabla \texttt{ROL} almacena los distintos perfiles de acceso del sistema, como puede ser usuario administrador, cliente o futuros roles como soporte. Sus atributos se muestran en la Tabla~\ref{tabla:rol_atributos}.
-
-\tablaSmall{Atributos de la tabla ROL}{l p{10cm}}{rol_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_rol} & Identificador interno del rol. Se utiliza una clave primaria autoincremental para desacoplar la identificación interna del nombre funcional.\\
-	\texttt{nombre} & Nombre del rol. Es \texttt{NOT NULL} y \texttt{UNIQUE} para que cada rol quede claramente diferenciado y no existan duplicados lógicos.\\
-	\texttt{descripcion} & Texto descriptivo del rol. Se permite \texttt{NULL} porque es útil para documentar, pero no imprescindible para aplicar permisos.\\
+\tablaDiccionario{Atributos de la tabla USUARIO}{usuario_atributos}{
+	\texttt{id\_usuario} & Identificador interno y clave primaria.\\
+	\texttt{email} & Correo electrónico obligatorio y único.\\
+	\texttt{username} & Nombre de usuario obligatorio y único.\\
+	\texttt{password\_hash} & Contraseña almacenada mediante hash.\\
+	\texttt{nombre\_visible} & Nombre mostrado en la interfaz.\\
+	\texttt{estado} & Estado lógico de la cuenta.\\
+	\texttt{creado\_en} & Fecha de creación.\\
+	\texttt{actualizado\_en} & Fecha de última modificación.\\
+	\texttt{borrado\_en} & Fecha de baja lógica, si procede.\\
 }
 
-La separación de \texttt{ROL} respecto de \texttt{USUARIO} permite gestionar los perfiles de forma flexible y evita codificar los roles como un simple valor fijo dentro de la cuenta. La unicidad del nombre se justifica porque no tendría sentido disponer de dos roles con la misma denominación, ya que eso introduciría ambigüedad tanto en la lógica del sistema como en la administración.
+\noindent{\footnotesize\emph{Nota:} \texttt{email} y \texttt{username} son únicos para evitar cuentas duplicadas. La baja se plantea de forma lógica para conservar la trazabilidad.}
 
-\subsection{Tabla USUARIO\_ROL}
+\medskip
 
-La tabla \texttt{USUARIO\_ROL} materializa la asignación de roles a usuarios. Sus atributos se resumen en la Tabla~\ref{tabla:usuario_rol_atributos}. Se trata de una tabla intermedia necesaria para representar una relación de muchos a muchos entre \texttt{USUARIO} y \texttt{ROL}.
+\noindent\textbf{Tabla \texttt{ROL}.} Se describe en la Tabla~\ref{tabla:rol_atributos}.
 
-\tablaSmall{Atributos de la tabla USUARIO\_ROL}{l p{10cm}}{usuario_rol_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_usuario} & Usuario al que se asigna el rol. Es obligatorio porque la asociación no tiene sentido sin un usuario existente.\\
-	\texttt{id\_rol} & Rol asignado al usuario. También es obligatorio porque la asociación debe apuntar siempre a un rol concreto.\\
+\tablaDiccionario{Atributos de la tabla ROL}{rol_atributos}{
+	\texttt{id\_rol} & Identificador interno y clave primaria.\\
+	\texttt{nombre} & Nombre del rol, obligatorio y único.\\
+	\texttt{descripcion} & Descripción opcional del rol.\\
 }
 
-La clave primaria compuesta \texttt{(id\_usuario, id\_rol)} evita que el mismo rol se asigne varias veces al mismo usuario. Esta solución es preferible a crear un identificador artificial adicional, ya que la propia combinación de ambos campos ya identifica unívocamente la asociación. En cuanto a las acciones de borrado, se utiliza \texttt{ON DELETE CASCADE} hacia \texttt{USUARIO} porque, si un usuario desaparece, sus asignaciones dejan de tener sentido; en cambio, hacia \texttt{ROL} se usa \texttt{ON DELETE RESTRICT} para impedir eliminar un rol que todavía está siendo utilizado.
+\noindent\textbf{Tabla \texttt{USUARIO\_ROL}.} Se describe en la Tabla~\ref{tabla:usuario_rol_atributos}.
 
-
-\subsection{Tabla TIPO\_PLAN}
-
-La tabla \texttt{TIPO\_PLAN} recoge el catálogo de planes disponibles en el sistema. En la versión actual se contemplan los planes Básico y Pro: el primero sirve como plan de entrada y permite ampliar el acceso mediante alquileres individuales de modelos, mientras que el segundo representa un acceso más completo al catálogo disponible. Sus atributos se presentan en la Tabla~\ref{tabla:tipo_plan_atributos}. Se separa de \texttt{SUSCRIPCION\_PLAN} para distinguir entre el tipo abstracto de plan y la contratación concreta realizada por un usuario en un periodo determinado.
-
-\tablaSmall{Atributos de la tabla TIPO\_PLAN}{l p{10cm}}{tipo_plan_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_plan} & Identificador interno del plan. Se utiliza como clave primaria autoincremental.\\
-	\texttt{nombre} & Nombre del plan. Es \texttt{NOT NULL} y \texttt{UNIQUE} porque cada elemento del catálogo debe quedar claramente identificado.\\
-	\texttt{precio\_mensual} & Precio base mensual del plan. Se permite \texttt{NULL} para no obligar a informar un importe en planes gratuitos o todavía no definidos.\\
-	\texttt{descripcion} & Descripción del plan y de sus condiciones generales. Se permite \texttt{NULL} porque no afecta directamente a la lógica de acceso.\\
-	\texttt{habilitado} & Indica si el plan está disponible para nuevas contrataciones. Es obligatorio y tiene valor por defecto \texttt{TRUE} para evitar estados indefinidos.\\
+\tablaDiccionario{Atributos de la tabla USUARIO\_ROL}{usuario_rol_atributos}{
+	\texttt{id\_usuario} & Usuario al que se asigna el rol.\\
+	\texttt{id\_rol} & Rol asignado al usuario.\\
 }
 
-La restricción \texttt{UNIQUE} sobre \texttt{nombre} se justifica porque el catálogo no debe contener dos planes con la misma denominación. El \texttt{CHECK} sobre \texttt{precio\_mensual} impide registrar precios negativos, reforzando la coherencia del dato económico desde la propia base de datos. El campo \texttt{habilitado} permite desactivar planes sin necesidad de eliminarlos, lo que conserva referencias históricas y simplifica la administración.
+\noindent{\footnotesize\emph{Nota:} la clave primaria compuesta \texttt{(id\_usuario, id\_rol)} evita asignaciones duplicadas.}
 
-\subsection{Tabla SUSCRIPCION\_PLAN}
+\medskip
 
-La tabla \texttt{SUSCRIPCION\_PLAN} registra cada suscripción efectiva de un usuario a un plan concreto. Sus atributos se recogen en la Tabla~\ref{tabla:suscripcion_plan_atributos}. Se diferencia de \texttt{TIPO\_PLAN} porque aquí no se define el plan, sino cada contratación realizada.
+\noindent\textbf{Tabla \texttt{TIPO\_PLAN}.} Se describe en la Tabla~\ref{tabla:tipo_plan_atributos}.
 
-\tablaSmall{Atributos de la tabla SUSCRIPCION\_PLAN}{l p{10cm}}{suscripcion_plan_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_suscripcion} & Identificador interno de la suscripción. Se define como clave primaria autoincremental.\\
-	\texttt{id\_usuario} & Usuario suscrito. Es \texttt{NOT NULL} porque la suscripción siempre debe pertenecer a una cuenta concreta.\\
-	\texttt{id\_plan} & Plan contratado. También es \texttt{NOT NULL} porque toda suscripción debe asociarse a un plan del catálogo.\\
-	\texttt{fecha\_compra} & Fecha en la que se registra la contratación. Es obligatoria y permite conservar trazabilidad sobre el momento de adquisición del servicio.\\
-	\texttt{fecha\_compra} & Fecha en la que se registra la contratación. Es obligatoria y permite conservar trazabilidad sobre el momento de adquisición del servicio.\\
-	\texttt{fecha\_fin} & Fecha de finalización, cuando exista. Se permite \texttt{NULL} porque una suscripción puede estar activa o no tener todavía cierre registrado.\\
-	\texttt{activo} & Indica si la suscripción debe considerarse operativa. Es obligatorio y permite resolver de forma directa las consultas de acceso sin depender únicamente del cálculo por fechas.\\
-	\texttt{renovacion\_auto} & Indica si la renovación es automática. Es obligatorio y se inicia en \texttt{FALSE} por defecto.\\
-	\texttt{importe} & Importe cobrado en esa contratación concreta. Se permite \texttt{NULL} porque puede haber promociones o ajustes que no siempre se registren inicialmente.\\
-	\texttt{referencia\_pago} & Referencia externa del pago asociado. Se deja opcional porque no tiene por qué existir siempre o puede no haberse informado todavía.\\
+\tablaDiccionario{Atributos de la tabla TIPO\_PLAN}{tipo_plan_atributos}{
+	\texttt{id\_plan} & Identificador interno y clave primaria.\\
+	\texttt{nombre} & Nombre del plan, obligatorio y único.\\
+	\texttt{precio\_mensual} & Precio mensual del plan.\\
+	\texttt{descripcion} & Descripción del plan.\\
+	\texttt{habilitado} & Indica si el plan puede contratarse.\\
 }
 
-Las claves foráneas hacia \texttt{USUARIO} y \texttt{TIPO\_PLAN} usan \texttt{RESTRICT} porque las suscripciones forman parte del histórico del sistema. De este modo se evita eliminar usuarios o planes que todavía tienen contratos asociados. Además, el \texttt{CHECK} sobre fechas impide que una suscripción tenga una fecha de finalización anterior a su fecha de inicio, y el \texttt{CHECK} sobre \texttt{importe} evita registrar cantidades negativas.
-\subsection{Tabla IA\_MODELO}
+\noindent\textbf{Tabla \texttt{SUSCRIPCION\_PLAN}.} Se describe en la Tabla~\ref{tabla:suscripcion_plan_atributos}.
 
-La tabla \texttt{IA\_MODELO} representa cada modelo de inteligencia artificial disponible en la aplicación. Sus atributos se muestran en la Tabla~\ref{tabla:ia_modelo_atributos}. Esta tabla es una de las entidades principales del dominio, ya que el sistema se centra en permitir el acceso y la ejecución de distintos modelos IA.
-
-\tablaSmall{Atributos de la tabla IA\_MODELO}{l p{10cm}}{ia_modelo_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_ia} & Identificador interno del modelo. Se define como clave primaria autoincremental.\\
-	\texttt{nombre} & Nombre del modelo. Es \texttt{NOT NULL} y \texttt{UNIQUE} para evitar duplicidades semánticas.\\
-	\texttt{descripcion} & Descripción funcional del modelo. Se permite \texttt{NULL} porque no siempre es necesaria para la lógica interna.\\
-	\texttt{habilitada} & Indica si el modelo puede utilizarse. Es obligatorio y tiene valor por defecto \texttt{TRUE} para mantener un estado definido.\\
-	\texttt{precio} & Coste individual del acceso al modelo, si procede. Se permite \texttt{NULL} porque algunos modelos pueden no tener precio independiente.\\
-	\texttt{ruta\_servidor} & Ruta o referencia interna utilizada por el backend para localizar el modelo. Se deja opcional para no forzar que todos los modelos se resuelvan exactamente igual.\\
+\tablaDiccionario{Atributos de la tabla SUSCRIPCION\_PLAN}{suscripcion_plan_atributos}{
+	\texttt{id\_suscripcion} & Identificador interno y clave primaria.\\
+	\texttt{id\_usuario} & Usuario titular de la suscripción.\\
+	\texttt{id\_plan} & Plan contratado.\\
+	\texttt{fecha\_compra} & Fecha de contratación.\\
+	\texttt{fecha\_inicio} & Inicio de la vigencia.\\
+	\texttt{fecha\_fin} & Fin de la vigencia, si existe.\\
+	\texttt{activo} & Indica si la suscripción está activa.\\
+	\texttt{renovacion\_auto} & Indica si se renueva automáticamente.\\
+	\texttt{importe} & Importe aplicado en la contratación.\\
+	\texttt{referencia\_pago} & Referencia opcional del pago.\\
 }
 
-La unicidad del nombre se establece para que cada modelo tenga una identidad lógica inequívoca. El \texttt{CHECK} sobre \texttt{precio} evita importes negativos en el catálogo de modelos. Además, el campo \texttt{habilitada} permite activar y desactivar modelos sin eliminarlos físicamente, lo que es útil en mantenimiento, pruebas o retirada temporal del servicio.
+\noindent{\footnotesize\emph{Nota:} se conserva como histórico de contratación, por lo que sus relaciones principales usan \texttt{RESTRICT}.}
 
-\subsection{Tabla IA\_MODO}
+\medskip
 
-La tabla \texttt{IA\_MODO} recoge los distintos modos de funcionamiento de cada modelo IA. Sus atributos aparecen en la Tabla~\ref{tabla:ia_modo_atributos}. Esta separación permite reutilizar un mismo modelo con varias configuraciones o finalidades sin necesidad de duplicarlo en la tabla principal.
+\noindent\textbf{Tabla \texttt{IA\_MODELO}.} Se describe en la Tabla~\ref{tabla:ia_modelo_atributos}.
 
-\tablaSmall{Atributos de la tabla IA\_MODO}{l p{10cm}}{ia_modo_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_modo} & Identificador interno del modo. Se define como clave primaria autoincremental.\\
-	\texttt{id\_ia} & Modelo al que pertenece el modo. Es \texttt{NOT NULL} porque todo modo debe estar asociado a un modelo existente.\\
-	\texttt{nombre\_modo} & Nombre del modo dentro del modelo. Es obligatorio porque identifica funcionalmente la variante de uso.\\
-	\texttt{descripcion} & Explicación opcional del modo. Se permite \texttt{NULL} porque no siempre será necesaria.\\
-	\texttt{habilitado} & Indica si el modo está disponible para su uso. Es obligatorio y tiene valor por defecto \texttt{TRUE}.\\
-	\texttt{config\_predeterminada} & Configuración base del modo. Se almacena como \texttt{TEXT} y se permite \texttt{NULL} para mantener flexibilidad y no imponer una estructura fija.\\
+\tablaDiccionario{Atributos de la tabla IA\_MODELO}{ia_modelo_atributos}{
+	\texttt{id\_ia} & Identificador interno y clave primaria.\\
+	\texttt{nombre} & Nombre del modelo, obligatorio y único.\\
+	\texttt{descripcion} & Descripción funcional del modelo.\\
+	\texttt{habilitada} & Indica si el modelo puede utilizarse.\\
+	\texttt{precio} & Precio del acceso individual.\\
+	\texttt{ruta\_servidor} & Ruta o referencia interna del modelo.\\
 }
 
-La restricción \texttt{UNIQUE (id\_ia, nombre\_modo)} evita que un mismo modelo tenga dos modos con el mismo nombre, lo que generaría ambigüedad. Además, se mantiene \texttt{UNIQUE (id\_modo, id\_ia)} porque esa combinación se usa posteriormente como referencia compuesta desde \texttt{PIPELINE\_ETAPA}. La clave foránea hacia \texttt{IA\_MODELO} utiliza \texttt{RESTRICT} para impedir eliminar un modelo si todavía conserva modos asociados.
+\noindent\textbf{Tabla \texttt{IA\_MODO}.} Se describe en la Tabla~\ref{tabla:ia_modo_atributos}.
 
-\subsection{Tabla ALQUILA}
-
-La tabla \texttt{ALQUILA} registra la adquisición individual de acceso a un modelo IA por parte de un usuario. Sus atributos se detallan en la Tabla~\ref{tabla:alquila_atributos}. Esta tabla resulta necesaria porque el sistema no solo contempla acceso por suscripción general, sino también compras o activaciones concretas de modelos.
-
-\tablaSmall{Atributos de la tabla ALQUILA}{l p{10cm}}{alquila_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_compra} & Identificador interno de la operación. Se define como clave primaria autoincremental.\\
-	\texttt{id\_usuario} & Usuario que realiza la compra. Es \texttt{NOT NULL} porque toda operación debe tener titular.\\
-	\texttt{id\_ia} & Modelo IA adquirido. También es \texttt{NOT NULL} porque la compra debe referirse a un recurso concreto.\\
-	\texttt{fecha\_compra} & Fecha de la operación. Se declara obligatoria con valor por defecto para registrar automáticamente el momento del alta.\\
-	\texttt{periodo\_inicio} & Fecha de inicio de la vigencia del acceso. Se permite \texttt{NULL} porque no todas las operaciones tienen por qué estar acotadas temporalmente del mismo modo.\\
-	\texttt{periodo\_fin} & Fecha de finalización de la vigencia. También se permite \texttt{NULL} para mantener flexibilidad.\\
-	\texttt{activo} & Indica si el acceso debe considerarse operativo. Es obligatorio y permite consultar de forma directa los modelos disponibles para el usuario.\\
-	\texttt{renovacion\_auto} & Indica si la renovación del acceso es automática. Es obligatorio y se inicia por defecto en \texttt{FALSE} para no asumir renovaciones sin indicación expresa.\\
-	\texttt{importe} & Importe cobrado en la operación concreta. Se conserva para mantener el valor pagado en el momento de la compra, aunque posteriormente cambie el precio del modelo. Se permite \texttt{NULL} porque pueden existir casos gratuitos, promocionales o pendientes de registrar.\\
-	\texttt{referencia\_pago} & Referencia externa del pago. Se deja opcional porque no siempre existirá una referencia única o puede no haberse informado todavía.\\
+\tablaDiccionario{Atributos de la tabla IA\_MODO}{ia_modo_atributos}{
+	\texttt{id\_modo} & Identificador interno del modo.\\
+	\texttt{id\_ia} & Modelo al que pertenece.\\
+	\texttt{nombre\_modo} & Nombre funcional del modo.\\
+	\texttt{descripcion} & Descripción del modo.\\
+	\texttt{habilitado} & Indica si el modo está disponible.\\
+	\texttt{config\_predeterminada} & Configuración base del modo.\\
 }
 
-Las claves foráneas hacia \texttt{USUARIO} e \texttt{IA\_MODELO} emplean \texttt{RESTRICT} porque estas operaciones forman parte del histórico de negocio y no conviene perderlas automáticamente al eliminar entidades relacionadas. El \texttt{CHECK} sobre \texttt{importe} evita cantidades negativas, mientras que el \texttt{CHECK} sobre el periodo obliga a que, si existen fecha de inicio y fecha de fin, la finalización no sea anterior al comienzo del acceso.
-\subsection{Tabla PIPELINE}
+\noindent{\footnotesize\emph{Nota:} \texttt{UNIQUE (id\_ia, nombre\_modo)} evita duplicar modos dentro de un mismo modelo.}
 
-La tabla \texttt{PIPELINE} representa un flujo de procesamiento configurable. Cada pipeline agrupa una o varias etapas que se ejecutan de forma ordenada sobre una imagen. Sus atributos se presentan en la Tabla~\ref{tabla:pipeline_atributos}. Esta tabla es una de las partes más importantes del diseño, ya que permite que el sistema no dependa de flujos escritos de forma fija en el código, sino de configuraciones almacenadas y gestionables desde la propia aplicación.
+\medskip
 
-\tablaSmall{Atributos de la tabla PIPELINE}{l p{10cm}}{pipeline_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_pipeline} & Identificador interno del pipeline. Se define como clave primaria autoincremental.\\
-	\texttt{id\_usuario} & Usuario propietario o creador del pipeline. Se permite \texttt{NULL} porque el diseño contempla conservar el pipeline aunque desaparezca su propietario original.\\
-	\texttt{nombre} & Nombre del pipeline. Es \texttt{NOT NULL} porque resulta necesario para identificarlo funcionalmente en el catálogo.\\
-	\texttt{descripcion} & Descripción del flujo. Se permite \texttt{NULL} porque no siempre es imprescindible documentarlo.\\
-	\texttt{habilitado} & Indica si el pipeline puede utilizarse. Es obligatorio y tiene valor por defecto \texttt{TRUE}.\\
-	\texttt{creado\_en} & Fecha de creación del pipeline. Se registra automáticamente para mantener trazabilidad temporal.\\
-	\texttt{publico} & Indica si el pipeline se muestra como disponible para los usuarios o si queda limitado a su propietario. Este campo facilita el filtrado del catálogo sin tener que deducir en cada consulta si el flujo procede de un administrador o de un usuario concreto.\\
+\noindent\textbf{Tabla \texttt{ALQUILA}.} Se describe en la Tabla~\ref{tabla:alquila_atributos}.
+
+\tablaDiccionario{Atributos de la tabla ALQUILA}{alquila_atributos}{
+	\texttt{id\_compra} & Identificador interno y clave primaria.\\
+	\texttt{id\_usuario} & Usuario que alquila el modelo.\\
+	\texttt{id\_ia} & Modelo contratado.\\
+	\texttt{fecha\_compra} & Fecha de la operación.\\
+	\texttt{periodo\_inicio} & Inicio de la vigencia.\\
+	\texttt{periodo\_fin} & Fin de la vigencia, si existe.\\
+	\texttt{activo} & Indica si el acceso está activo.\\
+	\texttt{renovacion\_auto} & Indica si se renueva automáticamente.\\
+	\texttt{importe} & Importe aplicado.\\
+	\texttt{referencia\_pago} & Referencia opcional del pago.\\
 }
 
-El campo \texttt{id\_usuario} usa \texttt{ON DELETE SET NULL}. Esta decisión evita que un pipeline desaparezca automáticamente si se elimina la cuenta que lo creó. En este proyecto tiene especial importancia, ya que los pipelines pueden haber sido definidos por un administrador y seguir siendo útiles para el resto del sistema. Además, se define la restricción \texttt{UNIQUE (id\_usuario, nombre)} para impedir que un mismo usuario tenga dos pipelines con el mismo nombre. Esta restricción resulta especialmente importante de cara a una posible evolución en la que los usuarios puedan crear sus propios pipelines, ya que permite mantener un catálogo privado ordenado y sin ambigüedades.
+\noindent\textbf{Tabla \texttt{PIPELINE}.} Se describe en la Tabla~\ref{tabla:pipeline_atributos}.
 
-\subsection{Tabla EJECUCION}
-
-La tabla \texttt{EJECUCION} registra cada procesamiento realizado en el sistema. Sus atributos se muestran en la Tabla~\ref{tabla:ejecucion_atributos}. Esta tabla es clave para la trazabilidad operativa, ya que permite saber qué usuario ejecutó qué pipeline, cuándo se lanzó, con qué estado terminó y qué configuración se aplicó.
-
-\tablaSmall{Atributos de la tabla EJECUCION}{l p{10cm}}{ejecucion_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_ejecucion} & Identificador interno de la ejecución. Se define como clave primaria autoincremental.\\
-	\texttt{id\_usuario} & Usuario asociado a la ejecución. Es obligatorio para mantener responsabilidad y trazabilidad sobre el uso del sistema.\\
-	\texttt{id\_pipeline} & Pipeline ejecutado. Es \texttt{NOT NULL} porque cada ejecución debe quedar vinculada al flujo concreto que se lanzó.\\
-	\texttt{estado} & Estado de la ejecución. Es obligatorio y su valor por defecto es \texttt{pendiente}, que representa el estado inicial natural antes de completarse o fallar.\\
-	\texttt{duracion\_ms} & Duración de la ejecución en milisegundos. Se permite \texttt{NULL} porque puede no conocerse todavía al inicio del proceso o si la ejecución falla antes de completarse.\\
-	\texttt{mensaje\_error\_user} & Mensaje de error orientado al usuario. Es opcional porque solo se utiliza cuando la ejecución no puede completarse correctamente.\\
-	\texttt{creado\_en} & Fecha de creación de la ejecución. Se registra automáticamente para mantener trazabilidad temporal.\\
-	\texttt{config\_aplicada} & Configuración real utilizada en la ejecución, tanto si procede de valores predeterminados como si ha sido modificada por el usuario. Se permite \texttt{NULL} porque no siempre será necesario persistirla.\\
+\tablaDiccionario{Atributos de la tabla PIPELINE}{pipeline_atributos}{
+	\texttt{id\_pipeline} & Identificador interno y clave primaria.\\
+	\texttt{id\_usuario} & Usuario creador o propietario, si existe.\\
+	\texttt{nombre} & Nombre del pipeline.\\
+	\texttt{descripcion} & Descripción del flujo.\\
+	\texttt{habilitado} & Indica si puede ejecutarse.\\
+	\texttt{creado\_en} & Fecha de creación.\\
+	\texttt{publico} & Indica si está disponible para usuarios.\\
 }
 
-Las claves foráneas hacia \texttt{USUARIO} y \texttt{PIPELINE} utilizan \texttt{RESTRICT}. En ambos casos interesa conservar la referencia completa de la ejecución: no debe eliminarse un usuario o pipeline si existen registros históricos que dependen de ellos. De esta forma, el historial de ejecuciones mantiene significado y puede consultarse posteriormente desde la interfaz de usuario o desde el panel de administración. Además, el \texttt{CHECK} sobre \texttt{duracion\_ms} evita registrar tiempos negativos.
+\noindent{\footnotesize\emph{Nota:} se usa \texttt{ON DELETE SET NULL} para conservar pipelines aunque desaparezca su creador.}
 
-\subsection{Tabla TEMPORAL\_ARCHIVO}
+\medskip
 
-La tabla \texttt{TEMPORAL\_ARCHIVO} gestiona los archivos temporales asociados a una ejecución. Sus atributos aparecen en la Tabla~\ref{tabla:temporal_archivo_atributos}. Estos recursos pueden representar archivos de entrada, de salida o intermedios y su naturaleza es claramente dependiente de la ejecución que los genera.
+\noindent\textbf{Tabla \texttt{EJECUCION}.} Se describe en la Tabla~\ref{tabla:ejecucion_atributos}.
 
-\tablaSmall{Atributos de la tabla TEMPORAL\_ARCHIVO}{l p{10cm}}{temporal_archivo_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_temporal} & Identificador interno del archivo temporal. Se define como clave primaria autoincremental.\\
-	\texttt{id\_ejecucion} & Ejecución a la que pertenece el archivo. Es obligatorio porque el temporal no tiene sentido de forma independiente.\\
-	\texttt{tipo} & Tipo de archivo temporal. Se permite \texttt{NULL} porque puede haber casos en los que no se clasifique expresamente.\\
-	\texttt{ruta\_servidor} & Ruta interna del archivo en el servidor. Se deja opcional para no imponer una única forma de gestión.\\
-	\texttt{token\_descarga} & Token utilizado para acceso o descarga controlada. Se permite \texttt{NULL} porque no todos los archivos temporales tienen por qué exponerse.\\
-	\texttt{expira\_en} & Fecha de expiración del recurso temporal. Es opcional porque puede calcularse o no utilizarse en todos los casos.\\
+\tablaDiccionario{Atributos de la tabla EJECUCION}{ejecucion_atributos}{
+	\texttt{id\_ejecucion} & Identificador interno y clave primaria.\\
+	\texttt{id\_usuario} & Usuario que lanza la ejecución.\\
+	\texttt{id\_pipeline} & Pipeline ejecutado.\\
+	\texttt{estado} & Estado de la ejecución.\\
+	\texttt{duracion\_ms} & Duración en milisegundos.\\
+	\texttt{mensaje\_error\_user} & Mensaje de error mostrado al usuario.\\
+	\texttt{creado\_en} & Fecha de creación.\\
+	\texttt{config\_aplicada} & Configuración utilizada durante el procesamiento.\\
 }
 
-La restricción \texttt{UNIQUE} sobre \texttt{token\_descarga} garantiza que, si existe, cada token identifique un único recurso. La clave foránea hacia \texttt{EJECUCION} emplea \texttt{ON DELETE CASCADE} porque aquí sí existe una dependencia total: si desaparece la ejecución, carece de sentido conservar sus archivos temporales. Es precisamente un caso claro y justificado de borrado en cascada.
+\noindent{\footnotesize\emph{Nota:} las ejecuciones se conservan como histórico, por lo que sus relaciones principales usan \texttt{RESTRICT}.}
 
-\subsection{Tabla PIPELINE\_ETAPA}
+\medskip
 
-La tabla \texttt{PIPELINE\_ETAPA} descompone cada pipeline en etapas ordenadas. Sus atributos se muestran en la Tabla~\ref{tabla:pipeline_etapa_atributos}. Esta estructura permite representar un procesamiento secuencial y modular, en el que cada etapa invoca un modo concreto de un modelo IA.
+\noindent\textbf{Tabla \texttt{TEMPORAL\_ARCHIVO}.} Se describe en la Tabla~\ref{tabla:temporal_archivo_atributos}.
 
-\tablaSmall{Atributos de la tabla PIPELINE\_ETAPA}{l p{10cm}}{pipeline_etapa_atributos}
-{ \multicolumn{1}{l}{Atributo} & \multicolumn{1}{l}{Descripción} \\}{
-	\texttt{id\_etapa} & Identificador interno de la etapa. Se define como clave primaria autoincremental.\\
-	\texttt{id\_pipeline} & Pipeline al que pertenece la etapa. Es obligatorio porque una etapa no existe de forma autónoma.\\
-	\texttt{id\_modo} & Modo IA utilizado en la etapa. Es \texttt{NOT NULL} porque la etapa debe invocar una operación concreta.\\
-	\texttt{id\_ia} & Modelo IA asociado al modo referenciado. Es obligatorio para reforzar la coherencia de la referencia compuesta.\\
-	\texttt{orden} & Posición de la etapa dentro del pipeline. Es obligatorio porque el flujo debe tener un orden definido.\\
-	\texttt{nombre} & Nombre de la etapa. Es obligatorio para identificarla funcionalmente dentro del flujo.\\
-	\texttt{descripcion} & Descripción opcional de la finalidad de la etapa. Se permite \texttt{NULL} porque no siempre será necesaria.\\
+\tablaDiccionario{Atributos de la tabla TEMPORAL\_ARCHIVO}{temporal_archivo_atributos}{
+	\texttt{id\_temporal} & Identificador interno y clave primaria.\\
+	\texttt{id\_ejecucion} & Ejecución asociada.\\
+	\texttt{tipo} & Tipo de archivo temporal.\\
+	\texttt{ruta\_servidor} & Ruta interna del archivo.\\
+	\texttt{token\_descarga} & Token de descarga controlada.\\
+	\texttt{expira\_en} & Fecha de expiración.\\
 }
 
-La clave foránea hacia \texttt{PIPELINE} utiliza \texttt{ON DELETE CASCADE} porque las etapas dependen completamente del pipeline al que pertenecen. En cambio, la clave foránea compuesta \texttt{(id\_modo, id\_ia)} hacia \texttt{IA\_MODO} usa \texttt{RESTRICT} para impedir eliminar un modo que todavía está siendo utilizado. La restricción \texttt{UNIQUE (id\_pipeline, nombre, orden)} evita duplicidades problemáticas dentro de un mismo pipeline, y el \texttt{CHECK (orden >= 1)} obliga a que el orden sea positivo y coherente con la idea de secuencia.
+\noindent{\footnotesize\emph{Nota:} el token evita exponer rutas internas. La relación con \texttt{EJECUCION} usa \texttt{ON DELETE CASCADE}.}
 
-\subsection{Relaciones del modelo}
+\medskip
 
-Una vez descritas las tablas por separado, conviene explicar de forma conjunta las relaciones del modelo para entender mejor el sentido global del diseño.
+\noindent\textbf{Tabla \texttt{PIPELINE\_ETAPA}.} Se describe en la Tabla~\ref{tabla:pipeline_etapa_atributos}.
+
+\tablaDiccionario{Atributos de la tabla PIPELINE\_ETAPA}{pipeline_etapa_atributos}{
+	\texttt{id\_etapa} & Identificador interno y clave primaria.\\
+	\texttt{id\_pipeline} & Pipeline al que pertenece.\\
+	\texttt{id\_modo} & Modo ejecutado en la etapa.\\
+	\texttt{id\_ia} & Modelo asociado al modo.\\
+	\texttt{orden} & Posición de la etapa dentro del flujo.\\
+	\texttt{nombre} & Nombre funcional de la etapa.\\
+	\texttt{descripcion} & Descripción de la etapa.\\
+}
+
+\noindent{\footnotesize\emph{Nota:} las etapas dependen del pipeline y se eliminan en cascada. La referencia compuesta \texttt{(id\_modo, id\_ia)} garantiza la coherencia entre modelo y modo.}
+
+\subsection{Relaciones principales y valoración del modelo}
+
+\begingroup
+\small
+Las relaciones más relevantes del modelo son:
 
 \begin{itemize}
-	\item \textbf{USUARIO -- USUARIO\_ROL -- ROL}: la asignación de roles se resuelve mediante una tabla intermedia porque la relación es de muchos a muchos. Un usuario puede tener varios roles y un rol puede estar asignado a varios usuarios.
-	
-	\item \textbf{USUARIO -- SUSCRIPCION\_PLAN}: un usuario puede contratar varias suscripciones a lo largo del tiempo, mientras que cada suscripción pertenece a un único usuario.
-	
-	\item \textbf{TIPO\_PLAN -- SUSCRIPCION\_PLAN}: un tipo de plan puede estar asociado a muchas suscripciones, mientras que cada suscripción corresponde a un único plan.
-	
-	\item \textbf{USUARIO -- ALQUILA}: un usuario puede realizar múltiples compras individuales de modelos IA, pero cada operación pertenece a un único usuario.
-	
-	\item \textbf{IA\_MODELO -- ALQUILA}: un modelo IA puede aparecer en muchas compras individuales, mientras que cada compra referencia a un único modelo.
-	
-	\item \textbf{IA\_MODELO -- IA\_MODO}: un modelo puede disponer de varios modos, mientras que cada modo pertenece a un único modelo.
-	
-	\item \textbf{USUARIO -- PIPELINE}: un usuario puede crear varios pipelines. Sin embargo, se permite que el pipeline sobreviva a la eliminación de su propietario mediante \texttt{ON DELETE SET NULL}. Esta decisión favorece la conservación de la estructura del flujo sin vincular su existencia estrictamente al usuario original.
-	
-	\item \textbf{PIPELINE -- PIPELINE\_ETAPA}: un pipeline puede contener varias etapas y estas dependen totalmente de él, por eso se utiliza borrado en cascada.
-	
-	\item \textbf{IA\_MODO -- PIPELINE\_ETAPA}: cada etapa referencia un modo concreto mediante la pareja \texttt{(id\_modo, id\_ia)}. Esta referencia compuesta garantiza que el modo utilizado pertenece realmente al modelo indicado.
-	
-	\item \textbf{USUARIO -- EJECUCION}: un usuario puede generar muchas ejecuciones, mientras que cada ejecución pertenece a un único usuario.
-	
-	\item \textbf{PIPELINE -- EJECUCION}: un pipeline puede ejecutarse muchas veces. En el diseño final se utiliza \texttt{RESTRICT} porque se considera importante que cada ejecución mantenga la referencia completa al pipeline con el que fue lanzada.
-	
-	\item \textbf{EJECUCION -- TEMPORAL\_ARCHIVO}: una ejecución puede generar varios archivos temporales y cada archivo temporal pertenece a una única ejecución. Aquí sí se justifica claramente el borrado en cascada, ya que el temporal depende por completo de la ejecución.
+	\setlength{\itemsep}{0.25em}
+	\setlength{\parsep}{0pt}
+	\item \textbf{\texttt{USUARIO} -- \texttt{ROL}}: relación muchos a muchos mediante \texttt{USUARIO\_ROL}.
+	\item \textbf{\texttt{USUARIO} -- \texttt{SUSCRIPCION\_PLAN} -- \texttt{TIPO\_PLAN}}: registra la contratación de planes.
+	\item \textbf{\texttt{USUARIO} -- \texttt{ALQUILA} -- \texttt{IA\_MODELO}}: registra el acceso individual a modelos.
+	\item \textbf{\texttt{IA\_MODELO} -- \texttt{IA\_MODO}}: permite que un modelo tenga varios modos de ejecución.
+	\item \textbf{\texttt{PIPELINE} -- \texttt{PIPELINE\_ETAPA}}: define flujos compuestos por etapas ordenadas.
+	\item \textbf{\texttt{IA\_MODO} -- \texttt{PIPELINE\_ETAPA}}: conecta cada etapa con el modo de IA que debe ejecutar.
+	\item \textbf{\texttt{USUARIO} -- \texttt{EJECUCION} -- \texttt{PIPELINE}}: registra qué usuario ejecuta qué pipeline.
+	\item \textbf{\texttt{EJECUCION} -- \texttt{TEMPORAL\_ARCHIVO}}: asocia los archivos temporales a la ejecución que los genera.
 \end{itemize}
 
-\subsection{Valoración global del modelo}
+El modelo cubre las funcionalidades principales de la aplicación: autenticación, roles, planes, alquileres de modelos, definición de pipelines, ejecución de análisis y gestión de archivos temporales. La separación entre catálogo y operaciones concretas permite conservar histórico aunque cambien precios, planes o modelos.
 
-En conjunto, el modelo de datos final ofrece una estructura coherente con el funcionamiento actual de la aplicación y con su posible evolución. No se limita a almacenar usuarios e imágenes procesadas, sino que representa los elementos principales del dominio: cuentas, roles, planes, alquileres de modelos, modelos de IA, modos de ejecución, pipelines, ejecuciones y archivos temporales.
-
-Una de las decisiones más importantes del diseño es separar claramente el catálogo del sistema de las operaciones realizadas por los usuarios. Por ejemplo, los planes se definen en \texttt{TIPO\_PLAN}, pero las contrataciones concretas se registran en \texttt{SUSCRIPCION\_PLAN}; del mismo modo, los modelos de IA se almacenan en \texttt{IA\_MODELO}, mientras que los accesos individuales se reflejan en \texttt{ALQUILA}. Esta separación permite conservar el histórico de uso y de contratación aunque en el futuro cambien los precios, se deshabiliten modelos o se modifiquen las condiciones de un plan.
-
-También destaca la forma en que se han modelado los pipelines. La existencia de \texttt{PIPELINE} y \texttt{PIPELINE\_ETAPA} permite definir flujos de procesamiento formados por varias etapas ordenadas, sin tener que codificar cada combinación de modelos directamente en la aplicación. Esto favorece la ampliación del sistema, ya que se pueden añadir nuevos flujos combinando modelos y modos ya registrados. Además, la restricción \texttt{UNIQUE (id\_usuario, nombre)} evita que un mismo usuario pueda tener dos pipelines con el mismo nombre, algo especialmente útil si en el futuro se habilita la creación de pipelines propios por parte de los usuarios.
-
-Las restricciones del modelo refuerzan esta coherencia general. Las claves foráneas mantienen la relación entre las entidades, las restricciones \texttt{UNIQUE} evitan duplicidades funcionales y los \texttt{CHECK} impiden valores básicos incoherentes, como importes negativos, fechas de fin anteriores a las de inicio, duraciones negativas u órdenes de etapa no válidos.
-
-Por último, las acciones de borrado se han definido según el significado de cada relación. Se utiliza \texttt{RESTRICT} en tablas que forman parte del histórico funcional o económico del sistema, como suscripciones, alquileres y ejecuciones; \texttt{CASCADE} únicamente en dependencias fuertes, como las etapas de un pipeline o los archivos temporales de una ejecución; y \texttt{SET NULL} en la relación entre \texttt{USUARIO} y \texttt{PIPELINE}, para que un flujo pueda conservarse aunque desaparezca el usuario que lo creó.
-
-Por todo ello, el modelo resultante mantiene un equilibrio entre integridad, trazabilidad y capacidad de ampliación. Esta estructura permite cubrir las funcionalidades actuales del proyecto y deja preparada la base de datos para incorporar nuevos modelos, nuevos modos o nuevas formas de organizar pipelines sin rediseñar el sistema desde cero.
-
+Además, la separación entre \texttt{PIPELINE} y \texttt{PIPELINE\_ETAPA} permite definir flujos configurables sin codificarlos de forma fija. Para mantener la integridad, se usa \texttt{RESTRICT} en información histórica, \texttt{CASCADE} en dependencias fuertes y \texttt{SET NULL} cuando interesa conservar un registro aunque desaparezca su propietario.
+\endgroup
 
 \section{Diseño arquitectónico}
 
-El diseño arquitectónico describe la organización interna de la aplicación y la forma en que se distribuyen las responsabilidades entre sus distintos componentes. Mientras que el diseño de datos se centra en la estructura persistente de la información, este apartado explica cómo se articula la aplicación a nivel de capas, módulos y servicios para permitir la autenticación de usuarios, la gestión de planes y modelos de inteligencia artificial, la configuración de pipelines y la ejecución del procesamiento de imágenes.
+El diseño arquitectónico describe cómo se organiza internamente la aplicación y cómo se reparten las responsabilidades entre interfaz, controladores, servicios, modelos y base de datos.
 
-La aplicación se ha desarrollado con \texttt{Flask}, por lo que no se aplica un patrón MVC clásico de forma estricta, como podría ocurrir en otros frameworks más orientados a dicho patrón. En este caso, se ha adoptado una arquitectura MVC adaptada al funcionamiento de Flask, incorporando además una capa de servicios para evitar que los controladores concentren toda la lógica de negocio y de procesamiento. Esta decisión permite separar mejor las responsabilidades del sistema, facilita las pruebas y favorece la ampliación futura de la aplicación.
+La aplicación se ha desarrollado con \texttt{Flask}. Por ello, no se aplica un patrón MVC clásico de forma estricta, sino una adaptación en la que los \texttt{Blueprints} actúan como controladores, las plantillas HTML y respuestas JSON como vistas, y las clases SQLAlchemy como modelo persistente. Además, se incorpora una capa de servicios para aislar la lógica de negocio y el procesamiento de imágenes.
 
-De manera general, la arquitectura se organiza en los siguientes bloques:
+De forma resumida, la arquitectura se organiza en los siguientes bloques:
 
 \begin{itemize}
-	\item \textbf{Cliente o navegador}: representa el punto de interacción del usuario con la aplicación. Desde él se realizan peticiones HTTP y se reciben respuestas en forma de páginas HTML o datos JSON.
-	
-	\item \textbf{Vista}: está formada por las plantillas HTML y por las respuestas generadas por la API. Su función principal es presentar la información al usuario y permitir la interacción con formularios, paneles y resultados.
-	
-	\item \textbf{Controladores}: se implementan mediante módulos \texttt{Blueprint} de Flask. Estos módulos reciben las peticiones, validan los datos de entrada, comprueban permisos y delegan las operaciones principales en la capa correspondiente.
-	
-	\item \textbf{Capa de servicios}: agrupa la lógica de aplicación que no debe quedar directamente dentro de los controladores. En ella se sitúan componentes como el orquestador de pipelines, la factoría de modelos de inteligencia artificial y los lanzadores concretos de cada familia de modelos.
-	
-	\item \textbf{Modelo}: está formado por las clases de persistencia definidas con SQLAlchemy. Estas clases representan las entidades principales del sistema, como usuarios, roles, planes, modelos IA, modos, pipelines, ejecuciones y archivos temporales.
-	
-	\item \textbf{Base de datos}: almacena de forma persistente la información del sistema. En el entorno principal se utiliza MariaDB, mientras que en las pruebas automatizadas se emplea SQLite en memoria para aislar los tests y evitar afectar a la base de datos real.
+	\item \textbf{Cliente}: navegador desde el que el usuario interactúa con la aplicación.
+	\item \textbf{Vistas}: plantillas HTML y respuestas JSON generadas por la aplicación.
+	\item \textbf{Controladores}: módulos Flask encargados de recibir peticiones, validar datos, comprobar permisos y devolver respuestas.
+	\item \textbf{Servicios}: lógica interna de ejecución de pipelines, selección de modelos y procesamiento de imágenes.
+	\item \textbf{Modelo}: entidades SQLAlchemy que representan usuarios, roles, planes, modelos, pipelines, ejecuciones y archivos temporales.
+	\item \textbf{Base de datos}: persistencia principal del sistema.
 \end{itemize}
 
-A continuación se presentan tres vistas complementarias de la arquitectura. En primer lugar, se muestra la arquitectura general adaptada a Flask. En segundo lugar, se representa la organización real de módulos y dependencias principales del proyecto. Por último, se detalla la estructura interna de la capa de servicios y el mecanismo de resolución dinámica de modelos mediante una factoría.
+A continuación se presentan tres vistas complementarias: la arquitectura general, la organización real de módulos y la estructura de la capa de servicios.
 
 \subsection{Arquitectura MVC adaptada a Flask con capa de servicios}
 
-La Figura~\ref{fig:arquitectura_mvc_flask_servicios} muestra la organización general de la aplicación siguiendo una adaptación del patrón MVC al contexto de Flask. En esta arquitectura, el cliente realiza peticiones HTTP al servidor y recibe como respuesta páginas HTML o datos estructurados en formato JSON. La factoría de aplicación, implementada mediante \texttt{create\_app()}, se encarga de inicializar la configuración, la base de datos, el sistema JWT y los distintos \texttt{Blueprints} de la aplicación.
+La Figura~\ref{fig:arquitectura_mvc_flask_servicios} muestra la arquitectura general de la aplicación. En ella se observa cómo el cliente se comunica con Flask mediante peticiones HTTP, que son atendidas por controladores y derivadas, cuando es necesario, hacia servicios internos o hacia la capa de persistencia.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{img/mvc_adaptado.png}
-	\caption{Arquitectura MVC adaptada a Flask con capa de servicios}
+	\caption[Arquitectura MVC adaptada a Flask]{Arquitectura MVC adaptada a Flask con capa de servicios.}
 	\label{fig:arquitectura_mvc_flask_servicios}
 \end{figure}
 
-En esta estructura, los controladores actúan como punto de entrada de las operaciones de la aplicación. El módulo \texttt{auth\_controller.py} concentra las operaciones relacionadas con autenticación, registro, inicio de sesión, consulta y modificación del perfil, baja de cuenta y administración de usuarios. El módulo \texttt{shop\_controller.py} gestiona la parte comercial del sistema, incluyendo la consulta de planes, alquileres de modelos, suscripciones y servicios activos. Por último, \texttt{pipeline\_controller.py} se encarga de las operaciones vinculadas a los pipelines, como su consulta, configuración, ejecución, historial y gestión administrativa.
+Los controladores son \texttt{auth\_controller.py}, \texttt{shop\_controller.py} y \texttt{pipeline\_controller.py}. El primero gestiona autenticación, registro, perfil y usuarios; el segundo agrupa las operaciones de tienda, planes y alquileres; y el tercero concentra la consulta, configuración, ejecución e historial de pipelines.
 
-Aunque estos controladores podrían contener directamente toda la lógica del sistema, se ha optado por introducir una capa de servicios. Esta capa permite desacoplar la lógica de procesamiento de imágenes y de ejecución de pipelines respecto de las rutas HTTP. De este modo, los controladores se centran en recibir la petición, validar los datos, comprobar la autenticación y preparar la respuesta, mientras que la ejecución técnica del procesamiento queda delegada en servicios especializados.
+La capa de servicios evita que los controladores acumulen toda la lógica. En especial, permite separar la ejecución de pipelines y la resolución de modelos de IA respecto de las rutas HTTP. Esta decisión mejora la mantenibilidad y facilita añadir nuevos modelos, modos o flujos de procesamiento.
 
-La capa de servicios resulta especialmente importante en este proyecto porque el sistema no se limita a ejecutar una única operación fija sobre una imagen. Al contrario, permite definir pipelines formados por varias etapas, donde cada etapa puede utilizar un modelo y un modo de ejecución distinto. Por este motivo, concentrar toda la lógica en el controlador habría dado lugar a componentes demasiado extensos y difíciles de mantener. La separación en servicios facilita que la aplicación pueda incorporar nuevos modelos, modos o flujos de procesamiento sin modificar de forma significativa la estructura general.
-
-El modelo de la aplicación se implementa mediante clases SQLAlchemy, definidas a partir del diseño de datos descrito anteriormente. Estas clases permiten trabajar con entidades persistentes como \texttt{Usuario}, \texttt{IAModelo}, \texttt{IAModo}, \texttt{Pipeline}, \texttt{PipelineEtapa}, \texttt{Ejecucion} o \texttt{TemporalArchivo}, ocultando parte de la complejidad de las consultas SQL directas. La comunicación con la base de datos se realiza mediante SQLAlchemy ORM, lo que permite mantener una correspondencia clara entre la lógica de aplicación y el modelo relacional.
-
-Esta arquitectura también favorece la realización de pruebas. Al estar separadas las responsabilidades, es posible probar los controladores mediante el cliente de pruebas de Flask, simular la base de datos mediante SQLite en memoria y aislar determinados servicios mediante técnicas de sustitución o \textit{mocking}. De esta forma, el diseño arquitectónico no solo organiza el código, sino que también contribuye a mejorar la verificabilidad del sistema.
+El modelo persistente se implementa mediante SQLAlchemy, manteniendo una correspondencia directa con las tablas descritas en el diseño de datos. Esta separación también favorece las pruebas, ya que permite probar controladores, servicios y persistencia de forma más aislada.
 
 \subsection{Organización de módulos y dependencias principales}
 
-La Figura~\ref{fig:modulos_dependencias} complementa la vista arquitectónica anterior mostrando cómo se materializa dicha arquitectura en la estructura real del proyecto. A diferencia del diagrama MVC, que representa las responsabilidades lógicas del sistema, este diagrama muestra los principales archivos, paquetes y dependencias que intervienen en la aplicación.
+La Figura~\ref{fig:modulos_dependencias} muestra la organización real del proyecto a nivel de archivos, paquetes y dependencias principales.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=\textwidth]{img/diagrama_modulos_dependencias_organizado.png}
-	\caption{Vista de módulos y dependencias principales de la aplicación}
+	\caption[Vista de módulos y dependencias]{Vista de módulos y dependencias principales de la aplicación.}
 	\label{fig:modulos_dependencias}
 \end{figure}
 
-El punto de entrada de la aplicación se encuentra en \texttt{run.py}. Este archivo crea la aplicación mediante la llamada a \texttt{create\_app()} y arranca el servidor Flask en el entorno de desarrollo. La configuración se centraliza en \texttt{config.py}, donde se definen parámetros como la clave de sesión, la clave utilizada para JWT y la URI de conexión a la base de datos. Esta separación evita dispersar la configuración en distintos puntos del código y facilita el cambio entre entornos.
+El punto de entrada se encuentra en \texttt{run.py}, que crea la aplicación mediante \texttt{create\_app()}. La configuración se centraliza en \texttt{config.py}, mientras que \texttt{app/\_\_init\_\_.py} inicializa extensiones como SQLAlchemy y JWT, carga la configuración y registra los \texttt{Blueprints}.
 
-El núcleo de inicialización se encuentra en \texttt{app/\_\_init\_\_.py}. En este módulo se crean las extensiones principales de la aplicación, como \texttt{SQLAlchemy} y \texttt{JWTManager}, se carga la configuración y se registran los \texttt{Blueprints} correspondientes a los distintos controladores. De este modo, la aplicación no queda construida directamente en el punto de entrada, sino mediante una factoría de aplicación. Esta solución resulta adecuada para proyectos Flask porque permite crear instancias configuradas de la aplicación tanto en ejecución normal como en entornos de prueba.
+La carpeta \texttt{app/controllers} contiene las rutas HTTP y las validaciones iniciales. La carpeta \texttt{app/templates} agrupa las plantillas HTML de la interfaz. La lógica de aplicación se sitúa en \texttt{app/services}, donde se encuentran el orquestador de pipelines y la factoría de modelos de IA. Por su parte, \texttt{app/models.py} concentra las entidades SQLAlchemy.
 
-Los módulos situados en \texttt{app/controllers} concentran las rutas HTTP, las validaciones iniciales y las comprobaciones de permisos. Estos controladores actúan como intermediarios entre las peticiones del usuario y el resto del sistema. Por ejemplo, reciben formularios o datos JSON, comprueban que la solicitud sea válida, verifican el usuario autenticado mediante JWT y consultan o modifican la información persistente cuando es necesario. Sin embargo, cuando la operación requiere lógica más compleja, delegan en la capa de servicios.
+También existen recursos auxiliares, como las configuraciones de ejecución en \texttt{configs}, los modelos locales en carpetas de \texttt{models} y los archivos temporales generados durante las ejecuciones. Finalmente, el paquete \texttt{tests} contiene las pruebas automatizadas, ejecutadas en un entorno aislado.
 
-La carpeta \texttt{app/templates} contiene las plantillas HTML utilizadas por la interfaz web. Estas plantillas se agrupan según su finalidad: páginas públicas, vistas del panel de usuario y vistas de administración. Esta organización permite separar la presentación de la lógica de control, manteniendo la interfaz en una zona diferenciada respecto a los controladores y servicios.
-
-La capa de servicios se localiza en \texttt{app/services}. En ella se encuentra \texttt{pipeline\_runner.py}, encargado de orquestar la ejecución de pipelines, y el paquete \texttt{ai\_factory}, responsable de resolver qué lanzador debe utilizarse para cada modelo de inteligencia artificial. Dentro de esta capa también se agrupan los módulos específicos de YOLO y MediaPipe, que contienen la lógica concreta de procesamiento de imágenes. Esta distribución permite que los controladores no tengan que conocer los detalles internos de cada modelo.
-
-El archivo \texttt{app/models.py} concentra las entidades SQLAlchemy de la aplicación. Estas entidades representan usuarios, roles, planes, alquileres, modelos de inteligencia artificial, modos de ejecución, pipelines, ejecuciones y archivos temporales. Desde el punto de vista arquitectónico, este módulo actúa como la capa de modelo de la aplicación y sirve de enlace entre la lógica Python y la base de datos relacional.
-
-La carpeta \texttt{configs} almacena las configuraciones predeterminadas de los distintos modos de ejecución. Estas configuraciones permiten que el sistema disponga de valores base para cada modo, pero sin impedir que el usuario pueda modificar determinados parámetros antes de ejecutar un pipeline. Esta decisión refuerza la flexibilidad del sistema, ya que las configuraciones no quedan completamente fijadas en el código fuente.
-
-Además de la persistencia en base de datos, el sistema utiliza recursos físicos en el servidor. En esta categoría se incluyen los modelos locales almacenados en carpetas como \texttt{models/mp} y \texttt{models/yolo}, así como los archivos temporales o resultados generados durante las ejecuciones. Estos recursos se relacionan con registros de base de datos, especialmente mediante la tabla de archivos temporales, pero no se almacenan directamente como datos binarios dentro del modelo relacional.
-
-Por último, el paquete \texttt{tests} reproduce la creación de la aplicación en un entorno controlado. Para ello utiliza una configuración específica de pruebas, un cliente de pruebas de Flask y una base de datos SQLite en memoria. Esto permite validar controladores, servicios, factorías, lanzadores y modelos sin modificar la base de datos real ni depender de recursos externos. Esta organización hace que las pruebas sean más rápidas, repetibles y seguras.
-
-En conjunto, esta vista de módulos permite comprobar que la arquitectura conceptual no se queda únicamente en una división teórica por capas, sino que se refleja en la estructura real del código fuente. Cada paquete cumple una función clara y las dependencias principales siguen una dirección coherente: entrada y configuración, inicialización de la aplicación, controladores, servicios, modelo, recursos y persistencia.
+Esta organización refleja la arquitectura definida: entrada, configuración, controladores, servicios, modelo, recursos y pruebas quedan separados en componentes diferenciados.
 
 \subsection{Diagrama de clases y módulos principales de la capa de servicios}
 
-La Figura~\ref{fig:clases_modulos_capa_servicios} muestra una vista más detallada de los elementos que intervienen en la capa de servicios y en la resolución dinámica de modelos de inteligencia artificial. Este diagrama no pretende repetir las entidades persistentes ya representadas en los diagramas entidad-relación y relacional, sino mostrar la estructura lógica de los controladores, servicios, factorías, lanzadores y módulos funcionales implicados en la ejecución de pipelines.
+La Figura~\ref{fig:clases_modulos_capa_servicios} muestra los elementos principales que intervienen en la ejecución de pipelines y en la resolución dinámica de modelos de inteligencia artificial.
 
-\begin{figure}[H]
+\begin{figure}
 	\centering
 	\includegraphics[width=\textwidth]{img/diagrama_clases_tfg.png}
-	\caption{Diagrama de clases y módulos principales de la capa de servicios}
+	\caption[Diagrama de la capa de servicios]{Diagrama de clases y módulos principales de la capa de servicios.}
 	\label{fig:clases_modulos_capa_servicios}
 \end{figure}
 
-El diagrama combina clases y módulos porque la aplicación está construida sobre Flask y Python. Por un lado, existen componentes que pueden representarse claramente como clases o interfaces, como \texttt{PipelineRunner}, \texttt{AIFactory}, \texttt{IALauncherBase}, \texttt{YoloLauncher} y \texttt{MediaPipeLauncher}. Por otro lado, existen módulos funcionales, como los controladores Flask o los módulos concretos de procesamiento de YOLO y MediaPipe, que no son clases en sentido estricto, pero sí forman parte de la estructura lógica del sistema.
+El flujo parte de \texttt{pipeline\_controller}, que recibe la solicitud de ejecución, valida la imagen, comprueba permisos y delega el procesamiento en \texttt{PipelineRunner}. Este servicio recorre las etapas del pipeline, obtiene la configuración aplicable y solicita a la factoría el lanzador correspondiente.
 
-El flujo principal comienza en \texttt{pipeline\_controller}, que recibe la solicitud de ejecución de un pipeline. Este controlador valida la imagen recibida, comprueba la configuración enviada por el usuario, verifica los permisos de acceso y delega la ejecución en \texttt{PipelineRunner}. De este modo, el controlador no necesita conocer los detalles internos de cada modelo de inteligencia artificial ni la forma concreta en que se procesa cada etapa.
+La factoría de IA desacopla el orquestador de las implementaciones concretas. Si una etapa requiere YOLO, se selecciona el lanzador correspondiente; si requiere MediaPipe, se utiliza el lanzador asociado a ese modelo. Cada lanzador encapsula la lógica específica y delega finalmente en los módulos funcionales de procesamiento.
 
-La clase \texttt{PipelineRunner} actúa como servicio de orquestación. Su responsabilidad es recorrer de forma ordenada las etapas de un pipeline, obtener la configuración que debe aplicarse en cada una de ellas y solicitar el lanzador adecuado para ejecutar el modelo correspondiente. Esta clase devuelve una colección de rutas de imágenes generadas y una estructura de resultados en formato JSON, lo que permite a la capa de controladores preparar posteriormente la respuesta al usuario.
+Gracias a esta estructura, los pipelines no quedan codificados como funciones fijas, sino como secuencias de etapas almacenadas y configurables. Esto permite que el administrador modifique la composición de los pipelines desde la aplicación y facilita la incorporación futura de nuevos modelos o modos de ejecución.
 
-Para evitar que \texttt{PipelineRunner} tenga que instanciar directamente cada tipo de modelo, se introduce \texttt{AIFactory}. Esta factoría centraliza la resolución del lanzador adecuado a partir del modelo solicitado. Así, cuando una etapa requiere YOLO, la factoría selecciona \texttt{YoloLauncher}; cuando una etapa requiere MediaPipe, selecciona \texttt{MediaPipeLauncher}. Esta decisión reduce el acoplamiento entre el orquestador y las implementaciones concretas de inteligencia artificial.
-
-La interfaz \texttt{IALauncherBase} define el comportamiento común que deben ofrecer los lanzadores de modelos. A partir de ella, \texttt{YoloLauncher} y \texttt{MediaPipeLauncher} implementan la operación de ejecución de modo. Cada lanzador se encarga de despachar la operación hacia los módulos funcionales correspondientes. En el caso de YOLO, se utilizan módulos como \texttt{yolo.deteccion} y \texttt{yolo.recortes}; en el caso de MediaPipe, se emplean módulos como \texttt{mediapipe\_modelo.manos} y \texttt{mediapipe\_modelo.pose}.
-
-Esta organización permite que el sistema sea ampliable. Si en el futuro se quisiera incorporar un nuevo modelo de inteligencia artificial, no sería necesario modificar de forma profunda el controlador ni el orquestador principal. Bastaría con añadir el nuevo lanzador, implementar sus modos de ejecución y registrar su resolución en la factoría. Del mismo modo, si un modelo ya existente incorpora un nuevo modo, este podría añadirse en el lanzador correspondiente sin alterar el funcionamiento general de la aplicación.
-
-Otra ventaja de este diseño es que la definición de los pipelines queda desacoplada del código fuente. Las etapas se almacenan en la base de datos y cada una referencia un modelo y un modo concreto. Durante la ejecución, el sistema interpreta esa definición y resuelve dinámicamente qué componente debe actuar. Esto permite que un administrador pueda modificar la composición de los pipelines desde la aplicación, manteniendo una estructura flexible y preparada para nuevas combinaciones de procesamiento.
-
-\subsection{Valoración global de la arquitectura}
-
-La arquitectura resultante mantiene una separación clara entre presentación, control de peticiones, lógica de aplicación, procesamiento de inteligencia artificial y persistencia. Esta separación es especialmente importante en un sistema que combina autenticación, gestión comercial, administración de recursos, procesamiento de imágenes y generación de resultados temporales.
-
-La adaptación del patrón MVC a Flask permite estructurar la aplicación de forma comprensible sin forzar una correspondencia rígida con un framework MVC tradicional. Los \texttt{Blueprints} actúan como controladores, las plantillas HTML y respuestas JSON cumplen la función de vista, y las clases SQLAlchemy representan el modelo persistente. Sobre esta base se incorpora una capa de servicios que permite aislar la lógica más compleja del proyecto.
-
-El diagrama de módulos y dependencias muestra que esta arquitectura se refleja en la organización real del código. El punto de entrada, la configuración, la inicialización de Flask, los controladores, las plantillas, los servicios, los modelos, las configuraciones externas, los recursos físicos y las pruebas se encuentran separados en elementos diferenciados. Esta división reduce el acoplamiento entre partes del sistema y facilita localizar cada responsabilidad dentro del proyecto.
-
-El principal beneficio de la capa de servicios se observa en la ejecución de pipelines. En lugar de codificar cada flujo de procesamiento como una función independiente e inamovible, el sistema interpreta una secuencia de etapas almacenada en base de datos y utiliza una factoría para resolver dinámicamente el modelo que debe ejecutarse. Esta solución reduce la dependencia entre componentes y facilita la incorporación de nuevos modelos, modos y pipelines.
-
-Además, el diseño favorece la mantenibilidad del código. Los controladores quedan más centrados en la gestión de peticiones y respuestas; los servicios contienen la lógica de orquestación; los lanzadores encapsulan las particularidades de cada familia de modelos; y los módulos funcionales realizan el procesamiento concreto de las imágenes. Esta distribución evita controladores monolíticos y permite localizar con mayor facilidad el lugar donde debe realizarse una modificación.
-
-En conjunto, la arquitectura propuesta resulta coherente con los objetivos del proyecto. Permite construir una aplicación web funcional, con autenticación, gestión de usuarios, planes y modelos, ejecución de pipelines configurables y consulta de resultados. Al mismo tiempo, deja preparada la estructura para futuras ampliaciones, como la incorporación de nuevos modelos de inteligencia artificial, nuevos modos de ejecución, nuevas configuraciones de pipeline o mejoras en la administración del sistema.
 \section{Diseño procedimental}
 
-El diseño procedimental describe el comportamiento dinámico del sistema a partir de los principales flujos de interacción entre los actores, la interfaz web, los controladores de Flask, los servicios auxiliares y la capa de persistencia. Mientras que el diseño de datos define la estructura de la información y el diseño arquitectónico muestra la organización general de la aplicación, este apartado se centra en el orden en el que se producen las operaciones durante la ejecución de los casos de uso.
+El diseño procedimental describe los principales flujos de ejecución del sistema a partir de los casos de uso definidos.
 
-Para representar estos flujos se han elaborado diagramas de secuencia simplificados. En ellos se muestran únicamente los componentes que intervienen realmente en cada operación: el actor correspondiente, la vista web asociada, los controladores de la aplicación, la base de datos gestionada mediante SQLAlchemy sobre MariaDB, el servicio JWT cuando interviene en procesos de autenticación y los servicios internos necesarios en los flujos de procesamiento. Además, los diagramas incluyen alternativas de error mediante bloques \textit{alt}, con el objetivo de reflejar el tratamiento de situaciones como credenciales incorrectas, ausencia de permisos, errores de validación, recursos inexistentes o fallos de persistencia.
+Los diagramas incluyen los flujos principales y, cuando procede, alternativas de error relacionadas con credenciales incorrectas, falta de permisos, validaciones no superadas, recursos inexistentes o fallos de persistencia.
+
+% Comando auxiliar para diagramas de secuencia compactos.
+% Permite que LaTeX coloque más de una figura por página cuando el tamaño lo permita.
+\newcommand{\diagramaSecuencia}[4]{%
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[width=\textwidth,height=0.42\textheight,keepaspectratio]{#1}
+		\caption[#2]{#3.}
+		\label{#4}
+	\end{figure}
+}
+
+% Comando auxiliar para diagramas de secuencia grandes.
+% Se reserva para diagramas especialmente densos.
+\newcommand{\diagramaSecuenciaGrande}[4]{%
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[width=\textwidth,height=0.78\textheight,keepaspectratio]{#1}
+		\caption[#2]{#3.}
+		\label{#4}
+	\end{figure}
+}
 
 \subsection{Flujos de autenticación y gestión de cuenta}
 
-Los primeros flujos procedimentales están relacionados con la creación de cuentas, el inicio de sesión y la gestión básica del perfil del usuario. Estos casos de uso son la base del resto de operaciones privadas de la aplicación, ya que permiten identificar al usuario, asociarle roles y aplicar posteriormente las reglas de acceso a planes, modelos y pipelines.
+Este bloque recoge los procedimientos relacionados con el registro, inicio de sesión, gestión del perfil y baja lógica de una cuenta.
 
-La Figura~\ref{fig:seq_cu1_registrarse} muestra el proceso de registro de un usuario no autenticado. En este flujo, la interfaz recoge los datos del formulario y el controlador de autenticación valida el contenido recibido, comprueba la unicidad del correo y del nombre de usuario, crea la cuenta en base de datos, asigna el rol correspondiente y genera un token JWT para permitir el acceso posterior al sistema.
+La Figura~\ref{fig:seq_cu1_registrarse} muestra el registro de usuario: validación de datos, comprobación de duplicados, creación de la cuenta y asignación del rol correspondiente.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-1_Registrarse.png}
-	\caption{Diagrama de secuencia del CU-1 Registrarse.}
-	\label{fig:seq_cu1_registrarse}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-1_Registrarse.png}
+{CU-1 Registrarse}
+{Diagrama de secuencia del CU-1 Registrarse}
+{fig:seq_cu1_registrarse}
 
-La Figura~\ref{fig:seq_cu2_iniciar_sesion} representa el inicio de sesión. El usuario introduce sus credenciales desde la interfaz web y el controlador de autenticación consulta la cuenta asociada, valida la contraseña, comprueba el estado de la cuenta y solicita la generación del token de acceso. En caso de credenciales incorrectas, usuario inexistente o cuenta suspendida, el flujo alternativo devuelve el error correspondiente a la interfaz.
+La Figura~\ref{fig:seq_cu2_iniciar_sesion} representa el inicio de sesión, incluyendo la validación de credenciales, comprobación del estado de la cuenta y generación del token de acceso.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-2_Iniciar_sesion.png}
-	\caption{Diagrama de secuencia del CU-2 Iniciar sesión.}
-	\label{fig:seq_cu2_iniciar_sesion}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-2_Iniciar_sesion.png}
+{CU-2 Iniciar sesión}
+{Diagrama de secuencia del CU-2 Iniciar sesión}
+{fig:seq_cu2_iniciar_sesion}
 
-La Figura~\ref{fig:seq_cu3_gestionar_perfil} recoge la consulta y modificación del perfil. En este caso, el usuario autenticado solicita sus datos, la interfaz envía la petición protegida al controlador y este recupera la información de la cuenta desde la base de datos. Cuando el usuario modifica campos permitidos, el controlador valida los datos, comprueba la contraseña actual si procede y actualiza la información persistida.
+La Figura~\ref{fig:seq_cu3_gestionar_perfil} recoge la consulta y modificación del perfil del usuario autenticado.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-3_Gestionar_perfil.png}
-	\caption{Diagrama de secuencia del CU-3 Gestionar perfil.}
-	\label{fig:seq_cu3_gestionar_perfil}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-3_Gestionar_perfil.png}
+{CU-3 Gestionar perfil}
+{Diagrama de secuencia del CU-3 Gestionar perfil}
+{fig:seq_cu3_gestionar_perfil}
 
-La Figura~\ref{fig:seq_cu4_baja_cuenta} muestra la baja lógica de la cuenta. El usuario solicita la operación desde la interfaz, el controlador identifica la cuenta autenticada y actualiza su estado en base de datos. Este diseño evita una eliminación física inmediata y permite mantener la coherencia con ejecuciones, compras o suscripciones previamente registradas.
+La Figura~\ref{fig:seq_cu4_baja_cuenta} muestra la baja lógica de la cuenta y la desactivación de los servicios asociados.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-4_Solicitar_baja_de_cuenta.png}
-	\caption{Diagrama de secuencia del CU-4 Solicitar baja de cuenta.}
-	\label{fig:seq_cu4_baja_cuenta}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-4_Solicitar_baja_de_cuenta.png}
+{CU-4 Solicitar baja de cuenta}
+{Diagrama de secuencia del CU-4 Solicitar baja de cuenta}
+{fig:seq_cu4_baja_cuenta}
 
 \subsection{Flujos de tienda, planes y servicios}
 
-El segundo bloque de diagramas describe los procedimientos asociados a la tienda de servicios. Estos flujos permiten consultar los planes y modelos disponibles, contratar un plan, alquilar modelos de IA y revisar el estado de los servicios activos del usuario.
+Este bloque agrupa los procedimientos relacionados con la consulta de servicios, contratación de planes, alquiler de modelos de IA y revisión de compras activas.
 
-La Figura~\ref{fig:seq_cu5_tienda} representa la consulta de la tienda. La interfaz solicita al controlador de tienda el catálogo disponible y este recupera de la base de datos los planes, modelos habilitados y el estado de contratación del usuario. El resultado permite mostrar en la interfaz qué servicios están disponibles y cuáles se encuentran ya activos.
+La Figura~\ref{fig:seq_cu5_tienda} representa la consulta de la tienda, donde se recuperan planes, modelos disponibles y estado de contratación del usuario.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-5_Consultar_tienda_de_servicios.png}
-	\caption{Diagrama de secuencia del CU-5 Consultar tienda de servicios.}
-	\label{fig:seq_cu5_tienda}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-5_Consultar_tienda_de_servicios.png}
+{CU-5 Consultar tienda de servicios}
+{Diagrama de secuencia del CU-5 Consultar tienda de servicios}
+{fig:seq_cu5_tienda}
 
-La Figura~\ref{fig:seq_cu6_suscripcion_plan} muestra el proceso de suscripción a un plan. Tras seleccionar un plan en la interfaz, el controlador comprueba que existe en la base de datos, registra la suscripción asociada al usuario y actualiza su estado de acceso. Las alternativas contemplan situaciones como plan inexistente, usuario no autenticado o error al guardar la operación.
+La Figura~\ref{fig:seq_cu6_suscripcion_plan} muestra el proceso de suscripción a un plan.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-6_Suscribirse_a_un_plan.png}
-	\caption{Diagrama de secuencia del CU-6 Suscribirse a un plan.}
-	\label{fig:seq_cu6_suscripcion_plan}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-6_Suscribirse_a_un_plan.png}
+{CU-6 Suscribirse a un plan}
+{Diagrama de secuencia del CU-6 Suscribirse a un plan}
+{fig:seq_cu6_suscripcion_plan}
 
-La Figura~\ref{fig:seq_cu7_alquilar_modelo} representa el alquiler individual de un modelo de inteligencia artificial. Este flujo permite a un usuario con plan básico ampliar temporalmente su acceso a un modelo concreto. El controlador valida la existencia y disponibilidad del modelo, comprueba si el usuario ya dispone de un acceso activo y registra el alquiler con sus fechas de vigencia.
+La Figura~\ref{fig:seq_cu7_alquilar_modelo} representa el alquiler individual de un modelo de inteligencia artificial.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-7_Alquilar_modelo_IA.png}
-	\caption{Diagrama de secuencia del CU-7 Alquilar un modelo de IA.}
-	\label{fig:seq_cu7_alquilar_modelo}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-7_Alquilar_modelo_IA.png}
+{CU-7 Alquilar un modelo de IA}
+{Diagrama de secuencia del CU-7 Alquilar un modelo de IA}
+{fig:seq_cu7_alquilar_modelo}
 
-La Figura~\ref{fig:seq_cu8_compras} recoge la consulta de compras y servicios activos. La interfaz solicita al controlador el estado de suscripciones y alquileres del usuario autenticado, y el sistema devuelve la información necesaria para mostrar fechas, estado de vigencia y opciones asociadas a cada servicio.
+La Figura~\ref{fig:seq_cu8_compras} recoge la consulta de compras, suscripciones y alquileres activos del usuario.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-8_Consultar_compras_y_servicios_activos.png}
-	\caption{Diagrama de secuencia del CU-8 Consultar compras y servicios activos.}
-	\label{fig:seq_cu8_compras}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-8_Consultar_compras_y_servicios_activos.png}
+{CU-8 Consultar compras y servicios activos}
+{Diagrama de secuencia del CU-8 Consultar compras y servicios activos}
+{fig:seq_cu8_compras}
 
-La Figura~\ref{fig:seq_cu9_guia_compra} muestra la guía de compra. En este flujo, el sistema obtiene los pipelines disponibles y sus dependencias de modelos y modos, cruza esta información con los servicios activos del usuario y devuelve una orientación sobre qué servicios debería contratar para ampliar su acceso.
+La Figura~\ref{fig:seq_cu9_guia_compra} muestra la guía de compra, que cruza los pipelines disponibles con los modelos requeridos y los servicios activos del usuario.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-9_Consultar_guia_de_compra.png}
-	\caption{Diagrama de secuencia del CU-9 Consultar guía de compra.}
-	\label{fig:seq_cu9_guia_compra}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-9_Consultar_guia_de_compra.png}
+{CU-9 Consultar guía de compra}
+{Diagrama de secuencia del CU-9 Consultar guía de compra}
+{fig:seq_cu9_guia_compra}
 
 \subsection{Flujos de consulta, configuración y ejecución de pipelines}
 
-El tercer bloque procedimental se centra en la funcionalidad principal de la aplicación: la selección de pipelines, la carga de configuración, la ejecución del análisis y la consulta de resultados. Estos flujos son los más relevantes desde el punto de vista técnico, ya que combinan autenticación, validación de permisos, persistencia, procesamiento de imágenes y generación de resultados temporales.
+Este bloque recoge la funcionalidad principal de la aplicación: consulta de pipelines disponibles, carga de configuración, ejecución del análisis, visualización de resultados e historial.
 
-La Figura~\ref{fig:seq_cu10_pipelines_disponibles} representa la consulta de pipelines disponibles. El controlador identifica al usuario autenticado, revisa su rol, su plan y sus alquileres activos, y filtra los pipelines que puede ejecutar. De esta forma, la interfaz no muestra simplemente todos los pipelines existentes, sino únicamente aquellos compatibles con los permisos reales del usuario.
+La Figura~\ref{fig:seq_cu10_pipelines_disponibles} representa la consulta de pipelines ejecutables según los permisos, plan y modelos activos del usuario.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-10_Consultar_pipelines_disponibles.png}
-	\caption{Diagrama de secuencia del CU-10 Consultar pipelines disponibles.}
-	\label{fig:seq_cu10_pipelines_disponibles}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-10_Consultar_pipelines_disponibles.png}
+{CU-10 Consultar pipelines disponibles}
+{Diagrama de secuencia del CU-10 Consultar pipelines disponibles}
+{fig:seq_cu10_pipelines_disponibles}
 
-La Figura~\ref{fig:seq_cu11_configuracion_pipeline} muestra la carga y modificación de la configuración de un pipeline. El sistema recupera la configuración predeterminada de las etapas y la presenta en la interfaz para que el usuario pueda revisarla o adaptarla antes de lanzar la ejecución. La validación definitiva de la configuración se realiza posteriormente durante el envío de la solicitud de análisis.
+La Figura~\ref{fig:seq_cu11_configuracion_pipeline} muestra la carga y posible modificación de la configuración del pipeline antes de ejecutarlo.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-11_Cargar_y_modificar_configuracion_pipeline.png}
-	\caption{Diagrama de secuencia del CU-11 Cargar y modificar configuración del pipeline.}
-	\label{fig:seq_cu11_configuracion_pipeline}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-11_Cargar_y_modificar_configuracion_pipeline.png}
+{CU-11 Cargar y modificar configuración del pipeline}
+{Diagrama de secuencia del CU-11 Cargar y modificar configuración del pipeline}
+{fig:seq_cu11_configuracion_pipeline}
 
-La Figura~\ref{fig:seq_cu12_ejecutar_pipeline} representa el flujo central de ejecución de un pipeline sobre una imagen. El usuario selecciona un pipeline, adjunta una imagen y envía opcionalmente una configuración personalizada. El controlador valida el archivo, comprueba el formato de la configuración, verifica los permisos de acceso, registra la ejecución, prepara un espacio de trabajo temporal y delega la ejecución en el servicio encargado de recorrer las etapas del pipeline. Al finalizar, se registran los archivos temporales generados y se devuelve a la interfaz la información necesaria para visualizar el resultado.
+La Figura~\ref{fig:seq_cu12_ejecutar_pipeline} representa el flujo central del sistema: subida de imagen, validación, comprobación de permisos, ejecución de etapas, registro de resultados y devolución de la respuesta.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-12_Ejecutar_pipeline_sobre_una_imagen.png}
-	\caption{Diagrama de secuencia del CU-12 Ejecutar pipeline sobre una imagen.}
-	\label{fig:seq_cu12_ejecutar_pipeline}
-\end{figure}
+\diagramaSecuenciaGrande
+{diagramas_secuencia/CU-12_Ejecutar_pipeline_sobre_una_imagen.png}
+{CU-12 Ejecutar pipeline sobre una imagen}
+{Diagrama de secuencia del CU-12 Ejecutar pipeline sobre una imagen}
+{fig:seq_cu12_ejecutar_pipeline}
 
-La Figura~\ref{fig:seq_cu13_resultados} muestra la visualización y descarga de resultados. La interfaz presenta las etapas ejecutadas, las imágenes generadas y los datos estructurados en formato JSON. Cuando el usuario solicita una descarga, el sistema resuelve el archivo mediante un token temporal, comprueba que no haya caducado y entrega el recurso sin exponer directamente la ruta interna del servidor.
+La Figura~\ref{fig:seq_cu13_resultados} muestra la visualización y descarga temporal de resultados mediante tokens de acceso.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-13_Visualizar_y_descargar_resultados.png}
-	\caption{Diagrama de secuencia del CU-13 Visualizar y descargar resultados.}
-	\label{fig:seq_cu13_resultados}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-13_Visualizar_y_descargar_resultados.png}
+{CU-13 Visualizar y descargar resultados}
+{Diagrama de secuencia del CU-13 Visualizar y descargar resultados}
+{fig:seq_cu13_resultados}
 
-La Figura~\ref{fig:seq_cu14_historial} recoge la consulta del historial de ejecuciones. El controlador recupera únicamente las ejecuciones asociadas al usuario autenticado y devuelve la información necesaria para mostrar el pipeline ejecutado, la fecha, el estado, la duración y los posibles errores. Este flujo mantiene el aislamiento entre usuarios, impidiendo que una cuenta pueda consultar ejecuciones ajenas.
+La Figura~\ref{fig:seq_cu14_historial} recoge la consulta del historial de ejecuciones del usuario autenticado.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-14_Consultar_historial_de_ejecuciones.png}
-	\caption{Diagrama de secuencia del CU-14 Consultar historial de ejecuciones.}
-	\label{fig:seq_cu14_historial}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-14_Consultar_historial_de_ejecuciones.png}
+{CU-14 Consultar historial de ejecuciones}
+{Diagrama de secuencia del CU-14 Consultar historial de ejecuciones}
+{fig:seq_cu14_historial}
 
 \subsection{Flujos de administración}
 
-El cuarto bloque agrupa los procedimientos propios del administrador. Estos flujos permiten acceder al panel de administración, gestionar cuentas de usuario, modificar pipelines sin tocar el código fuente y consultar ejecuciones globales. Desde el punto de vista procedimental, estos casos de uso reflejan la separación entre las operaciones disponibles para usuarios normales y las operaciones restringidas por rol.
+Este bloque recoge los procedimientos restringidos al rol administrador: acceso al panel, gestión de usuarios, gestión de pipelines y consulta global de ejecuciones.
 
-La Figura~\ref{fig:seq_cu15_panel_admin} muestra el acceso al panel de administración. El sistema valida el token JWT y comprueba que el usuario autenticado dispone del rol de administrador. Si la comprobación es correcta, la interfaz administrativa queda disponible; en caso contrario, se devuelve una respuesta de acceso denegado.
+La Figura~\ref{fig:seq_cu15_panel_admin} muestra la validación del rol administrador y el acceso al panel de administración.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-15_Acceder_al_panel_de_administracion.png}
-	\caption{Diagrama de secuencia del CU-15 Acceder al panel de administración.}
-	\label{fig:seq_cu15_panel_admin}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-15_Acceder_al_panel_de_administracion.png}
+{CU-15 Acceder al panel de administración}
+{Diagrama de secuencia del CU-15 Acceder al panel de administración}
+{fig:seq_cu15_panel_admin}
 
-La Figura~\ref{fig:seq_cu16_gestionar_usuarios} representa la gestión de usuarios desde administración. El administrador consulta el listado de cuentas, revisa información básica y solicita cambios de estado cuando procede. El controlador valida la operación, evita acciones no permitidas y persiste los cambios en la base de datos.
+La Figura~\ref{fig:seq_cu16_gestionar_usuarios} representa la consulta de usuarios y modificación controlada de su estado.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-16_Gestionar_usuarios_desde_administracion.png}
-	\caption{Diagrama de secuencia del CU-16 Gestionar usuarios desde administración.}
-	\label{fig:seq_cu16_gestionar_usuarios}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-16_Gestionar_usuarios_desde_administracion.png}
+{CU-16 Gestionar usuarios desde administración}
+{Diagrama de secuencia del CU-16 Gestionar usuarios desde administración}
+{fig:seq_cu16_gestionar_usuarios}
 
-La Figura~\ref{fig:seq_cu17_gestionar_pipelines} muestra la gestión de pipelines desde el panel de administración. Este flujo es especialmente relevante porque permite crear, modificar, deshabilitar o eliminar pipelines desde la propia aplicación. El controlador comprueba que las etapas hagan referencia a modelos y modos válidos, guarda la definición del flujo y, en caso de eliminación, decide entre borrar físicamente el pipeline o deshabilitarlo si existen ejecuciones asociadas.
+La Figura~\ref{fig:seq_cu17_gestionar_pipelines} muestra la gestión de pipelines desde administración, incluyendo creación, modificación, deshabilitación o eliminación cuando procede.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-17_Gestionar_pipelines_desde_administracion.png}
-	\caption{Diagrama de secuencia del CU-17 Gestionar pipelines desde administración.}
-	\label{fig:seq_cu17_gestionar_pipelines}
-\end{figure}
+\diagramaSecuenciaGrande
+{diagramas_secuencia/CU-17_Gestionar_pipelines_desde_administracion.png}
+{CU-17 Gestionar pipelines desde administración}
+{Diagrama de secuencia del CU-17 Gestionar pipelines desde administración}
+{fig:seq_cu17_gestionar_pipelines}
 
-La Figura~\ref{fig:seq_cu18_ejecuciones_globales} representa la consulta global de ejecuciones. A diferencia del historial de usuario, este flujo está restringido al administrador y permite obtener una visión general de las ejecuciones realizadas en el sistema, incluyendo su estado y posibles errores registrados.
+La Figura~\ref{fig:seq_cu18_ejecuciones_globales} representa la consulta global de ejecuciones realizadas en el sistema.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-18_Consultar_ejecuciones_globales.png}
-	\caption{Diagrama de secuencia del CU-18 Consultar ejecuciones globales.}
-	\label{fig:seq_cu18_ejecuciones_globales}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-18_Consultar_ejecuciones_globales.png}
+{CU-18 Consultar ejecuciones globales}
+{Diagrama de secuencia del CU-18 Consultar ejecuciones globales}
+{fig:seq_cu18_ejecuciones_globales}
 
 \subsection{Flujo de mantenimiento automático}
 
-Por último, el sistema incorpora tareas de mantenimiento orientadas a conservar la coherencia de los datos y evitar la acumulación de recursos temporales. Este flujo no parte de una interacción directa de un usuario, sino de una ejecución automática del propio sistema.
+El mantenimiento automático agrupa las operaciones internas encargadas de conservar la coherencia del sistema, como la limpieza de archivos temporales y la revisión de servicios caducados.
 
-La Figura~\ref{fig:seq_cu19_mantenimiento} muestra el procedimiento de mantenimiento. El sistema localiza archivos temporales caducados, elimina los recursos físicos cuando procede, actualiza el estado de registros asociados, revisa suscripciones o alquileres expirados y aplica los cambios necesarios en base de datos. Este flujo contribuye a mantener bajo control el ciclo de vida de los archivos generados y de los servicios temporales contratados.
+La Figura~\ref{fig:seq_cu19_mantenimiento} muestra el flujo de mantenimiento, donde el sistema revisa temporales expirados, actualiza registros asociados y comprueba suscripciones o alquileres vencidos.
 
-\begin{figure}[p]
-	\centering
-	\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{diagramas_secuencia/CU-19_Ejecutar_tareas_de_mantenimiento.png}
-	\caption{Diagrama de secuencia del CU-19 Ejecutar tareas de mantenimiento.}
-	\label{fig:seq_cu19_mantenimiento}
-\end{figure}
+\diagramaSecuencia
+{diagramas_secuencia/CU-19_Ejecutar_tareas_de_mantenimiento.png}
+{CU-19 Ejecutar tareas de mantenimiento}
+{Diagrama de secuencia del CU-19 Ejecutar tareas de mantenimiento}
+{fig:seq_cu19_mantenimiento}
+
+\FloatBarrier
 
 \subsection{Síntesis del diseño procedimental}
 
-En conjunto, los diagramas anteriores muestran cómo la aplicación organiza sus procedimientos principales mediante una separación clara entre interfaz, controladores, servicios internos y persistencia. Los flujos de autenticación establecen la identidad del usuario mediante JWT; los flujos de tienda y servicios determinan qué permisos tiene cada cuenta; los flujos de pipelines materializan el procesamiento de imágenes mediante etapas configurables; y los flujos de administración permiten modificar usuarios y pipelines sin alterar directamente el código fuente.
+Los diagramas anteriores muestran que los procedimientos principales siguen una estructura común: la interfaz recoge la acción del usuario, el controlador valida la petición y los permisos, la base de datos mantiene el estado persistente y, cuando se requiere procesamiento, los servicios internos ejecutan la lógica correspondiente.
 
-Esta organización procedimental refuerza la escalabilidad del sistema. La lógica de negocio queda concentrada en los controladores y servicios correspondientes, mientras que la interfaz actúa como punto de interacción con el usuario y la base de datos mantiene el estado persistente de cuentas, planes, modelos, pipelines, ejecuciones y archivos temporales. Como resultado, el sistema puede ampliarse con nuevos modelos, modos de ejecución o flujos de procesamiento manteniendo una estructura coherente y trazable.
+Esta organización permite separar autenticación, gestión de servicios, ejecución de pipelines, administración y mantenimiento. Como resultado, el sistema mantiene una estructura procedimental coherente, trazable y preparada para ampliaciones futuras.
 
 \FloatBarrier
+
 \section{Diseño de interfaces}
 
-El diseño de interfaces recoge la organización visual y de navegación de la aplicación web desarrollada. A diferencia de otros apartados del diseño, centrados en la estructura de datos, la arquitectura interna o los procedimientos de ejecución, este apartado se centra en la forma en la que el usuario interactúa con el sistema desde el navegador.
+El diseño de interfaces recoge la organización visual y de navegación de la aplicación web. La interfaz se ha construido mediante plantillas HTML renderizadas desde Flask y lógica JavaScript para consumir los endpoints del backend.
 
-La aplicación dispone de una interfaz web construida mediante plantillas HTML renderizadas desde Flask y lógica JavaScript en el lado cliente para realizar peticiones a los endpoints de la API. Esta separación permite que la interfaz actúe como capa de presentación, mientras que las validaciones, permisos, persistencia y ejecución de pipelines permanecen concentradas en los controladores y servicios del backend.
+Desde el punto de vista funcional, las pantallas se agrupan en tres zonas: zona pública, zona de usuario autenticado y zona de administración. Esta separación permite diferenciar claramente las acciones disponibles para cada tipo de usuario.
 
-Desde el punto de vista funcional, las interfaces se han diseñado para cubrir tres zonas principales:
+\subsection{Criterios de diseño}
 
-\begin{itemize}
-	\item \textbf{Zona pública}: formada por la página de inicio, el formulario de registro y el formulario de inicio de sesión.
-	\item \textbf{Zona de usuario autenticado}: formada por el panel principal, el perfil, la tienda, las compras del usuario, la guía de compra, el historial y la visualización de resultados.
-	\item \textbf{Zona de administración}: formada por el panel administrativo, desde el que se gestionan usuarios, ejecuciones globales y pipelines.
-\end{itemize}
-
-Esta distribución permite separar claramente las funcionalidades disponibles para usuarios no autenticados, usuarios registrados y administradores. Además, facilita que cada interfaz tenga una responsabilidad concreta, evitando concentrar toda la interacción en una única página.
-
-\subsection{Criterios de diseño de la interfaz}
-
-El diseño de las interfaces se ha realizado siguiendo varios criterios generales:
+El diseño de la interfaz se ha realizado siguiendo los siguientes criterios:
 
 \begin{itemize}
-	\item \textbf{Claridad}: cada página debe mostrar únicamente la información necesaria para la tarea que representa.
-	\item \textbf{Separación por perfiles}: las funcionalidades de administración no se mezclan con las operaciones propias del usuario normal.
-	\item \textbf{Coherencia de navegación}: las páginas principales mantienen enlaces de retorno hacia el panel o hacia la sección relacionada.
-	\item \textbf{Retroalimentación al usuario}: los formularios muestran mensajes de error o confirmación cuando una operación falla o se completa correctamente.
-	\item \textbf{Ocultación de complejidad técnica}: el usuario no necesita conocer la estructura interna de los modelos, los controladores o los archivos temporales para ejecutar un análisis.
-	\item \textbf{Compatibilidad con la arquitectura}: la interfaz consume los endpoints de la API mediante peticiones HTTP, respetando la separación entre presentación y lógica de negocio.
+	\setlength{\itemsep}{0.25em}
+	\item \textbf{Claridad}: cada pantalla muestra únicamente la información necesaria para su función.
+	\item \textbf{Separación por perfiles}: las operaciones de usuario y administración aparecen en zonas distintas.
+	\item \textbf{Coherencia de navegación}: las páginas principales mantienen enlaces hacia las secciones relacionadas.
+	\item \textbf{Retroalimentación}: los formularios muestran mensajes de error o confirmación.
+	\item \textbf{Ocultación de complejidad}: el usuario no necesita conocer la estructura interna de modelos, controladores o archivos temporales.
 \end{itemize}
-
-Estos criterios resultan especialmente importantes porque la aplicación combina varias responsabilidades: autenticación, contratación de servicios, selección de pipelines, carga de imágenes, edición de configuración, visualización de resultados y administración del sistema. Por ello, el diseño de interfaces no se plantea únicamente como una cuestión estética, sino como una forma de ordenar la interacción con funcionalidades técnicamente diferentes.
 
 \subsection{Relación de interfaces principales}
 
-La Tabla~\ref{tabla:interfaces_principales} resume las interfaces principales de la aplicación, indicando su ruta y su finalidad dentro del sistema.
+La Tabla~\ref{tabla:interfaces_principales} resume las principales interfaces de la aplicación y su finalidad.
 
-\tablaSmall{Interfaces principales de la aplicación}{p{3.2cm} p{3.2cm} p{7cm}}{interfaces_principales}
-{ \multicolumn{1}{l}{Interfaz} & \multicolumn{1}{l}{Ruta} & \multicolumn{1}{l}{Finalidad} \\}{
-	Página de inicio & \texttt{/} & Presenta la aplicación y permite acceder al registro o al inicio de sesión.\\
-	Registro & \texttt{/registro} & Permite crear una cuenta de usuario introduciendo nombre visible, nombre de usuario, correo electrónico y contraseña.\\
-	Inicio de sesión & \texttt{/login} & Permite autenticar al usuario mediante correo o nombre de usuario y redirigirlo al panel correspondiente según su rol.\\
-	Panel de usuario & \texttt{/dashboard} & Constituye la pantalla principal del usuario autenticado. Desde ella se consultan pipelines disponibles, se carga la configuración y se ejecuta el análisis de imágenes.\\
-	Perfil & \texttt{/perfil} & Permite consultar y modificar información básica de la cuenta, así como solicitar la eliminación lógica de la misma.\\
-	Tienda & \texttt{/shop} & Muestra los planes y modelos de inteligencia artificial disponibles para contratación o alquiler.\\
-	Mis compras & \texttt{/mis-compras} & Presenta las suscripciones y alquileres activos o programados del usuario.\\
-	Guía de compra & \texttt{/guia-compra} & Explica los pipelines disponibles y ayuda al usuario a comprender qué modelos o servicios necesita para utilizarlos.\\
-	Historial & \texttt{/historial} & Muestra las ejecuciones realizadas por el usuario, su estado, fecha, duración y configuración utilizada.\\
-	Resultados & \texttt{/resultados/\{id\}} & Permite consultar los archivos asociados a una ejecución concreta, incluyendo imagen original, imágenes generadas y resultados JSON.\\
-	Panel de administración & \texttt{/admin} & Permite al administrador consultar usuarios, revisar actividad global y crear, modificar, deshabilitar o eliminar pipelines.\\
-}
+\begingroup
+\small
+\renewcommand{\arraystretch}{1.05}
+\begin{center}
+	\bottomcaption{Interfaces principales de la aplicación.}
+	\begin{xtabular}{@{}p{3cm}p{3cm}p{7cm}@{}}
+		\toprule
+		\textbf{Interfaz} & \textbf{Ruta} & \textbf{Finalidad} \\
+		\midrule
+		Página de inicio & \texttt{/} & Presenta la aplicación y permite acceder al registro o inicio de sesión.\\
+		Registro & \texttt{/registro} & Permite crear una cuenta de usuario.\\
+		Inicio de sesión & \texttt{/login} & Permite autenticar al usuario y redirigirlo según su rol.\\
+		Panel de usuario & \texttt{/dashboard} & Permite consultar pipelines, cargar configuración y ejecutar análisis de imágenes.\\
+		Perfil & \texttt{/perfil} & Permite consultar y modificar datos de la cuenta.\\
+		Tienda & \texttt{/shop} & Muestra planes y modelos disponibles para contratación.\\
+		Mis compras & \texttt{/mis-compras} & Presenta suscripciones y alquileres activos o programados.\\
+		Guía de compra & \texttt{/guia-compra} & Indica qué modelos o servicios necesita el usuario para utilizar cada pipeline.\\
+		Historial & \texttt{/historial} & Muestra las ejecuciones realizadas por el usuario.\\
+		Resultados & \texttt{/resultados/\{id\}} & Permite consultar los resultados de una ejecución concreta.\\
+		Panel de administración & \texttt{/admin} & Permite gestionar usuarios, actividad global y pipelines.\\
+		\bottomrule
+	\end{xtabular}
+	\label{tabla:interfaces_principales}
+\end{center}
+\endgroup
 
-La existencia de estas interfaces permite cubrir el flujo completo de uso de la aplicación. Un usuario puede registrarse, iniciar sesión, consultar sus servicios, ejecutar un pipeline, revisar los resultados obtenidos y acceder posteriormente al historial. Por su parte, el administrador dispone de una zona separada para realizar operaciones de supervisión y configuración sin necesidad de modificar directamente el código fuente.
+Estas interfaces cubren el flujo completo de uso: registro, autenticación, contratación de servicios, ejecución de pipelines, consulta de resultados e interacción administrativa.
 
-\subsection{Navegabilidad entre interfaces}
+\subsection{Navegabilidad e interacción con el backend}
 
-La Figura~\ref{fig:navegabilidad_interfaces} muestra el diagrama de navegabilidad de la aplicación. En él se representa la transición entre las interfaces públicas, las interfaces de usuario autenticado y el panel de administración.
+La Figura~\ref{fig:navegabilidad_interfaces} muestra la navegación entre las zonas públicas, privadas y administrativas de la aplicación.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=\textwidth]{diagramas_interfaces/diagrama_navegabilidad_interfaces.png}
-	\caption{Diagrama de navegabilidad e interacción entre interfaces}
+	\caption[Diagrama de navegabilidad]{Diagrama de navegabilidad e interacción entre interfaces.}
 	\label{fig:navegabilidad_interfaces}
 \end{figure}
 
-El acceso inicial se realiza desde la página pública, desde la que el usuario puede iniciar sesión o registrarse. Tras la autenticación, el sistema redirige al panel de usuario o al panel de administración en función de los roles asociados a la cuenta. Esta redirección resulta importante porque impide que la navegación dependa únicamente de enlaces visibles en la interfaz, ya que el servidor mantiene la comprobación de permisos en los endpoints protegidos.
+El acceso inicial se realiza desde la página pública. Tras iniciar sesión, el sistema redirige al usuario al panel correspondiente según su rol. Desde el panel de usuario se accede a perfil, tienda, compras, historial y ejecución de pipelines. El panel de administración concentra las funciones de supervisión y configuración.
 
-Dentro de la zona de usuario, el panel principal actúa como núcleo de navegación. Desde él se accede al perfil, la tienda, las compras, el historial y la ejecución de pipelines. La vista de resultados puede alcanzarse tanto desde una ejecución recién finalizada como desde el historial, lo que permite consultar posteriormente los archivos generados mientras sigan disponibles.
+La Figura~\ref{fig:interaccion_interfaces_api} representa la relación entre las principales interfaces, los endpoints consumidos mediante JavaScript y los controladores del backend.
 
-En la zona de administración se opta por concentrar las operaciones en un único panel con secciones internas. Esta decisión simplifica la navegación administrativa y permite trabajar desde una misma pantalla sobre usuarios, ejecuciones globales y pipelines.
-
-\subsection{Interacción entre interfaces y backend}
-
-La Figura~\ref{fig:interaccion_interfaces_api} muestra la relación entre las principales interfaces web, los endpoints consumidos mediante JavaScript y los controladores del backend.
-
-\begin{figure}[H]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=\textwidth]{diagramas_interfaces/diagrama_interaccion_interfaces_api.png}
-	\caption{Relación entre interfaces web, endpoints y lógica interna}
+	\caption[Relación entre interfaces y backend]{Relación entre interfaces web, endpoints y lógica interna.}
 	\label{fig:interaccion_interfaces_api}
 \end{figure}
 
-Las páginas públicas de registro e inicio de sesión se comunican con el controlador de autenticación. Cuando la operación se completa correctamente, la interfaz almacena los datos de sesión necesarios en el navegador y redirige al usuario a la zona correspondiente. A partir de ese momento, las interfaces privadas realizan sus peticiones incluyendo el token de autenticación, de forma que el backend pueda identificar al usuario y aplicar las reglas de autorización.
-
-El panel de usuario consume principalmente los endpoints relacionados con pipelines. Primero obtiene el listado de pipelines disponibles para la cuenta autenticada; después carga la configuración predeterminada del pipeline seleccionado; finalmente envía la imagen y la configuración personalizada al endpoint de análisis. Esta interacción mantiene desacoplada la interfaz respecto a la lógica interna de ejecución, ya que la página solo necesita conocer los datos que debe enviar y la estructura de la respuesta recibida.
-
-Las interfaces de tienda, compras y guía se comunican con el controlador de tienda. Estas vistas permiten consultar modelos, planes, compras activas y pipelines disponibles desde una perspectiva orientada al usuario. Por otro lado, el panel de administración consume endpoints restringidos para obtener usuarios, ejecuciones globales, catálogo técnico de modelos y definición completa de pipelines.
+Las pantallas públicas se comunican con el controlador de autenticación. Las páginas privadas envían peticiones con el token de acceso para que el backend pueda identificar al usuario y aplicar reglas de autorización. El panel principal consume endpoints de pipelines, mientras que tienda, compras y guía se relacionan con el controlador de servicios. El panel de administración utiliza endpoints restringidos.
 
 \subsection{Flujo de interfaz para la ejecución de pipelines}
 
-La Figura~\ref{fig:flujo_interfaz_pipeline} representa el flujo de interacción del usuario durante la ejecución de un pipeline desde el panel principal.
+La Figura~\ref{fig:flujo_interfaz_pipeline} muestra el flujo de interacción seguido para ejecutar un pipeline desde el panel principal.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
 	\centering
 	\includegraphics[width=\textwidth]{diagramas_interfaces/diagrama_flujo_interfaz_ejecucion_pipeline.png}
-	\caption{Flujo de interacción de la interfaz durante la ejecución de un pipeline}
+	\caption[Flujo de ejecución desde la interfaz]{Flujo de interacción de la interfaz durante la ejecución de un pipeline.}
 	\label{fig:flujo_interfaz_pipeline}
 \end{figure}
 
-El flujo comienza cuando el usuario accede al panel principal. La interfaz comprueba que exista una sesión activa y solicita al backend los pipelines disponibles para esa cuenta. El listado recibido depende de los permisos del usuario, de su plan y de los modelos que tenga contratados o disponibles.
-
-Una vez seleccionado un pipeline, la interfaz solicita su configuración predeterminada. Esta configuración se muestra al usuario para que pueda utilizarla directamente o modificarla antes de la ejecución. De esta forma, el sistema ofrece una configuración base funcional, pero permite adaptar parámetros concretos sin alterar la definición del pipeline almacenada en base de datos.
-
-Tras seleccionar la imagen y confirmar la ejecución, la interfaz envía la solicitud al endpoint de análisis. Si el servidor valida correctamente la imagen, la configuración y los permisos, el backend ejecuta el pipeline y devuelve la información necesaria para mostrar los resultados. La interfaz presenta entonces las imágenes generadas, los datos JSON asociados y los enlaces de descarga basados en tokens temporales.
-
-Este diseño evita exponer rutas internas del servidor en el navegador. El usuario recibe enlaces controlados por tokens, mientras que el backend se encarga de resolver cada archivo, comprobar su vigencia y entregarlo únicamente si sigue disponible.
-
-\subsection{Evolución visual de las interfaces}
-
-La primera versión de las interfaces se desarrolló con un diseño básico, pero suficientemente usable para validar el funcionamiento completo de la aplicación. En esta fase se priorizó que las pantallas permitieran ejecutar correctamente los flujos principales: registro, inicio de sesión, consulta de pipelines, carga de imágenes, ejecución de análisis, visualización de resultados, consulta de compras y administración.
-
-Por tanto, el objetivo inicial no fue construir una interfaz visualmente sofisticada, sino disponer de una capa de interacción clara y funcional que permitiera demostrar el comportamiento del sistema. Esta decisión es coherente con el enfoque del proyecto, cuyo núcleo técnico se encuentra en la integración de modelos de inteligencia artificial, la ejecución de pipelines, la gestión de permisos y la arquitectura modular.
-
-No obstante, una vez estabilizada la funcionalidad principal, se ha realizado una fase de refinamiento visual de las páginas. Esta mejora se plantea como una iniciativa personal orientada a aumentar el impacto visual de la aplicación durante su uso y demostración, sin modificar los objetivos técnicos del TFG. Para esta fase se contempla el uso de herramientas de inteligencia artificial generativa como apoyo en la mejora de estilos, composición visual, jerarquía de elementos y presentación general de las páginas. Dichas mejoras visuales se documentarán, en su caso, en el manual de usuario para evitar redundancias dentro de este anexo de diseño.
-
-La Figura~\ref{fig:evolucion_diseno_interfaces} resume esta evolución prevista del diseño visual.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{diagramas_interfaces/diagrama_evolucion_diseno_interfaces.png}
-	\caption{Evolución prevista del diseño visual de las interfaces}
-	\label{fig:evolucion_diseno_interfaces}
-\end{figure}
-
-Es importante señalar que esta asistencia se limita al aspecto visual de la interfaz. La arquitectura, los endpoints, las validaciones, la autenticación, el control de permisos, la persistencia y la lógica de procesamiento no dependen de dicha asistencia. Por ello, la mejora visual no altera el alcance técnico del proyecto, sino que complementa la presentación de una aplicación que ya cuenta con un flujo funcional definido.
+El usuario selecciona un pipeline, carga su configuración, puede modificarla, adjunta una imagen y lanza el análisis. La interfaz envía la solicitud al backend, que valida permisos, archivo y configuración. Finalmente, se muestran las imágenes generadas, los datos JSON y los enlaces temporales de descarga.
 
 \subsection{Capturas de las interfaces funcionales iniciales}
 
-A continuación se incluyen las capturas representativas de las interfaces funcionales iniciales de la aplicación. Estas pantallas corresponden a la primera versión completa de la interfaz, desarrollada con un diseño sencillo, pero suficiente para validar la navegación y los principales casos de uso del sistema.
+A continuación se incluyen capturas de la primera versión funcional de las interfaces. Estas pantallas no representan el diseño visual final de la aplicación, sino el estado inicial de la interfaz antes de aplicar mejoras de estilos visuales asistidas por inteligencia artificial.
 
-\subsubsection*{Interfaces públicas}
+El objetivo de estas capturas es dejar constancia de que la aplicación ya disponía de una interfaz operativa para validar los principales casos de uso: registro, inicio de sesión, consulta de servicios, ejecución de pipelines, visualización de resultados, historial y administración. Las interfaces finales, junto con la explicación detallada de su uso, se recogen posteriormente en el manual de usuario.
+% Comando auxiliar para compactar capturas de interfaces.
+\newcommand{\capturaInterfaz}[5]{%
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[
+		width=#1\textwidth,
+		height=0.30\textheight,
+		keepaspectratio
+		]{#2}
+		\caption[#3]{#4.}
+		\label{#5}
+	\end{figure}
+}
 
-La Figura~\ref{fig:interfaz_public_index} muestra la página inicial de la aplicación. Esta interfaz actúa como punto de entrada al sistema y presenta de forma resumida la finalidad de la plataforma, destacando el procesamiento de imágenes mediante inteligencia artificial y pipelines multi-etapa.
 
-\begin{figure}[H]
+\subsubsection*{Interfaces públicas iniciales}
+
+La Figura~\ref{fig:interfaz_public_index} muestra la página inicial de la primera versión funcional de la aplicación.
+
+\capturaInterfaz{0.95}
+{img/interfaces_basicas/interfaz_public_index.png}
+{Página inicial funcional}
+{Interfaz pública inicial de la aplicación antes del refinamiento visual}
+{fig:interfaz_public_index}
+
+Las Figuras~\ref{fig:interfaz_public_login} y~\ref{fig:interfaz_public_registro} muestran las pantallas iniciales de inicio de sesión y registro.
+
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_public_index.png}
-	\caption{Interfaz pública inicial de la aplicación}
-	\label{fig:interfaz_public_index}
+	\begin{minipage}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_public_login.png}
+		\caption[Inicio de sesión inicial]{Interfaz inicial de inicio de sesión.}
+		\label{fig:interfaz_public_login}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_public_registro.png}
+		\caption[Registro inicial]{Interfaz inicial de registro de usuario.}
+		\label{fig:interfaz_public_registro}
+	\end{minipage}
 \end{figure}
 
-Las Figuras~\ref{fig:interfaz_public_login} y~\ref{fig:interfaz_public_registro} recogen las pantallas públicas de autenticación. La primera permite acceder al sistema mediante correo electrónico o nombre de usuario, mientras que la segunda permite crear una nueva cuenta introduciendo los datos básicos requeridos por la aplicación.
+\subsubsection*{Interfaces iniciales del usuario autenticado}
 
-\begin{figure}[H]
+La Figura~\ref{fig:interfaz_dashboard_usuario_panel} muestra el panel principal inicial del usuario autenticado, desde el que ya era posible seleccionar un pipeline, cargar configuración y enviar una imagen a procesar.
+
+\capturaInterfaz{0.70}
+{img/interfaces_basicas/interfaz_dashboard_usuario_panel.png}
+{Panel inicial del usuario}
+{Panel principal inicial del usuario para la ejecución de pipelines}
+{fig:interfaz_dashboard_usuario_panel}
+
+La Figura~\ref{fig:interfaz_dashboard_shop} muestra la primera versión de la tienda de servicios.
+
+\capturaInterfaz{0.70}
+{img/interfaces_basicas/interfaz_dashboard_shop.png}
+{Tienda inicial}
+{Interfaz inicial de tienda de planes y modelos de IA}
+{fig:interfaz_dashboard_shop}
+
+La Figura~\ref{fig:interfaz_dashboard_guia_compra} muestra la guía inicial de compra, utilizada para relacionar pipelines con los modelos necesarios.
+
+\capturaInterfaz{0.70}
+{img/interfaces_basicas/interfaz_dashboard_guia_compra.png}
+{Guía inicial de pipelines}
+{Interfaz inicial de guía de pipelines y modelos necesarios}
+{fig:interfaz_dashboard_guia_compra}
+
+La Figura~\ref{fig:interfaz_dashboard_mis_compras} muestra la pantalla inicial de suscripciones y alquileres del usuario.
+
+La Figura~\ref{fig:interfaz_dashboard_perfil} muestra la primera versión funcional de la pantalla de perfil.
+
+
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=0.6\textwidth]{img/interfaces_basicas/interfaz_public_login.png}
-	\caption{Interfaz de inicio de sesión}
-	\label{fig:interfaz_public_login}
+	\begin{minipage}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_mis_compras.png}
+		\caption[Suscripciones y alquileres iniciales]{Interfaz inicial de inicio de sesión.}
+		\label{fig:interfaz_dashboard_mis_compras}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_perfil.png}
+		\caption[Perfil inicial]{Interfaz inicial de consulta y edición del perfil de usuario}
+		\label{fig:interfaz_dashboard_perfil}
+	\end{minipage}
 \end{figure}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.6\textwidth]{img/interfaces_basicas/interfaz_public_registro.png}
-	\caption{Interfaz de registro de usuario}
-	\label{fig:interfaz_public_registro}
-\end{figure}
+La Figura~\ref{fig:interfaz_dashboard_historial_ejecuciones} muestra el historial inicial de ejecuciones.
 
-\subsubsection*{Interfaces del usuario autenticado}
+\capturaInterfaz{0.70}
+{img/interfaces_basicas/interfaz_dashboard_historial_ejecuciones.png}
+{Historial inicial}
+{Interfaz inicial de historial de ejecuciones del usuario}
+{fig:interfaz_dashboard_historial_ejecuciones}
 
-La Figura~\ref{fig:interfaz_dashboard_usuario_panel} muestra el panel principal del usuario autenticado. Esta pantalla constituye el núcleo funcional de la aplicación para el usuario final, ya que desde ella se selecciona el pipeline, se carga la configuración predeterminada, se permite su modificación y se sube la imagen que será procesada.
+La Figura~\ref{fig:interfaz_dashboard_resultados_ejecucion} muestra la primera versión de la vista de resultados de una ejecución.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_usuario_panel.png}
-	\caption{Panel principal del usuario para la ejecución de pipelines}
-	\label{fig:interfaz_dashboard_usuario_panel}
-\end{figure}
+\capturaInterfaz{0.40}
+{img/interfaces_basicas/interfaz_dashboard_resultados_ejecucion.png}
+{Resultados iniciales}
+{Interfaz inicial de visualización de resultados de una ejecución}
+{fig:interfaz_dashboard_resultados_ejecucion}
 
-La Figura~\ref{fig:interfaz_dashboard_shop} muestra la tienda de servicios. En esta pantalla se presentan los planes de suscripción y los modelos de inteligencia artificial disponibles para alquiler individual, permitiendo al usuario gestionar el acceso a nuevas capacidades del sistema.
+\subsubsection*{Interfaces iniciales de administración}
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_shop.png}
-	\caption{Interfaz de tienda de planes y modelos de IA}
-	\label{fig:interfaz_dashboard_shop}
-\end{figure}
+Las interfaces de administración iniciales permitían validar las operaciones restringidas al rol administrador antes del refinamiento visual.
 
-La Figura~\ref{fig:interfaz_dashboard_guia_compra} recoge la guía de pipelines. Esta interfaz ayuda al usuario a comprender qué modelos de inteligencia artificial son necesarios para desbloquear cada pipeline, mostrando tanto la secuencia técnica de ejecución como los motores requeridos.
+La Figura~\ref{fig:interfaz_admin_usuarios} muestra la gestión inicial de usuarios.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_guia_compra.png}
-	\caption{Interfaz de guía de pipelines y modelos necesarios}
-	\label{fig:interfaz_dashboard_guia_compra}
-\end{figure}
+\capturaInterfaz{0.70}
+{img/interfaces_basicas/interfaz_admin_usuarios.png}
+{Gestión inicial de usuarios}
+{Interfaz administrativa inicial de gestión de usuarios}
+{fig:interfaz_admin_usuarios}
 
-La Figura~\ref{fig:interfaz_dashboard_mis_compras} muestra la pantalla de suscripciones y alquileres del usuario. En ella se presenta el plan activo y los motores de inteligencia artificial contratados, junto con sus fechas de disponibilidad y vencimiento.
+La Figura~\ref{fig:interfaz_admin_actividad} muestra la primera versión de la actividad global del sistema.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_mis_compras.png}
-	\caption{Interfaz de suscripciones y alquileres activos}
-	\label{fig:interfaz_dashboard_mis_compras}
-\end{figure}
+\capturaInterfaz{0.70}
+{img/interfaces_basicas/interfaz_admin_actividad.png}
+{Actividad global inicial}
+{Interfaz administrativa inicial de actividad global}
+{fig:interfaz_admin_actividad}
 
-La Figura~\ref{fig:interfaz_dashboard_perfil} muestra la pantalla de perfil. Esta interfaz permite consultar la información principal de la cuenta, editar el nombre visible, cambiar la contraseña y solicitar la eliminación de la cuenta desde una zona claramente diferenciada.
+La Figura~\ref{fig:interfaz_admin_pipelines} muestra la administración inicial de pipelines. Esta pantalla ya permitía validar la creación, edición, deshabilitación o eliminación de pipelines desde la aplicación.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_perfil.png}
-	\caption{Interfaz de consulta y edición del perfil de usuario}
-	\label{fig:interfaz_dashboard_perfil}
-\end{figure}
+\capturaInterfaz{0.70}
+{img/interfaces_basicas/interfaz_admin_pipelines.png}
+{Administración inicial de pipelines}
+{Interfaz administrativa inicial de gestión de pipelines}
+{fig:interfaz_admin_pipelines}
 
-La Figura~\ref{fig:interfaz_dashboard_historial_ejecuciones} muestra el historial de ejecuciones. Esta pantalla permite consultar los análisis realizados, su fecha, el pipeline utilizado, el estado de la ejecución, la duración y la configuración personalizada aplicada cuando existe.
+\FloatBarrier
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_historial_ejecuciones.png}
-	\caption{Interfaz de historial de ejecuciones del usuario}
-	\label{fig:interfaz_dashboard_historial_ejecuciones}
-\end{figure}
-
-La Figura~\ref{fig:interfaz_dashboard_resultados_ejecucion} muestra la vista de resultados de una ejecución concreta. En esta pantalla se presenta la imagen original, las salidas generadas por cada etapa del pipeline, los botones de descarga y el acceso a los datos estructurados en formato JSON.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.82\textwidth]{img/interfaces_basicas/interfaz_dashboard_resultados_ejecucion.png}
-	\caption{Interfaz de visualización de resultados de una ejecución}
-	\label{fig:interfaz_dashboard_resultados_ejecucion}
-\end{figure}
-
-\subsubsection*{Interfaces de administración}
-
-Las interfaces de administración se han diseñado separadas del panel de usuario, de forma que las operaciones de supervisión y configuración del sistema queden restringidas a cuentas con rol administrador.
-
-La Figura~\ref{fig:interfaz_admin_usuarios} muestra la pantalla de gestión de usuarios. Desde ella el administrador puede consultar las cuentas registradas, sus correos, estados y roles, además de activar o desactivar cuentas cuando proceda.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_admin_usuarios.png}
-	\caption{Interfaz administrativa de gestión de usuarios}
-	\label{fig:interfaz_admin_usuarios}
-\end{figure}
-
-La Figura~\ref{fig:interfaz_admin_actividad} muestra la pantalla de actividad global. Esta interfaz permite al administrador consultar las ejecuciones realizadas en el sistema, incluyendo usuario, pipeline, fecha, estado y duración.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_admin_actividad.png}
-	\caption{Interfaz administrativa de actividad global}
-	\label{fig:interfaz_admin_actividad}
-\end{figure}
-
-La Figura~\ref{fig:interfaz_admin_pipelines} muestra la pantalla de administración de pipelines. Esta interfaz es especialmente relevante dentro del proyecto, ya que permite crear, editar, deshabilitar o eliminar pipelines desde la propia aplicación, seleccionando modelos, modos y etapas sin necesidad de modificar directamente el código fuente.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_admin_pipelines.png}
-	\caption{Interfaz administrativa de gestión de pipelines}
-	\label{fig:interfaz_admin_pipelines}
-\end{figure}
-
-\subsection{Síntesis del diseño de interfaces}
-
-En conjunto, el diseño de interfaces mantiene una separación clara entre las distintas zonas de la aplicación y se adapta a la arquitectura general del sistema. Las páginas públicas permiten acceder al sistema; el panel de usuario concentra el flujo principal de análisis de imágenes; las vistas de tienda y compras permiten gestionar el acceso a modelos y planes; el historial y la vista de resultados ofrecen trazabilidad de las ejecuciones; y el panel de administración permite supervisar usuarios, actividad y pipelines.
-
-Esta organización facilita el uso de la aplicación y refuerza la separación de responsabilidades definida en el resto del diseño. La interfaz no contiene la lógica de negocio principal, sino que actúa como punto de interacción con los controladores del backend. De esta manera, el sistema mantiene una estructura coherente, ampliable y preparada para incorporar futuras mejoras visuales o funcionales sin comprometer la organización técnica del proyecto.

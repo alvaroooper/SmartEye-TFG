@@ -2,30 +2,37 @@
 
 \section{Introducción}
 
-Este apéndice recoge los requisitos y casos de uso del sistema desarrollado. La aplicación se centra en permitir a usuarios autenticados acceder a una plataforma web de procesamiento de imágenes mediante modelos de inteligencia artificial, organizados en forma de \textit{pipelines} configurables.
+Este apéndice recoge la especificación de requisitos y los casos de uso principales del sistema desarrollado. La aplicación consiste en una plataforma web de procesamiento de imágenes mediante modelos de inteligencia artificial, organizados en forma de \emph{pipelines} configurables.
 
-El sistema contempla distintos perfiles de acceso: usuarios con plan Básico, usuarios con plan Pro y usuarios administradores. Los usuarios pueden seleccionar un pipeline disponible según sus permisos, subir una imagen, ejecutar el procesamiento, visualizar los resultados generados y acceder temporalmente a los archivos de salida. Además, la aplicación incorpora funcionalidades de gestión de cuenta, contratación de planes o modelos individuales, consulta de ejecuciones realizadas y administración básica del sistema.
+El sistema contempla distintos perfiles de acceso: usuarios no autenticados, usuarios registrados con plan Básico, usuarios con plan Pro y usuarios administradores. Los usuarios registrados pueden consultar los servicios disponibles, contratar planes o modelos individuales, seleccionar un pipeline autorizado, modificar su configuración, subir una imagen, ejecutar el procesamiento, visualizar los resultados y acceder temporalmente a los archivos generados.
+
+Desde el punto de vista administrativo, la aplicación permite consultar usuarios, revisar ejecuciones globales y gestionar los pipelines disponibles sin modificar directamente el código fuente. Esta última funcionalidad resulta especialmente importante para la escalabilidad del sistema, ya que permite definir nuevos flujos de procesamiento combinando modelos y modos ya registrados.
+
+La especificación se divide en tres partes: objetivos generales, catálogo de requisitos funcionales y no funcionales, y descripción detallada de los casos de uso.
+
+\section{Objetivos generales}
 
 Los objetivos generales del sistema son los siguientes:
-\section{Objetivos generales}
+
 \begin{itemize}
 	\item Permitir el acceso de usuarios autenticados a una plataforma web de procesamiento de imágenes mediante modelos de inteligencia artificial.
-	\item Diferenciar entre usuarios de diferentes planes y usuarios con rol de Administrador.
-	\item Ofrecer un flujo completo de uso: registro o inicio de sesión, consulta de servicios, selección de pipeline, configuración de la ejecución, subida de imagen, procesamiento, visualización de resultados y descarga temporal de archivos.
+	\item Diferenciar entre usuarios no autenticados, usuarios registrados y usuarios con rol de administrador.
 	\item Aplicar control de acceso en el servidor para impedir que un usuario ejecute pipelines que requieran modelos no contratados o no disponibles para su plan.
-	\item Permitir la contratación de planes y modelos individuales, diferenciando entre acceso completo mediante plan Pro y acceso concreto mediante alquiler de modelos.
-	\item Registrar las ejecuciones realizadas, manteniendo trazabilidad básica sobre el usuario, el pipeline ejecutado, el estado de la operación, la duración, los posibles errores y la configuración aplicada.
-	\item Gestionar los archivos generados como recursos temporales, evitando su conservación indefinida y controlando su acceso mediante identificadores de descarga.
+	\item Ofrecer un flujo completo de uso: registro o inicio de sesión, consulta de servicios, selección de pipeline, configuración de la ejecución, subida de imagen, procesamiento, visualización de resultados y descarga temporal de archivos.
+	\item Permitir la contratación simulada de planes y modelos individuales, diferenciando entre acceso completo mediante plan Pro y acceso concreto mediante alquiler de modelos.
+	\item Registrar las ejecuciones realizadas, manteniendo trazabilidad básica sobre usuario, pipeline ejecutado, estado de la operación, duración, errores y configuración aplicada.
+	\item Gestionar los archivos generados como recursos temporales, evitando su conservación indefinida y controlando su acceso mediante tokens de descarga.
 	\item Facilitar la administración del sistema mediante un panel específico para revisar usuarios, estados, ejecuciones y pipelines.
-	\item Diseñar una base funcional ampliable, de forma que puedan añadirse nuevos modelos, modos o pipelines sin rehacer la estructura general de la aplicación.
+	\item Diseñar una base funcional ampliable, de forma que puedan añadirse nuevos modelos, modos o pipelines con cambios reducidos sobre la estructura general de la aplicación.
 \end{itemize}
 
 \section{Catálogo de requisitos}
 
-\subsection{Requisitos funcionales (MVP)}
+\subsection{Requisitos funcionales}
 
 \textbf{RF-1 Gestión de cuentas de usuario}\\
 La aplicación debe permitir la creación, acceso, modificación y baja lógica de cuentas de usuario.
+
 \begin{itemize}
 	\item RF-1.1 Registrar un nuevo usuario.
 	\item RF-1.2 Iniciar sesión mediante credenciales válidas.
@@ -38,16 +45,18 @@ La aplicación debe permitir la creación, acceso, modificación y baja lógica 
 
 \textbf{RF-2 Autenticación, roles y permisos}\\
 La aplicación debe proteger las operaciones principales mediante autenticación y aplicar permisos según el rol y el estado del usuario.
+
 \begin{itemize}
 	\item RF-2.1 Generar un token de acceso tras un inicio de sesión correcto.
 	\item RF-2.2 Proteger las rutas privadas para impedir accesos no autenticados.
 	\item RF-2.3 Distinguir entre usuario normal y usuario administrador.
 	\item RF-2.4 Impedir el acceso a cuentas suspendidas o dadas de baja.
-	\item RF-2.5 Restringir las acciones administrativas a usuarios con rol de Administrador.
+	\item RF-2.5 Restringir las acciones administrativas a usuarios con rol de administrador.
 \end{itemize}
 
 \textbf{RF-3 Planes, suscripciones y contratación individual}\\
 La aplicación debe permitir consultar y contratar servicios que determinan el acceso a modelos y pipelines.
+
 \begin{itemize}
 	\item RF-3.1 Consultar los planes disponibles.
 	\item RF-3.2 Suscribirse a un plan.
@@ -60,6 +69,7 @@ La aplicación debe permitir consultar y contratar servicios que determinan el a
 
 \textbf{RF-4 Catálogo de modelos, modos y pipelines}\\
 La aplicación debe ofrecer al usuario un catálogo de pipelines ejecutables según los modelos disponibles para su cuenta.
+
 \begin{itemize}
 	\item RF-4.1 Registrar modelos de IA disponibles en el sistema.
 	\item RF-4.2 Asociar a cada modelo distintos modos de ejecución.
@@ -71,6 +81,7 @@ La aplicación debe ofrecer al usuario un catálogo de pipelines ejecutables seg
 
 \textbf{RF-5 Configuración de pipelines}\\
 La aplicación debe permitir ejecutar pipelines con una configuración predeterminada y, cuando sea necesario, modificar parámetros antes del procesamiento.
+
 \begin{itemize}
 	\item RF-5.1 Consultar la configuración predeterminada de un pipeline.
 	\item RF-5.2 Mostrar la configuración de forma editable en la interfaz.
@@ -81,6 +92,7 @@ La aplicación debe permitir ejecutar pipelines con una configuración predeterm
 
 \textbf{RF-6 Procesamiento de imágenes mediante pipelines}\\
 La aplicación debe ejecutar el procesamiento de una imagen siguiendo las etapas del pipeline seleccionado.
+
 \begin{itemize}
 	\item RF-6.1 Subir una imagen desde el panel principal.
 	\item RF-6.2 Validar el archivo recibido antes de procesarlo.
@@ -92,7 +104,8 @@ La aplicación debe ejecutar el procesamiento de una imagen siguiendo las etapas
 \end{itemize}
 
 \textbf{RF-7 Visualización y descarga de resultados}\\
-La aplicación debe mostrar los resultados de una ejecución de forma visual además de  permitir su descarga mientras estén disponibles.
+La aplicación debe mostrar los resultados de una ejecución de forma visual y permitir su descarga mientras estén disponibles.
+
 \begin{itemize}
 	\item RF-7.1 Mostrar las imágenes generadas por cada etapa del pipeline.
 	\item RF-7.2 Mostrar los datos JSON asociados a cada etapa.
@@ -103,6 +116,7 @@ La aplicación debe mostrar los resultados de una ejecución de forma visual ade
 
 \textbf{RF-8 Historial de ejecuciones}\\
 La aplicación debe permitir al usuario consultar las ejecuciones realizadas desde su cuenta.
+
 \begin{itemize}
 	\item RF-8.1 Consultar el historial de ejecuciones del usuario autenticado.
 	\item RF-8.2 Mostrar el pipeline ejecutado, fecha, estado, duración y posibles errores.
@@ -113,6 +127,7 @@ La aplicación debe permitir al usuario consultar las ejecuciones realizadas des
 
 \textbf{RF-9 Gestión de archivos temporales}\\
 La aplicación debe gestionar los archivos de entrada, salida e intermedios como recursos temporales asociados a una ejecución.
+
 \begin{itemize}
 	\item RF-9.1 Registrar los archivos temporales asociados a una ejecución.
 	\item RF-9.2 Asociar tokens de descarga a los archivos que deban ser accesibles desde la interfaz.
@@ -123,6 +138,7 @@ La aplicación debe gestionar los archivos de entrada, salida e intermedios como
 
 \textbf{RF-10 Administración de usuarios}\\
 La aplicación debe permitir al administrador consultar y gestionar el estado de las cuentas de usuario.
+
 \begin{itemize}
 	\item RF-10.1 Acceder a un panel de administración.
 	\item RF-10.2 Consultar el listado de usuarios.
@@ -133,6 +149,7 @@ La aplicación debe permitir al administrador consultar y gestionar el estado de
 
 \textbf{RF-11 Administración de pipelines}\\
 La aplicación debe permitir al administrador gestionar los pipelines disponibles en el sistema sin modificar directamente el código fuente.
+
 \begin{itemize}
 	\item RF-11.1 Consultar los pipelines existentes.
 	\item RF-11.2 Crear nuevos pipelines.
@@ -140,10 +157,13 @@ La aplicación debe permitir al administrador gestionar los pipelines disponible
 	\item RF-11.4 Modificar la información y composición de un pipeline.
 	\item RF-11.5 Deshabilitar o eliminar pipelines cuando sea posible.
 	\item RF-11.6 Evitar la eliminación física de pipelines con ejecuciones asociadas, conservando la coherencia del historial.
+	\item RF-11.7 Consultar el catálogo técnico de modelos y modos disponibles para definir etapas.
+	\item RF-11.8 Validar que cada etapa utilice un modo perteneciente al modelo seleccionado y que ambos estén habilitados.
 \end{itemize}
 
 \textbf{RF-12 Auditoría y mantenimiento del sistema}\\
 La aplicación debe incorporar funciones de revisión y mantenimiento que permitan conservar un estado coherente.
+
 \begin{itemize}
 	\item RF-12.1 Consultar ejecuciones globales desde el panel de administración.
 	\item RF-12.2 Renovar servicios activos cuando tengan renovación automática.
@@ -154,6 +174,7 @@ La aplicación debe incorporar funciones de revisión y mantenimiento que permit
 
 \textbf{RF-13 Interfaz web}\\
 La aplicación debe disponer de una interfaz web que permita utilizar las funciones principales sin acceder directamente a la API.
+
 \begin{itemize}
 	\item RF-13.1 Disponer de página pública de inicio.
 	\item RF-13.2 Disponer de pantallas de registro e inicio de sesión.
@@ -165,588 +186,278 @@ La aplicación debe disponer de una interfaz web que permita utilizar las funcio
 	\item RF-13.8 Disponer de panel de administración.
 \end{itemize}
 
-\subsection{Requisitos no funcionales (MVP)}
+\subsection{Requisitos no funcionales}
 
+Los requisitos no funcionales establecen las condiciones de calidad que debe cumplir el sistema, complementando a los requisitos funcionales descritos anteriormente.
 
-\textbf{RNF-1 Usabilidad}\\
-La interfaz debe ser clara y permitir que un usuario pueda ejecutar el flujo principal sin conocer la estructura interna del sistema.
-
-\textbf{RNF-2 Seguridad}\\
-Las operaciones privadas deben requerir autenticación y el servidor debe verificar los permisos antes de ejecutar acciones sensibles.
-
-\textbf{RNF-3 Privacidad}\\
-Las imágenes y resultados generados deben tratarse como recursos temporales, evitando su almacenamiento indefinido y controlando el acceso mediante tokens.
-
-\textbf{RNF-4 Rendimiento}\\
-El procesamiento debe ejecutarse en tiempos razonables para imágenes de tamaño habitual, evitando operaciones innecesarias cuando el usuario no tenga permisos o el archivo no sea válido.
-
-\textbf{RNF-5 Mantenibilidad}\\
-El sistema debe organizarse de forma modular, separando controladores, modelos, servicios, plantillas y lógica específica de inteligencia artificial.
-
-\textbf{RNF-6 Escalabilidad funcional}\\
-La arquitectura debe permitir añadir nuevos modelos, modos y pipelines con cambios reducidos sobre la estructura existente.
-
-\textbf{RNF-7 Trazabilidad}\\
-El sistema debe conservar información básica sobre ejecuciones y cambios relevantes, de forma que sea posible reconstruir el uso principal de la aplicación.
-
-\textbf{RNF-8 Portabilidad}\\
-La aplicación debe poder ejecutarse en un entorno de desarrollo o despliegue documentado, con configuración centralizada y dependencias identificadas.
-
-\textbf{RNF-9 Robustez}\\
-El sistema debe responder de forma controlada ante errores de entrada, configuraciones incorrectas, archivos no válidos, servicios caducados o fallos internos.
-
-\textbf{RNF-10 Comprobabilidad}\\
-Las partes principales del sistema deben poder verificarse mediante pruebas automatizadas, especialmente autenticación, permisos, tienda, ejecución de pipelines y procesamiento de imágenes.
+\begingroup
+\small
+\begin{itemize}
+	\setlength{\itemsep}{0.35em}
+	\setlength{\parsep}{0pt}
+	
+	\item \textbf{RNF-1 Usabilidad.} La interfaz debe ser clara, comprensible y permitir ejecutar el flujo principal sin que el usuario conozca la estructura interna del sistema.
+	
+	\item \textbf{RNF-2 Seguridad.} Las operaciones privadas deben requerir autenticación y el servidor debe validar permisos antes de ejecutar acciones sensibles.
+	
+	\item \textbf{RNF-3 Privacidad.} Las imágenes y resultados deben tratarse como recursos temporales, evitando su conservación indefinida y controlando el acceso mediante tokens.
+	
+	\item \textbf{RNF-4 Rendimiento.} El sistema debe evitar procesamientos innecesarios cuando el archivo no sea válido o el usuario no tenga permisos.
+	
+	\item \textbf{RNF-5 Mantenibilidad.} El código debe organizarse de forma modular, separando controladores, modelos, servicios, plantillas y lógica específica de IA.
+	
+	\item \textbf{RNF-6 Escalabilidad funcional.} La arquitectura debe permitir añadir nuevos modelos, modos y pipelines con cambios reducidos sobre la estructura existente.
+	
+	\item \textbf{RNF-7 Trazabilidad.} El sistema debe conservar información básica de ejecuciones, estados y errores para poder revisar el uso principal de la aplicación.
+	
+	\item \textbf{RNF-8 Portabilidad.} La aplicación debe poder ejecutarse en un entorno documentado, con configuración centralizada y dependencias identificadas.
+	
+	\item \textbf{RNF-9 Robustez.} El sistema debe responder de forma controlada ante entradas no válidas, configuraciones incorrectas, archivos caducados o fallos internos.
+	
+	\item \textbf{RNF-10 Comprobabilidad.} Las partes principales deben poder verificarse mediante pruebas automatizadas, especialmente autenticación, permisos, tienda, pipelines y modelos de IA.
+\end{itemize}
+\endgroup
 
 \section{Especificación de requisitos}
 
-En esta sección se recogen los casos de uso principales del sistema. Con el fin de ofrecer una visión general previa a su descripción detallada, en la Figura~\ref{fig:diagrama_casos_uso} se muestra el diagrama de casos de uso de la aplicación. Este diagrama permite identificar de forma visual los actores que intervienen en el sistema y las funcionalidades más relevantes asociadas a cada uno de ellos.
+En esta sección se recogen los casos de uso principales del sistema. Antes de describirlos individualmente, la Figura~\ref{fig:diagrama_casos_uso} muestra una visión general de los actores y funcionalidades más relevantes de la aplicación.
 
-\begin{figure}[h!]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.95\textwidth]{img/diagrama_casos_uso.png}
-	\caption{Diagrama de casos de uso del sistema}
+	\caption[Diagrama de casos de uso del sistema]{Diagrama de casos de uso del sistema.}
 	\label{fig:diagrama_casos_uso}
 \end{figure}
 
-El diagrama diferencia cuatro actores principales: el usuario no autenticado, el usuario registrado, el administrador y las tareas programadas del sistema. El usuario no autenticado puede registrarse e iniciar sesión. Una vez autenticado, el usuario registrado puede gestionar su cuenta, consultar los servicios disponibles, contratar planes o modelos de inteligencia artificial, ejecutar pipelines sobre imágenes, visualizar resultados y consultar su historial de ejecuciones.
+El diagrama diferencia cuatro actores: usuario no autenticado, usuario registrado, administrador y sistema. El usuario no autenticado puede registrarse e iniciar sesión. El usuario registrado puede gestionar su cuenta, contratar servicios, consultar pipelines disponibles, ejecutar análisis sobre imágenes, visualizar resultados y consultar su historial. El administrador dispone de funciones de gestión de usuarios, pipelines y ejecuciones globales. Por último, el sistema representa las tareas automáticas de mantenimiento, como la limpieza de archivos temporales, renovación o desactivación de servicios y anonimización de cuentas dadas de baja.
 
-Por otro lado, el administrador dispone de funcionalidades específicas de gestión, entre las que se encuentran la administración de usuarios, la gestión de pipelines y la consulta global de ejecuciones. Finalmente, el actor correspondiente a las tareas programadas representa los procesos automáticos de mantenimiento, encargados de depurar archivos temporales caducados y revisar la renovación o desactivación de servicios.
+A partir de esta visión general, se detallan a continuación los casos de uso identificados. Para cada uno de ellos se resume el actor principal, los requisitos asociados, la finalidad del caso de uso, sus precondiciones, el flujo principal, el resultado esperado y las posibles excepciones.
 
-A continuación, se describen de forma individual los casos de uso principales del sistema..
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-1} & \textbf{Registrarse}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario no autenticado\\
-		\textbf{Requisitos asociados} & RF-1.1, RF-13.2 \\
-		\textbf{Descripción} & Creación de una cuenta de usuario para acceder a las funciones privadas de la aplicación. \\
-		\textbf{Precondición} & El usuario no dispone de una cuenta registrada con el mismo correo o nombre de usuario. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede a la pantalla de registro.
-			\item Introduce nombre de usuario, correo, contraseña y datos requeridos.
-			\item El sistema valida que los campos sean correctos.
-			\item El sistema comprueba que no exista una cuenta con los mismos datos únicos.
-			\item El sistema crea la cuenta y asigna el rol de usuario.
-			\item El sistema informa de que el registro se ha completado correctamente.
-		\end{enumerate}\\
-		\textbf{Postcondición} & La cuenta queda creada y puede utilizarse para iniciar sesión. \\
-		\textbf{Excepciones} & Correo duplicado, nombre de usuario duplicado, contraseña no válida o datos incompletos. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-1 Registrarse.}
-\end{table}
+% Formato compacto para los casos de uso.
+% Se usa xtabular para permitir división entre páginas y evitar espacios en blanco innecesarios.
+\newenvironment{casouso}[2]{%
+	\begingroup
+	\small
+	\renewcommand{\arraystretch}{1.08}
+	\def\cuLabel{#2}
+	\begin{center}
+		\bottomcaption{#1.}
+		\begin{xtabular}{@{}p{0.22\linewidth}p{0.70\linewidth}@{}}
+			\toprule
+		}{%
+			\bottomrule
+		\end{xtabular}
+		\label{tabla:\cuLabel}
+	\end{center}
+	\endgroup
+}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-2} & \textbf{Iniciar sesión}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-1.2, RF-2.1, RF-2.2, RF-13.2 \\
-		\textbf{Descripción} & Acceso del usuario a la aplicación mediante credenciales válidas. \\
-		\textbf{Precondición} & El usuario dispone de una cuenta activa. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede a la pantalla de inicio de sesión.
-			\item Introduce su identificador y contraseña.
-			\item El sistema valida las credenciales.
-			\item El sistema comprueba que la cuenta esté activa.
-			\item El sistema genera el token de acceso y guarda la información necesaria para la sesión.
-			\item El usuario accede al panel correspondiente según su rol.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario queda autenticado en el sistema. \\
-		\textbf{Excepciones} & Credenciales incorrectas, usuario inexistente o cuenta suspendida. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-2 Iniciar sesión.}
-\end{table}
+\begin{casouso}{CU-1 Registrarse}{cu1}
+	\textbf{Actor} & Usuario no autenticado. \\
+	\textbf{RF} & RF-1.1, RF-13.2. \\
+	\textbf{Descripción} & Creación de una cuenta para acceder a las funciones privadas de la aplicación. \\
+	\textbf{Precondición} & No existe una cuenta con el mismo correo o nombre de usuario. \\
+	\textbf{Flujo principal} & El usuario accede al registro, introduce sus datos, el sistema valida los campos, comprueba duplicados, crea la cuenta y asigna el rol de usuario. \\
+	\textbf{Resultado} & La cuenta queda creada y puede utilizarse para iniciar sesión. \\
+	\textbf{Excepciones} & Correo duplicado, nombre de usuario duplicado, contraseña no válida o datos incompletos. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-3} & \textbf{Gestionar perfil}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-1.4, RF-1.5, RF-1.6, RF-13.4 \\
-		\textbf{Descripción} & Consulta y modificación de los datos básicos de la cuenta. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede a la página de perfil.
-			\item El sistema muestra los datos asociados a la cuenta.
-			\item El usuario modifica los campos permitidos.
-			\item Si desea cambiar la contraseña, introduce también la contraseña actual.
-			\item El sistema valida los datos y aplica los cambios.
-			\item El sistema informa del resultado de la operación.
-		\end{enumerate}\\
-		\textbf{Postcondición} & Los datos de la cuenta quedan actualizados. \\
-		\textbf{Excepciones} & Contraseña actual incorrecta, nueva contraseña no válida o error de persistencia. \\
-		\textbf{Importancia} & Media \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-3 Gestionar perfil.}
-\end{table}
+\begin{casouso}{CU-2 Iniciar sesión}{cu2}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-1.2, RF-2.1, RF-2.2, RF-13.2. \\
+	\textbf{Descripción} & Acceso a la aplicación mediante credenciales válidas. \\
+	\textbf{Precondición} & El usuario dispone de una cuenta activa. \\
+	\textbf{Flujo principal} & El usuario introduce sus credenciales, el sistema las valida, comprueba el estado de la cuenta, genera el token de acceso y redirige al panel correspondiente. \\
+	\textbf{Resultado} & El usuario queda autenticado en el sistema. \\
+	\textbf{Excepciones} & Credenciales incorrectas, usuario inexistente o cuenta suspendida. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-4} & \textbf{Solicitar baja de cuenta}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-1.7, RF-12.4 \\
-		\textbf{Descripción} & Baja lógica de una cuenta de usuario y desactivación de sus servicios activos. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario solicita la baja de su cuenta.
-			\item El sistema localiza la cuenta autenticada.
-			\item El sistema marca la cuenta como borrada.
-			\item El sistema desactiva sus suscripciones y alquileres activos.
-			\item El sistema registra la fecha de baja para su posterior tratamiento.
-		\end{enumerate}\\
-		\textbf{Postcondición} & La cuenta queda dada de baja y sus servicios dejan de estar activos. \\
-		\textbf{Excepciones} & Identidad no localizada o error al aplicar la baja. \\
-		\textbf{Importancia} & Media \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-4 Solicitar baja de cuenta.}
-\end{table}
+\begin{casouso}{CU-3 Gestionar perfil}{cu3}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-1.4, RF-1.5, RF-1.6, RF-13.4. \\
+	\textbf{Descripción} & Consulta y modificación de los datos básicos de la cuenta. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión. \\
+	\textbf{Flujo principal} & El usuario accede al perfil, consulta sus datos, modifica los campos permitidos y el sistema valida y guarda los cambios. Si cambia la contraseña, debe indicar la contraseña actual. \\
+	\textbf{Resultado} & Los datos de la cuenta quedan actualizados. \\
+	\textbf{Excepciones} & Contraseña actual incorrecta, nueva contraseña no válida o error de persistencia. \\
+	\textbf{Importancia} & Media. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-5} & \textbf{Consultar tienda de servicios}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-3.1, RF-3.3, RF-13.5 \\
-		\textbf{Descripción} & Consulta de planes y modelos disponibles para contratación. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede a la tienda.
-			\item El sistema consulta los planes disponibles.
-			\item El sistema consulta los modelos de IA habilitados.
-			\item El sistema muestra el estado de cada servicio respecto al usuario.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario puede decidir qué plan o modelo contratar. \\
-		\textbf{Excepciones} & Error al recuperar el catálogo de servicios. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-5 Consultar tienda de servicios.}
-\end{table}
+\begin{casouso}{CU-4 Solicitar baja de cuenta}{cu4}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-1.7, RF-12.4. \\
+	\textbf{Descripción} & Baja lógica de una cuenta y desactivación de sus servicios activos. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión. \\
+	\textbf{Flujo principal} & El usuario solicita la baja, el sistema localiza la cuenta, la marca como borrada, desactiva sus servicios activos y registra la fecha de baja. \\
+	\textbf{Resultado} & La cuenta queda dada de baja y sus servicios dejan de estar activos. \\
+	\textbf{Excepciones} & Identidad no localizada o error al aplicar la baja. \\
+	\textbf{Importancia} & Media. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-6} & \textbf{Suscribirse a un plan}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-3.2, RF-3.6, RF-3.7 \\
-		\textbf{Descripción} & Contratación de un plan de servicio, como el plan Pro, para ampliar el acceso a modelos y pipelines. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión y el plan está disponible. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario selecciona un plan.
-			\item El sistema comprueba que el plan existe y está habilitado.
-			\item El usuario confirma la suscripción.
-			\item El sistema registra la suscripción y sus fechas de vigencia.
-			\item El sistema actualiza el estado de acceso del usuario.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario dispone del plan contratado. \\
-		\textbf{Excepciones} & Plan inexistente, plan no disponible o error al registrar la suscripción. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-6 Suscribirse a un plan.}
-\end{table}
+\begin{casouso}{CU-5 Consultar tienda de servicios}{cu5}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-3.1, RF-3.3, RF-13.5. \\
+	\textbf{Descripción} & Consulta de planes y modelos disponibles para contratación. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión. \\
+	\textbf{Flujo principal} & El usuario accede a la tienda, el sistema recupera los planes y modelos habilitados y muestra el estado de cada servicio respecto al usuario. \\
+	\textbf{Resultado} & El usuario puede decidir qué plan o modelo contratar. \\
+	\textbf{Excepciones} & Error al recuperar el catálogo de servicios. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-7} & \textbf{Alquilar un modelo de IA}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-3.3, RF-3.4, RF-3.6, RF-3.7 \\
-		\textbf{Descripción} & Contratación individual de un modelo de IA para permitir la ejecución de pipelines que dependan de él. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión y el modelo está habilitado. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario selecciona un modelo de IA disponible.
-			\item El sistema comprueba que el modelo existe y está habilitado.
-			\item El sistema comprueba si el usuario ya tiene un acceso activo.
-			\item El usuario confirma la contratación.
-			\item El sistema registra el alquiler y su periodo de vigencia.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario puede acceder a pipelines que utilicen el modelo contratado, siempre que se cumplan el resto de condiciones. \\
-		\textbf{Excepciones} & Modelo inexistente, modelo ya contratado, fecha inválida o error al registrar la operación. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-7 Alquilar un modelo de IA.}
-\end{table}
+\begin{casouso}{CU-6 Suscribirse a un plan}{cu6}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-3.2, RF-3.6, RF-3.7. \\
+	\textbf{Descripción} & Contratación de un plan de servicio para ampliar el acceso a modelos y pipelines. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión y el plan está disponible. \\
+	\textbf{Flujo principal} & El usuario selecciona un plan, el sistema comprueba su disponibilidad, registra la suscripción, define su vigencia y actualiza los permisos de acceso. \\
+	\textbf{Resultado} & El usuario dispone del plan contratado. \\
+	\textbf{Excepciones} & Plan inexistente, plan no disponible o error al registrar la suscripción. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-8} & \textbf{Consultar compras y servicios activos}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-3.5, RF-3.6, RF-3.7, RF-13.5 \\
-		\textbf{Descripción} & Consulta de planes, alquileres y servicios activos o programados del usuario. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede a la página de compras.
-			\item El sistema recupera sus suscripciones y alquileres.
-			\item El sistema muestra fechas, estado y renovación automática.
-			\item El usuario puede modificar opciones permitidas, como renovación o activación inmediata.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario conoce el estado de sus servicios. \\
-		\textbf{Excepciones} & Error al recuperar la información o intento de modificar un servicio inexistente. \\
-		\textbf{Importancia} & Media Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-8 Consultar compras y servicios activos.}
-\end{table}
+\begin{casouso}{CU-7 Alquilar un modelo de IA}{cu7}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-3.3, RF-3.4, RF-3.6, RF-3.7. \\
+	\textbf{Descripción} & Contratación individual de un modelo de IA para ejecutar pipelines que dependan de él. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión y el modelo está habilitado. \\
+	\textbf{Flujo principal} & El usuario selecciona un modelo, el sistema comprueba que exista, que esté habilitado y que no exista ya un acceso activo, y registra el alquiler con su periodo de vigencia. \\
+	\textbf{Resultado} & El usuario puede acceder a pipelines que utilicen el modelo contratado. \\
+	\textbf{Excepciones} & Modelo inexistente, modelo ya contratado, fecha inválida o error de registro. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-9} & \textbf{Consultar guía de compra}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-4.6, RF-13.6 \\
-		\textbf{Descripción} & Consulta orientativa de qué modelos o planes son necesarios para ejecutar los pipelines disponibles. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede a la guía de compra.
-			\item El sistema obtiene los pipelines y sus modelos requeridos.
-			\item El sistema indica qué requisitos cumple ya el usuario.
-			\item El sistema muestra qué modelos o planes debería contratar para ampliar su acceso.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario dispone de información para decidir qué servicio contratar. \\
-		\textbf{Excepciones} & No existen pipelines disponibles o se produce un error al calcular dependencias. \\
-		\textbf{Importancia} & Media \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-9 Consultar guía de compra.}
-\end{table}
+\begin{casouso}{CU-8 Consultar compras y servicios activos}{cu8}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-3.5, RF-3.6, RF-3.7, RF-13.5. \\
+	\textbf{Descripción} & Consulta de planes, alquileres y servicios activos o programados. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión. \\
+	\textbf{Flujo principal} & El usuario accede a sus compras, el sistema recupera sus suscripciones y alquileres, muestra fechas, estado y renovación automática, y permite modificar las opciones admitidas. \\
+	\textbf{Resultado} & El usuario conoce el estado de sus servicios. \\
+	\textbf{Excepciones} & Error al recuperar la información o intento de modificar un servicio inexistente. \\
+	\textbf{Importancia} & Media-alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-10} & \textbf{Consultar pipelines disponibles}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-4.3, RF-4.4, RF-4.5, RF-13.3 \\
-		\textbf{Descripción} & Obtención de los pipelines que el usuario puede ejecutar según su rol, plan y modelos contratados. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede al panel principal.
-			\item El sistema identifica al usuario autenticado.
-			\item El sistema revisa su plan y sus modelos contratados.
-			\item El sistema obtiene los pipelines compatibles.
-			\item La interfaz muestra únicamente los pipelines ejecutables.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario puede seleccionar un pipeline permitido. \\
-		\textbf{Excepciones} & Si no hay pipelines disponibles, se muestra un aviso y se deshabilita la ejecución. \\
-		\textbf{Importancia} & Muy alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-10 Consultar pipelines disponibles.}
-\end{table}
+\begin{casouso}{CU-9 Consultar guía de compra}{cu9}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-4.6, RF-13.6. \\
+	\textbf{Descripción} & Consulta orientativa de los modelos o planes necesarios para ejecutar cada pipeline. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión. \\
+	\textbf{Flujo principal} & El usuario accede a la guía, el sistema obtiene los pipelines y sus modelos requeridos, indica qué requisitos cumple el usuario y qué servicios tendría que contratar. \\
+	\textbf{Resultado} & El usuario dispone de información para decidir qué servicio contratar. \\
+	\textbf{Excepciones} & No existen pipelines disponibles o se produce un error al calcular dependencias. \\
+	\textbf{Importancia} & Media. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-11} & \textbf{Cargar y modificar configuración del pipeline}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-5.1, RF-5.2, RF-5.3, RF-5.4, RF-5.5 \\
-		\textbf{Descripción} & Consulta de la configuración predeterminada de un pipeline y posible modificación antes de ejecutarlo. \\
-		\textbf{Precondición} & El usuario ha seleccionado un pipeline permitido. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario pulsa la opción de cargar configuración.
-			\item El sistema recupera la configuración predeterminada de las etapas.
-			\item La interfaz muestra la configuración en formato editable.
-			\item El usuario modifica los parámetros que considere necesarios.
-			\item El sistema validará la configuración al lanzar la ejecución.
-		\end{enumerate}\\
-		\textbf{Postcondición} & La configuración queda preparada para utilizarse en la ejecución. \\
-		\textbf{Excepciones} & Configuración no encontrada, formato JSON incorrecto o pipeline no permitido. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-11 Cargar y modificar configuración del pipeline.}
-\end{table}
+\begin{casouso}{CU-10 Consultar pipelines disponibles}{cu10}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-4.3, RF-4.4, RF-4.5, RF-13.3. \\
+	\textbf{Descripción} & Obtención de los pipelines ejecutables según rol, plan y modelos contratados. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión. \\
+	\textbf{Flujo principal} & El usuario accede al panel principal, el sistema identifica su cuenta, revisa sus permisos y muestra únicamente los pipelines que puede ejecutar. \\
+	\textbf{Resultado} & El usuario puede seleccionar un pipeline permitido. \\
+	\textbf{Excepciones} & Si no hay pipelines disponibles, se muestra un aviso y se deshabilita la ejecución. \\
+	\textbf{Importancia} & Muy alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-12} & \textbf{Ejecutar pipeline sobre una imagen}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-6.1, RF-6.2, RF-6.3, RF-6.4, RF-6.5, RF-6.6, RF-6.7 \\
-		\textbf{Descripción} & Flujo principal de procesamiento: el usuario sube una imagen, selecciona un pipeline y obtiene resultados generados por sus etapas. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión y dispone de acceso al pipeline seleccionado. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario selecciona un pipeline disponible.
-			\item El usuario adjunta una imagen.
-			\item Opcionalmente, el usuario ajusta la configuración.
-			\item El usuario pulsa la opción de ejecutar análisis.
-			\item El sistema valida la imagen y la configuración.
-			\item El sistema comprueba los permisos del usuario.
-			\item El sistema ejecuta las etapas del pipeline.
-			\item El sistema registra la ejecución y sus resultados.
-			\item El sistema devuelve los resultados a la interfaz.
-		\end{enumerate}\\
-		\textbf{Postcondición} & La ejecución queda registrada y el usuario puede visualizar los resultados generados. \\
-		\textbf{Excepciones} & Archivo inválido, pipeline no permitido, configuración incorrecta, error de procesamiento o ausencia de resultados útiles. \\
-		\textbf{Importancia} & Muy alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-12 Ejecutar pipeline sobre una imagen.}
-\end{table}
+\begin{casouso}{CU-11 Cargar y modificar configuración del pipeline}{cu11}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-5.1, RF-5.2, RF-5.3, RF-5.4, RF-5.5. \\
+	\textbf{Descripción} & Consulta y edición de la configuración de ejecución de un pipeline. \\
+	\textbf{Precondición} & El usuario ha seleccionado un pipeline permitido. \\
+	\textbf{Flujo principal} & El usuario solicita la configuración, el sistema recupera la configuración predeterminada de las etapas, la interfaz la muestra en formato editable y el usuario puede modificarla antes de ejecutar. \\
+	\textbf{Resultado} & La configuración queda preparada para utilizarse en la ejecución. \\
+	\textbf{Excepciones} & Configuración no encontrada, JSON incorrecto o pipeline no permitido. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-13} & \textbf{Visualizar y descargar resultados}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-7.1, RF-7.2, RF-7.3, RF-7.4, RF-7.5, RF-9.2 \\
-		\textbf{Descripción} & Visualización de imágenes y datos generados por una ejecución, con posibilidad de descarga temporal. \\
-		\textbf{Precondición} & Existe una ejecución completada con archivos disponibles. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El sistema muestra las etapas ejecutadas.
-			\item El sistema muestra las imágenes generadas por cada etapa.
-			\item El usuario puede desplegar los datos JSON.
-			\item El usuario puede descargar imágenes o archivos JSON.
-			\item El sistema resuelve la descarga mediante el token temporal correspondiente.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario visualiza o descarga los resultados mientras estén disponibles. \\
-		\textbf{Excepciones} & Archivo caducado, token inválido, archivo eliminado físicamente o acceso no autorizado. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-13 Visualizar y descargar resultados.}
-\end{table}
+\begin{casouso}{CU-12 Ejecutar pipeline sobre una imagen}{cu12}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-6.1, RF-6.2, RF-6.3, RF-6.4, RF-6.5, RF-6.6, RF-6.7. \\
+	\textbf{Descripción} & Flujo principal de procesamiento de una imagen mediante un pipeline. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión y tiene acceso al pipeline seleccionado. \\
+	\textbf{Flujo principal} & El usuario selecciona un pipeline, adjunta una imagen, ajusta opcionalmente la configuración y lanza el análisis. El sistema valida imagen, configuración y permisos, ejecuta las etapas, registra la ejecución y devuelve los resultados. \\
+	\textbf{Resultado} & La ejecución queda registrada y el usuario puede visualizar los resultados generados. \\
+	\textbf{Excepciones} & Archivo inválido, pipeline no permitido, configuración incorrecta, error de procesamiento o ausencia de resultados útiles. \\
+	\textbf{Importancia} & Muy alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-14} & \textbf{Consultar historial de ejecuciones}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Usuario\\
-		\textbf{Requisitos asociados} & RF-8.1, RF-8.2, RF-8.3, RF-8.4, RF-8.5, RF-13.7 \\
-		\textbf{Descripción} & Consulta de las ejecuciones realizadas por el usuario autenticado. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El usuario accede a la página de historial.
-			\item El sistema obtiene las ejecuciones asociadas a su cuenta.
-			\item El sistema muestra pipeline, fecha, estado, duración y errores.
-			\item El usuario selecciona una ejecución concreta.
-			\item El sistema muestra el detalle y los archivos disponibles, si no han expirado.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El usuario consulta sus ejecuciones y puede revisar las que aún tengan resultados disponibles. \\
-		\textbf{Excepciones} & No existen ejecuciones, ejecución no encontrada o intento de acceder a una ejecución ajena. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-14 Consultar historial de ejecuciones.}
-\end{table}
+\begin{casouso}{CU-13 Visualizar y descargar resultados}{cu13}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-7.1, RF-7.2, RF-7.3, RF-7.4, RF-7.5, RF-9.2. \\
+	\textbf{Descripción} & Visualización y descarga temporal de resultados generados por una ejecución. \\
+	\textbf{Precondición} & Existe una ejecución completada con archivos disponibles. \\
+	\textbf{Flujo principal} & El sistema muestra las etapas, imágenes y datos JSON generados. El usuario puede descargar los archivos disponibles y el sistema resuelve la descarga mediante tokens temporales. \\
+	\textbf{Resultado} & El usuario visualiza o descarga los resultados mientras estén disponibles. \\
+	\textbf{Excepciones} & Archivo caducado, token inválido, archivo eliminado físicamente o acceso no autorizado. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-15} & \textbf{Acceder al panel de administración}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Administrador\\
-		\textbf{Requisitos asociados} & RF-2.3, RF-2.5, RF-10.1, RF-13.8 \\
-		\textbf{Descripción} & Acceso del administrador a la consola de gestión del sistema. \\
-		\textbf{Precondición} & El usuario ha iniciado sesión con rol de Administrador. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El administrador inicia sesión.
-			\item El sistema detecta su rol.
-			\item El sistema redirige al panel de administración.
-			\item El panel muestra las secciones de gestión disponibles.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El administrador puede acceder a funciones de revisión y gestión. \\
-		\textbf{Excepciones} & Usuario no administrador o token no válido. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-15 Acceder al panel de administración.}
-\end{table}
+\begin{casouso}{CU-14 Consultar historial de ejecuciones}{cu14}
+	\textbf{Actor} & Usuario. \\
+	\textbf{RF} & RF-8.1, RF-8.2, RF-8.3, RF-8.4, RF-8.5, RF-13.7. \\
+	\textbf{Descripción} & Consulta de ejecuciones realizadas por el usuario autenticado. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión. \\
+	\textbf{Flujo principal} & El usuario accede al historial, el sistema recupera sus ejecuciones y muestra pipeline, fecha, estado, duración y errores. Si selecciona una ejecución, se muestran sus detalles y archivos disponibles. \\
+	\textbf{Resultado} & El usuario puede revisar sus ejecuciones y resultados temporales disponibles. \\
+	\textbf{Excepciones} & No existen ejecuciones, ejecución no encontrada o intento de acceder a una ejecución ajena. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-16} & \textbf{Gestionar usuarios desde administración}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Administrador\\
-		\textbf{Requisitos asociados} & RF-10.2, RF-10.3, RF-10.4, RF-10.5 \\
-		\textbf{Descripción} & Consulta de usuarios y modificación controlada de su estado. \\
-		\textbf{Precondición} & El administrador ha accedido al panel de administración. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El administrador consulta el listado de usuarios.
-			\item El sistema muestra información básica de cada cuenta.
-			\item El administrador selecciona una cuenta.
-			\item El administrador solicita un cambio de estado.
-			\item El sistema valida que la operación sea permitida.
-			\item El sistema aplica el cambio y confirma la operación.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El estado de la cuenta queda actualizado. \\
-		\textbf{Excepciones} & Usuario no encontrado, intento de auto-bloqueo o error al actualizar la base de datos. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-16 Gestionar usuarios desde administración.}
-\end{table}
+\begin{casouso}{CU-15 Acceder al panel de administración}{cu15}
+	\textbf{Actor} & Administrador. \\
+	\textbf{RF} & RF-2.3, RF-2.5, RF-10.1, RF-13.8. \\
+	\textbf{Descripción} & Acceso del administrador a la consola de gestión del sistema. \\
+	\textbf{Precondición} & El usuario ha iniciado sesión con rol de administrador. \\
+	\textbf{Flujo principal} & El administrador inicia sesión, el sistema detecta su rol, lo redirige al panel de administración y muestra las secciones de gestión disponibles. \\
+	\textbf{Resultado} & El administrador puede acceder a funciones de revisión y gestión. \\
+	\textbf{Excepciones} & Usuario no administrador o token no válido. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-17} & \textbf{Gestionar pipelines desde administración}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Administrador\\
-		\textbf{Requisitos asociados} & RF-11.1, RF-11.2, RF-11.3, RF-11.4, RF-11.5, RF-11.6 \\
-		\textbf{Descripción} & Creación, modificación, deshabilitación o eliminación de pipelines desde el panel de administración. \\
-		\textbf{Precondición} & El administrador ha iniciado sesión y existen modelos y modos registrados. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El administrador consulta los pipelines existentes.
-			\item El administrador crea un nuevo pipeline o selecciona uno existente.
-			\item El administrador define o modifica sus etapas.
-			\item El sistema valida que las etapas hagan referencia a modelos y modos válidos.
-			\item El sistema guarda la configuración del pipeline.
-			\item Si se solicita eliminar un pipeline, el sistema comprueba si tiene ejecuciones asociadas.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El catálogo de pipelines queda actualizado sin necesidad de modificar el código fuente. \\
-		\textbf{Excepciones} & Pipeline inexistente, etapas inválidas, falta de permisos o existencia de ejecuciones asociadas que impidan el borrado físico. \\
-		\textbf{Importancia} & Muy alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-17 Gestionar pipelines desde administración.}
-\end{table}
+\begin{casouso}{CU-16 Gestionar usuarios desde administración}{cu16}
+	\textbf{Actor} & Administrador. \\
+	\textbf{RF} & RF-10.2, RF-10.3, RF-10.4, RF-10.5. \\
+	\textbf{Descripción} & Consulta de usuarios y modificación controlada de su estado. \\
+	\textbf{Precondición} & El administrador ha accedido al panel de administración. \\
+	\textbf{Flujo principal} & El administrador consulta los usuarios, selecciona una cuenta, solicita un cambio de estado y el sistema valida y aplica la operación. \\
+	\textbf{Resultado} & El estado de la cuenta queda actualizado. \\
+	\textbf{Excepciones} & Usuario no encontrado, intento de auto-bloqueo o error al actualizar la base de datos. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-18} & \textbf{Consultar ejecuciones globales}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Administrador\\
-		\textbf{Requisitos asociados} & RF-12.1, RNF-7 \\
-		\textbf{Descripción} & Consulta administrativa del histórico general de ejecuciones realizadas en el sistema. \\
-		\textbf{Precondición} & El administrador ha accedido al panel de administración. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El administrador solicita la vista global de ejecuciones.
-			\item El sistema obtiene las ejecuciones registradas.
-			\item El sistema muestra usuario, pipeline, fecha, estado, duración y posibles errores.
-			\item El administrador revisa la información para mantenimiento o supervisión.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El administrador dispone de una visión global del uso del sistema. \\
-		\textbf{Excepciones} & Falta de permisos o error al obtener la información. \\
-		\textbf{Importancia} & Media Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-18 Consultar ejecuciones globales.}
-\end{table}
+\begin{casouso}{CU-17 Gestionar pipelines desde administración}{cu17}
+	\textbf{Actor} & Administrador. \\
+	\textbf{RF} & RF-11.1, RF-11.2, RF-11.3, RF-11.4, RF-11.5, RF-11.6, RF-11.7, RF-11.8. \\
+	\textbf{Descripción} & Creación, modificación, deshabilitación o eliminación de pipelines desde administración. \\
+	\textbf{Precondición} & El administrador ha iniciado sesión y existen modelos y modos registrados. \\
+	\textbf{Flujo principal} & El administrador consulta el catálogo, crea o selecciona un pipeline, define sus etapas y el sistema valida que los modelos y modos sean coherentes y estén habilitados antes de guardar los cambios. \\
+	\textbf{Resultado} & El catálogo de pipelines queda actualizado sin modificar el código fuente. \\
+	\textbf{Excepciones} & Pipeline inexistente, etapas inválidas, modelo o modo deshabilitado, falta de permisos o historial asociado que impida el borrado físico. \\
+	\textbf{Importancia} & Muy alta. \\
+\end{casouso}
 
-\begin{table}[p]
-	\centering
-	\begin{tabularx}{\linewidth}{ p{0.22\columnwidth} p{0.70\columnwidth} }
-		\toprule
-		\textbf{CU-19} & \textbf{Ejecutar tareas de mantenimiento}\\
-		\toprule
-		\textbf{Versión} & 1.0 \\
-		\textbf{Actor} & Sistema\\
-		\textbf{Requisitos asociados} & RF-9.4, RF-9.5, RF-12.2, RF-12.3, RF-12.4 \\
-		\textbf{Descripción} & Revisión periódica de temporales, servicios caducados, renovaciones automáticas y cuentas dadas de baja. \\
-		\textbf{Precondición} & Existen ejecuciones, servicios o cuentas susceptibles de revisión. \\
-		\textbf{Acciones} &
-		\begin{enumerate}
-			\tightlist
-			\item El sistema comprueba si hay archivos temporales caducados.
-			\item El sistema elimina o invalida los recursos que ya no deben estar disponibles.
-			\item El sistema revisa suscripciones y alquileres vencidos.
-			\item El sistema renueva o desactiva servicios según su configuración.
-			\item El sistema revisa cuentas dadas de baja para aplicar anonimización cuando proceda.
-		\end{enumerate}\\
-		\textbf{Postcondición} & El sistema conserva un estado coherente y evita acumulación de recursos innecesarios. \\
-		\textbf{Excepciones} & Si una tarea falla, el sistema no debe interrumpir el funcionamiento principal de la aplicación. \\
-		\textbf{Importancia} & Alta \\
-		\bottomrule
-	\end{tabularx}
-	\caption{CU-19 Ejecutar tareas de mantenimiento.}
-\end{table}
+\begin{casouso}{CU-18 Consultar ejecuciones globales}{cu18}
+	\textbf{Actor} & Administrador. \\
+	\textbf{RF} & RF-12.1, RNF-7. \\
+	\textbf{Descripción} & Consulta administrativa del histórico general de ejecuciones del sistema. \\
+	\textbf{Precondición} & El administrador ha accedido al panel de administración. \\
+	\textbf{Flujo principal} & El administrador solicita la vista global, el sistema obtiene las ejecuciones registradas y muestra usuario, pipeline, fecha, estado, duración y errores. \\
+	\textbf{Resultado} & El administrador dispone de una visión global del uso del sistema. \\
+	\textbf{Excepciones} & Falta de permisos o error al obtener la información. \\
+	\textbf{Importancia} & Media-alta. \\
+\end{casouso}
+
+\begin{casouso}{CU-19 Ejecutar tareas de mantenimiento}{cu19}
+	\textbf{Actor} & Sistema. \\
+	\textbf{RF} & RF-9.4, RF-9.5, RF-12.2, RF-12.3, RF-12.4. \\
+	\textbf{Descripción} & Revisión de temporales, servicios caducados, renovaciones automáticas y cuentas dadas de baja. \\
+	\textbf{Precondición} & Existen ejecuciones, servicios o cuentas susceptibles de revisión. \\
+	\textbf{Flujo principal} & El sistema comprueba archivos temporales, elimina o invalida recursos caducados, revisa servicios vencidos, renueva o desactiva accesos y anonimiza cuentas dadas de baja cuando corresponda. \\
+	\textbf{Resultado} & El sistema conserva un estado coherente y evita acumulación de recursos innecesarios. \\
+	\textbf{Excepciones} & Si una tarea falla, no debe interrumpir el funcionamiento principal de la aplicación. \\
+	\textbf{Importancia} & Alta. \\
+\end{casouso}
