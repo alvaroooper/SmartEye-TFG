@@ -1,1 +1,6 @@
-	http://localhost:5000
+	{
+		"conf": 0.30,
+		"iou": 0.6,
+		"imgsz": 1280,
+		"scale_factor": 1.0
+	}

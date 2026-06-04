@@ -42,11 +42,273 @@ La aplicación se ejecuta escuchando en \texttt{0.0.0.0:5000} para permitir cone
 
 \section{Manual del usuario}
 
+En esta sección se describe el uso principal de la aplicación desde el punto de vista del usuario final. La plataforma SmartEye está organizada en dos zonas principales: una zona pública, accesible sin autenticación, y una zona privada, disponible después de iniciar sesión. Dentro de la zona privada existen funcionalidades para usuarios estándar y funcionalidades específicas para administradores.
+
+\subsection{Pantalla principal}
+
+Al acceder a la URL de la aplicación se muestra la pantalla pública inicial. Esta pantalla presenta brevemente la finalidad de SmartEye y permite acceder al inicio de sesión o al registro de una nueva cuenta. La Figura~\ref{fig:manual_public_index} muestra esta pantalla de bienvenida.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_public_index.png}
+	\caption[Pantalla inicial de SmartEye]{Pantalla inicial pública de SmartEye.}
+	\label{fig:manual_public_index}
+\end{figure}
+
+Desde esta pantalla el usuario puede pulsar en \textit{Iniciar Sesión} si ya dispone de una cuenta, o en \textit{Comenzar Gratis} para crear una nueva.
+
+\subsection{Registro e inicio de sesión}
+
+El acceso a la plataforma se realiza mediante las pantallas de registro e inicio de sesión. La Figura~\ref{fig:manual_public_login} muestra el formulario utilizado por los usuarios ya registrados, mientras que la Figura~\ref{fig:manual_public_registro} muestra la pantalla para crear una nueva cuenta.
+
+\begin{figure}[!htbp]
+	\centering
+	\begin{minipage}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{interfaces/interfaz_public_login.png}
+		\caption[Inicio de sesión]{Interfaz de inicio de sesión en SmartEye.}
+		\label{fig:manual_public_login}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.47\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{interfaces/interfaz_public_registro.png}
+		\caption[Registro de usuario]{Interfaz de registro de una nueva cuenta de usuario.}
+		\label{fig:manual_public_registro}
+	\end{minipage}
+\end{figure}
+
+En el inicio de sesión, el usuario puede identificarse mediante su correo electrónico o nombre de usuario, introduciendo además su contraseña. Si las credenciales son correctas y la cuenta está activa, se accede al panel principal de la aplicación.
+
+En el registro se solicitan los datos básicos de la cuenta: nombre visible, nombre de usuario, correo electrónico y contraseña. La contraseña debe cumplir las condiciones mínimas indicadas por la propia interfaz: tener al menos ocho caracteres e incluir, como mínimo, una letra mayúscula, una letra minúscula y un número.
+
+\subsection{Panel principal del usuario}
+
+Una vez autenticado, el usuario accede al panel principal. Esta pantalla permite seleccionar un pipeline de inteligencia artificial, cargar una configuración opcional y subir la imagen que se desea analizar. La Figura~\ref{fig:manual_dashboard_usuario_panel} muestra el panel de ejecución principal.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_usuario_panel.png}
+	\caption[Panel principal del usuario]{Panel principal para lanzar una secuencia de inteligencia artificial.}
+	\label{fig:manual_dashboard_usuario_panel}
+\end{figure}
+
+El flujo habitual de uso es el siguiente:
+
+\begin{enumerate}
+	\item Seleccionar el pipeline que se desea ejecutar.
+	\item Cargar la configuración predeterminada o introducir una configuración personalizada en formato JSON.
+	\item Seleccionar una imagen desde el equipo.
+	\item Pulsar el botón \textit{Ejecutar Red Neuronal}.
+	\item Esperar a que el servidor procese la imagen y genere los resultados.
+\end{enumerate}
+
+La configuración personalizada es opcional. Si el usuario no necesita modificar parámetros internos del modelo, puede utilizar la configuración predeterminada.
+
+\subsubsection{Configuración avanzada de ejecución}
+
+El usuario puede sustituir la configuración predeterminada por una configuración avanzada en formato JSON. Esta opción permite ajustar parámetros de inferencia como la confianza mínima, el tamaño de entrada o la complejidad del modelo.
+
+La aplicación valida que el texto introducido sea un JSON correcto, pero no comprueba en profundidad los valores internos. Por tanto, se presupone que el usuario conoce el efecto de los cambios realizados.
+
+\paragraph{MediaPipe manos.}
+Permite detectar manos y sus puntos clave.
+
+\begin{bloqueCodigo}[title={MediaPipe manos}]
+	{
+		"max_num_hands": 2,
+		"min_detection_confidence": 0.5
+	}
+\end{bloqueCodigo}
+
+\begin{itemize}
+	\item \texttt{max\_num\_hands}: máximo de manos a detectar. Entero $\geq 1$.
+	\item \texttt{min\_detection\_confidence}: confianza mínima de detección. Rango habitual: 0.0--1.0. Valores altos son más estrictos.
+\end{itemize}
+
+\paragraph{MediaPipe pose.}
+Permite estimar la postura corporal mediante puntos clave.
+
+\begin{bloqueCodigo}[title={MediaPipe pose}]
+	{
+		"model_complexity": 1,
+		"min_detection_confidence": 0.5
+	}
+\end{bloqueCodigo}
+
+\begin{itemize}
+	\item \texttt{model\_complexity}: complejidad del modelo. Valores habituales: 0, 1 o 2. A mayor valor, mayor precisión y coste.
+	\item \texttt{min\_detection\_confidence}: confianza mínima de detección. Rango habitual: 0.0--1.0.
+\end{itemize}
+
+\paragraph{YOLO detección.}
+Permite detectar objetos en la imagen.
+
+\begin{bloqueCodigo}[title={YOLO detección}]
+	{
+		"conf": 0.25,
+		"iou": 0.45,
+		"imgsz": 1280
+	}
+\end{bloqueCodigo}
+
+\begin{itemize}
+	\item \texttt{conf}: confianza mínima para aceptar detecciones. Rango habitual: 0.0--1.0.
+	\item \texttt{iou}: umbral de solapamiento para filtrar cajas duplicadas. Rango habitual: 0.0--1.0.
+	\item \texttt{imgsz}: tamaño de entrada del modelo. Entero positivo. Valores mayores pueden mejorar el detalle, pero aumentan el tiempo de ejecución.
+\end{itemize}
+
+\paragraph{YOLO recortes de personas.}
+Permite detectar personas y generar recortes independientes.
+
+\begin{bloqueCodigo}[title={YOLO recortes}]
+	{
+		"conf": 0.30,
+		"iou": 0.6,
+		"imgsz": 1280,
+		"scale_factor": 1.0
+	}
+\end{bloqueCodigo}
+
+\begin{itemize}
+	\item \texttt{conf}: confianza mínima para aceptar una persona detectada. Rango habitual: 0.0--1.0.
+	\item \texttt{iou}: umbral de solapamiento para filtrar cajas duplicadas. Rango habitual: 0.0--1.0.
+	\item \texttt{imgsz}: tamaño de entrada del modelo. Entero positivo.
+	\item \texttt{scale\_factor}: ampliación del recorte. Real $> 0$. El valor 1.0 mantiene el tamaño original.
+\end{itemize}
+
+En pipelines con varias etapas, la configuración se organiza con claves como \texttt{etapa\_1}, \texttt{etapa\_2} o sucesivas, aplicándose cada bloque a su fase correspondiente.
+
+\subsection{Historial de ejecuciones}
+
+El usuario puede consultar sus análisis anteriores desde el historial de ejecuciones. Como se muestra en la Figura~\ref{fig:manual_dashboard_historial}, esta pantalla recoge la fecha de ejecución, el pipeline utilizado, el estado del análisis, la duración, la configuración empleada y el acceso a los resultados disponibles.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_historial_ejecuciones.png}
+	\caption[Historial de ejecuciones]{Historial de ejecuciones realizadas por el usuario.}
+	\label{fig:manual_dashboard_historial}
+\end{figure}
+
+Cuando los resultados siguen disponibles, el usuario puede volver a abrirlos mediante el botón \textit{Resultados}. Si los archivos han caducado o han sido purgados, la interfaz indica que el resultado ya no está disponible para descarga.
+
+\subsection{Consulta de resultados}
+
+Si están disponibles los resultados en el registro de actividad se podrá acceder a esta página. En ella se presenta la imagen original y las salidas generadas por cada fase del pipeline. La Figura~\ref{fig:manual_dashboard_resultados_ejecucion} muestra un ejemplo de análisis de manos realizado con MediaPipe.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_resultados_ejecucion.png}
+	\caption[Resultados de una ejecución]{Pantalla de resultados generados tras ejecutar un pipeline de análisis de imagen.}
+	\label{fig:manual_dashboard_resultados_ejecucion}
+\end{figure}
+
+Desde esta pantalla el usuario puede visualizar las imágenes generadas, descargar la imagen original, descargar las imágenes procesadas, consultar la salida JSON y descargar los datos brutos asociados al análisis. Los archivos generados tienen carácter temporal, por lo que pueden dejar de estar disponibles una vez superado su periodo de validez (Plan básico 5 minutos, plan pro 30 días).
+
+\subsection{Tienda de IA}
+
+La aplicación incluye una tienda desde la que se pueden consultar los planes y motores de inteligencia artificial disponibles. La Figura~\ref{fig:manual_dashboard_shop} muestra la pantalla de tienda, donde aparecen las suscripciones globales y los motores contratables de forma individual.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_shop.png}
+	\caption[Tienda de IA]{Tienda de IA con planes y motores disponibles.}
+	\label{fig:manual_dashboard_shop}
+\end{figure}
+
+Desde esta pantalla el usuario puede consultar su plan actual, cambiar a un plan superior o programar el alquiler de un motor concreto. En la versión desarrollada para el TFG, esta funcionalidad permite validar la lógica de contratación y control de acceso, aunque no integra una pasarela de pago real.
+
+\subsection{Guía de pipelines}
+
+Antes de contratar un modelo, el usuario puede consultar la guía de pipelines. La Figura~\ref{fig:manual_dashboard_guia_compra} muestra esta pantalla, donde se indica qué motores necesita cada pipeline y cuál es su secuencia de ejecución.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_guia_compra.png}
+	\caption[Guía de pipelines]{Guía de pipelines disponibles y motores requeridos por cada flujo.}
+	\label{fig:manual_dashboard_guia_compra}
+\end{figure}
+
+Esta guía permite saber si un pipeline está disponible con los servicios actuales del usuario o si requiere contratar un modelo adicional. Por ejemplo, algunos flujos solo necesitan MediaPipe, mientras que otros requieren YOLO o una combinación de ambos modelos.
+
+\subsection{Consulta de compras y servicios activos}
+
+El usuario puede consultar sus servicios activos desde la sección de compras. Como se observa en la Figura~\ref{fig:manual_dashboard_mis_compras}, esta pantalla muestra el plan actual y los motores de IA alquilados, junto con sus fechas de disponibilidad y vencimiento.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_mis_compras.png}
+	\caption[Mis compras]{Pantalla de consulta de plan actual y motores de IA alquilados.}
+	\label{fig:manual_dashboard_mis_compras}
+\end{figure}
+
+Desde esta sección también se puede consultar si un servicio está activo y si dispone de renovación automática. Esta información es importante porque el acceso a determinados pipelines depende del plan contratado o de los motores de IA disponibles en la cuenta.
+
+\subsection{Gestión del perfil}
+
+La sección de perfil permite consultar la información de la cuenta y modificar algunos datos personales. La Figura~\ref{fig:manual_dashboard_perfil} muestra la pantalla de perfil de usuario.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_perfil.png}
+	\caption[Perfil de usuario]{Pantalla de consulta y edición del perfil de usuario.}
+	\label{fig:manual_dashboard_perfil}
+\end{figure}
+
+En esta pantalla el usuario puede modificar su nombre visible y cambiar la contraseña. Para autorizar cambios sensibles, la aplicación solicita la contraseña actual. Además, la pantalla incluye una zona de peligro desde la que el usuario puede solicitar la eliminación definitiva de su cuenta.
+
+\subsection{Funciones de administración}
+
+Los usuarios con rol de administrador disponen de un centro de mando específico. Desde esta zona se pueden consultar usuarios, auditar ejecuciones y gestionar pipelines. Estas opciones no están disponibles para usuarios estándar.
+
+\subsubsection{Gestión de usuarios}
+
+La pantalla de gestión de identidades permite consultar las cuentas registradas, su correo electrónico, estado, roles y acciones disponibles. La Figura~\ref{fig:manual_admin_usuarios} muestra esta sección administrativa.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_admin_usuarios.png}
+	\caption[Gestión de usuarios]{Pantalla administrativa para la gestión de usuarios.}
+	\label{fig:manual_admin_usuarios}
+\end{figure}
+
+Desde esta pantalla el administrador puede revisar el estado de las cuentas y suspender usuarios cuando sea necesario. Esta funcionalidad permite controlar el acceso a la plataforma sin intervenir directamente sobre la base de datos.
+
+\subsubsection{Auditoría global}
+
+La auditoría global permite al administrador consultar ejecuciones realizadas en el sistema. Como se muestra en la Figura~\ref{fig:manual_admin_actividad}, la pantalla incorpora filtros por fechas, identidad, flujo lógico y búsqueda en tiempo real.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_admin_actividad.png}
+	\caption[Auditoría global]{Pantalla de auditoría global de ejecuciones del sistema.}
+	\label{fig:manual_admin_actividad}
+\end{figure}
+
+Esta pantalla resulta útil para revisar la actividad de la plataforma, comprobar qué usuarios han ejecutado análisis y consultar el coste temporal de las inferencias realizadas.
+
+\subsubsection{Gestión de pipelines}
+
+La pantalla de orquestación de motores permite al administrador crear y gestionar flujos de IA. La Figura~\ref{fig:manual_admin_pipelines} muestra el diseñador de pipelines y el catálogo de flujos disponibles.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_admin_pipelines.png}
+	\caption[Gestión de pipelines]{Pantalla administrativa para diseñar y gestionar pipelines de IA.}
+	\label{fig:manual_admin_pipelines}
+\end{figure}
+
+Desde esta sección el administrador puede definir el nombre del pipeline, su descripción, si será público, si estará habilitado y las etapas que lo componen. Cada etapa se asocia a un modelo de IA y a un modo de ejecución concreto. De esta forma, se pueden crear flujos nuevos sin modificar directamente el código fuente de la aplicación.
+
+\subsection{Cierre de sesión}
+
+Para salir de la aplicación, el usuario debe utilizar el botón \textit{Salir} o \textit{Salir del sistema}, disponible en la barra superior o en el menú lateral según la pantalla. Al cerrar sesión, se abandona la zona privada y será necesario volver a introducir las credenciales para acceder de nuevo.
+
 \subsection{Problemas frecuentes de acceso}
 
 Los problemas más habituales desde el punto de vista del usuario se resumen en la Tabla~\ref{tabla:problemas_acceso_usuario}.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.15}
@@ -65,3 +327,4 @@ Los problemas más habituales desde el punto de vista del usuario se resumen en 
 	\caption[Problemas frecuentes de acceso]{Problemas frecuentes de acceso para el usuario.}
 	\label{tabla:problemas_acceso_usuario}
 \end{table}
+
