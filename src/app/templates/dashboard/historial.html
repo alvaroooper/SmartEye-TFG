@@ -1,149 +1,188 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Historial de Ejecuciones - IA Explorer</title>
-    <style>
-        :root { --primary: #0056b3; --bg: #f4f7f6; --text: #333; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
-        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn-header { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; transition: background 0.3s; }
-        .btn-header:hover { background: rgba(255,255,255,0.3); }
-        
-        main { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 12px 15px; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; color: #555; text-transform: uppercase; font-size: 0.85rem; }
-        
-        .badge { padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
-        .badge-completado { background: #d4edda; color: #155724; }
-        .badge-error { background: #f8d7da; color: #721c24; }
-        .badge-procesando { background: #fff3cd; color: #856404; }
-        
-        .btn-config { background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
-        .btn-config:hover { background: #138496; }
-        
-        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; margin-top: 10px; display: none; }
-        
-        .empty-state { text-align: center; padding: 40px; color: #666; font-style: italic; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-<header>
-    <h2>Historial de Ejecuciones</h2>
-    <div>
-        <a href="/dashboard" class="btn-header">← Volver al Panel</a>
-    </div>
-</header>
+{% block title %}Historial - SmartEye{% endblock %}
 
-<main>
-    <div class="card">
-        <h3 style="margin-top: 0; color: var(--primary);">Registros de Análisis</h3>
-        <p style="color: #666; font-size: 0.95rem;">Aquí puedes consultar el resultado de todos tus pipelines ejecutados y la configuración que inyectaste en cada uno.</p>
-        
-        <table id="tablaHistorial">
+{% block header_title %}SmartEye | <span style="font-weight: 300; font-size: 1.1rem; color: var(--text-muted); margin-left: 8px;">Historial de Ejecuciones</span>{% endblock %}
+
+{% block header_actions %}
+    <a href="/dashboard" class="btn btn-outline">← Volver al Panel</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    th, td {
+        text-align: left;
+        padding: 16px 15px;
+        border-bottom: 1px solid var(--border);
+    }
+    th {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+    tbody tr {
+        transition: background 0.3s;
+        animation: fadeInUp 0.4s ease-out backwards;
+    }
+    tbody tr:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    .btn-config {
+        background: rgba(255,255,255,0.05);
+        color: var(--text-main);
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: 0.2s;
+        font-family: var(--font-main);
+        white-space: nowrap;
+    }
+    .btn-config:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3 style="margin-top: 0; font-size: 1.5rem; font-weight: 800;">Registro de Actividad</h3>
+    <p style="color: var(--text-muted); margin-top: -10px; margin-bottom: 20px;">Auditoría de todos los análisis procesados por tu cuenta.</p>
+    
+    <div class="table-container">
+        <table>
             <thead>
                 <tr>
                     <th>Fecha</th>
-                    <th>Pipeline</th>
+                    <th>Flujo (Pipeline)</th>
                     <th>Estado</th>
                     <th>Duración</th>
                     <th>Configuración</th>
-                    <th>Resultados</th> </tr>
+                    <th>Acciones</th>
+                </tr>
             </thead>
+            <button class="btn btn-outline" style="margin-bottom: 15px;" onclick="cargarHistorial()">🔄 Refrescar Datos</button>
             <tbody id="tbodyHistorial">
-                <tr><td colspan="6" class="empty-state">Cargando historial...</td></tr>
+                <tr><td colspan="6" class="empty-state">Consultando la base de datos temporal...</td></tr>
             </tbody>
         </table>
     </div>
-</main>
+</div>
+{% endblock %}
 
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', cargarHistorial);
 
     async function cargarHistorial() {
         const tbody = document.getElementById('tbodyHistorial');
         const token = sessionStorage.getItem('jwt_token');
+
         if (!token) { window.location.replace('/login'); return; }
 
         try {
             const response = await fetch('/api/v1/historial', {
-                headers: { 'Authorization': 'Bearer ' + token, 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                }
             });
-            
+
             if (!response.ok) throw new Error("Error al cargar el historial");
-            
             const ejecuciones = await response.json();
-            tbody.innerHTML = ''; 
+            tbody.innerHTML = '';
 
             if (ejecuciones.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Aún no has ejecutado ningún pipeline.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Aún no has ejecutado ningún pipeline en SmartEye.</td></tr>';
                 return;
             }
 
-            ejecuciones.forEach(ej => {
-                // Determinar el color del estado
+            ejecuciones.forEach((ej, idx) => {
                 let claseEstado = 'badge-procesando';
                 if (ej.estado === 'completado') claseEstado = 'badge-completado';
                 if (ej.estado === 'error') claseEstado = 'badge-error';
-                
-                // Si hubo error, lo añadimos al nombre del pipeline para que lo vea
-                let errorHtml = ej.error ? `<br><small style="color: red;">Error: ${ej.error}</small>` : '';
 
-                // Comprobar si hay configuración personalizada válida
-                let configHtml = '<span style="color: #999; font-size: 0.85rem;">Predeterminada</span>';
+                let errorHtml = ej.error ? `<br><small style="color: #fca5a5; margin-top:4px; display:block;">Error: ${ej.error}</small>` : '';
+
+                // Lógica simplificada: si hay configuración, preparamos la descarga
+                let configHtml = '<span style="color: var(--text-muted); font-size: 0.85rem;">Predeterminada</span>';
                 if (ej.config_aplicada && ej.config_aplicada.trim() !== "" && ej.config_aplicada !== "{}") {
-                    // Formatear el JSON para que quede bonito en el <pre>
-                    let jsonFormateado = "";
-                    try {
-                        jsonFormateado = JSON.stringify(JSON.parse(ej.config_aplicada), null, 4);
-                    } catch(e) {
-                        jsonFormateado = ej.config_aplicada; // Si falla el parseo, lo ponemos en crudo
-                    }
-
+                    // Codificamos el JSON para que no rompa las comillas del HTML del botón
+                    const datosSeguros = encodeURIComponent(ej.config_aplicada);
                     configHtml = `
-                        <button class="btn-config" onclick="toggleConfig(this)">Ver JSON</button>
-                        <pre>${jsonFormateado}</pre>
+                        <button class="btn-config" onclick="descargarJSON('${datosSeguros}', 'configuracion_ejecucion_${ej.id}.json')">
+                            📥 Descargar JSON
+                        </button>
                     `;
                 }
 
-                let btnResultados = ej.archivos_disponibles 
-                    ? `<button onclick="abrirPestanaResultados(${ej.id})" style="background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold; display: inline-block;">Ver Resultados ↗</button>` 
-                    : `<span style="color: #999; font-size: 0.85rem; font-style: italic;">Expirados</span>`;
+                let btnResultados = ej.archivos_disponibles ? 
+                    `<button onclick="abrirPestanaResultados(${ej.id})" class="btn btn-success" style="padding: 6px 12px; font-size: 0.85rem;">Resultados ↗</button>` : 
+                    `<span style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">Purgado (Expirado)</span>`;
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="white-space: nowrap;">${ej.fecha}</td>
-                        <td><b>${ej.pipeline}</b>${errorHtml}</td>
-                        <td><span class="badge ${claseEstado}">${ej.estado}</span></td>
-                        <td>${ej.duracion}</td>
-                        <td>${configHtml}</td>
-                        <td>${btnResultados}</td> </tr>
+                const tr = document.createElement('tr');
+                tr.style.animationDelay = `${idx * 0.1}s`;
+                tr.innerHTML = `
+                    <td style="white-space: nowrap;">${ej.fecha}</td>
+                    <td><b style="color: var(--text-main);">${ej.pipeline}</b>${errorHtml}</td>
+                    <td><span class="badge ${claseEstado}">${ej.estado}</span></td>
+                    <td>${ej.duracion}</td>
+                    <td>${configHtml}</td>
+                    <td>${btnResultados}</td>
                 `;
+                tbody.appendChild(tr);
             });
-
         } catch (error) {
-            tbody.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error de conexión: ${error.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="color: var(--danger); text-align: center;">Error de conexión: ${error.message}</td></tr>`;
         }
     }
 
-    function toggleConfig(btn) {
-        const pre = btn.nextElementSibling;
-        if (pre.style.display === "none" || pre.style.display === "") {
-            pre.style.display = "block";
-            btn.textContent = "Ocultar JSON";
-        } else {
-            pre.style.display = "none";
-            btn.textContent = "Ver JSON";
+    // Nueva función que intercepta el texto codificado, lo convierte a un archivo y lanza la descarga
+    function descargarJSON(datosCodificados, nombreArchivo) {
+        try {
+            // Decodificamos la cadena y la formateamos bonito (con sangrías)
+            const jsonCrudo = decodeURIComponent(datosCodificados);
+            const jsonFormateado = JSON.stringify(JSON.parse(jsonCrudo), null, 4);
+            
+            // Creamos un blob (archivo virtual) con el contenido
+            const blob = new Blob([jsonFormateado], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Forzamos la descarga creando un enlace invisible
+            const enlaceVirtual = document.createElement('a');
+            enlaceVirtual.href = url;
+            enlaceVirtual.download = nombreArchivo;
+            document.body.appendChild(enlaceVirtual);
+            enlaceVirtual.click();
+            
+            // Limpiamos el rastro
+            document.body.removeChild(enlaceVirtual);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert("No se pudo generar el archivo de configuración.");
         }
     }
-    function abrirPestanaResultados(id) {
-        window.location.href = `/resultados/${id}`;
-    }
+
+    function abrirPestanaResultados(id) { window.location.href = `/resultados/${id}`; }
 </script>
-</body>
-</html>
+{% endblock %}

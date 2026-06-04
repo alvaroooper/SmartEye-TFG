@@ -1,264 +1,215 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Panel de Usuario - IA Explorer</title>
-    <style>
-        :root { --primary: #0056b3; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; }
-        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .user-info { display: flex; gap: 15px; align-items: center; }
-        .btn-tienda { background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; text-decoration: none; transition: 0.2s; }
-        .btn-tienda:hover { background-color: #218838; }
-        .btn-toggle-json, .btn-secundario { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; text-decoration: none; transition: 0.2s; }
-        .btn-toggle-json:hover, .btn-secundario:hover { background-color: #5a6268; }
-        .btn-logout { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-        main { max-width: 800px; margin: 30px auto; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input[type="file"], select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-analizar { width: 100%; background: #28a745; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #areaResultado { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
-        .oculto { display: none; }
-        
-        .etapa-card { border: 2px solid #0056b3; border-radius: 8px; padding: 15px; margin-bottom: 25px; background: #fafafa; }
-        .etapa-card h4 { color: #0056b3; margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .etapa-card img { max-width: 100%; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-bottom: 8px; }
-        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 0; }
-        
-        .btn-toggle-json, .btn-secundario { background-color: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-        .btn-toggle-json:hover, .btn-secundario:hover { background-color: #5a6268; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-<header>
-    <h2>IA Explorer</h2>
-    <div class="user-info">
-        <span id="userName">Cargando...</span>
-        <a href="/historial" class="btn-secundario"> Historial</a>
-        <a href="/shop" class="btn-tienda">Tienda</a>
-        <a href="/mis-compras" class="btn-secundario"> Mis Compras</a>
-        <a href="/perfil" class="btn-secundario">Perfil</a>
-        <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
-    </div>
-</header>
+{% block title %}Panel de Control - SmartEye{% endblock %}
 
-<main>
-    <div class="card">
-        <h3>Procesar Imagen</h3>
-        <form id="uploadForm">
-            <div class="form-group">
-                <label for="id_pipeline">Selecciona Pipeline:</label>
-                <select id="id_pipeline" name="id_pipeline" required>
-                    <option value="">Cargando pipelines...</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="configEditor">Configuración del Pipeline (Opcional):</label>
-                <button type="button" id="btnCargarConfig" class="btn-secundario" style="margin-bottom:10px;">Cargar Configuración</button>
-                <textarea id="configEditor" name="config_personalizada" style="height: 150px; font-family: monospace; display: none;" placeholder="La configuración en formato JSON aparecerá aquí..."></textarea>
-            </div>
+{% block header_title %}SmartEye | <span id="userName" style="font-weight: 300; font-size: 1.1rem; color: var(--text-muted); margin-left: 8px;">Cargando...</span>{% endblock %}
 
-            <div class="form-group">
-                <label for="imagen">Imagen:</label>
-                <input id="imagen" type="file" name="imagen" accept="image/*" required>
-            </div>
-            <button type="submit" class="btn-analizar" id="btnAnalizar">Ejecutar Análisis</button>
-        </form>
+{% block header_actions %}
+    <a href="/shop" class="btn btn-outline" style="border-color: var(--success); color: var(--success);">🛒 Tienda IA</a>
+    <a href="/mis-compras" class="btn btn-outline">Suscripciones</a>
+    <a href="/historial" class="btn btn-outline">Historial</a>
+    <a href="/perfil" class="btn btn-outline">Perfil</a>
+    <button class="btn btn-danger" onclick="cerrarSesion()">Salir</button>
+{% endblock %}
 
-        <div id="areaResultado" class="oculto">
-            <h3>Evolución del Pipeline:</h3>
-            <div id="contenedorEtapas"></div>
+{% block extra_css %}
+<style>
+    /* Estilos específicos para la evolución del pipeline */
+    .etapa-resultado {
+        border-left: 4px solid var(--primary);
+        background: rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        margin-bottom: 20px;
+        animation: fadeInUp 0.5s ease-out backwards;
+    }
+    .etapa-resultado h4 {
+        margin-top: 0; color: var(--primary); font-size: 1.2rem;
+    }
+    .galeria-ia {
+        display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px;
+    }
+    .galeria-ia::-webkit-scrollbar { height: 8px; }
+    .galeria-ia::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+    .galeria-ia::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+    
+    .img-box {
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px;
+        text-align: center;
+        min-width: 250px;
+    }
+    .img-box img {
+        width: 100%; height: auto; max-height: 250px; object-fit: cover;
+        border-radius: 6px; margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3 style="margin-top: 0; font-size: 1.8rem; font-weight: 800;">Lanzar Secuencia IA</h3>
+    <p style="color: var(--text-muted); margin-bottom: 25px;">Selecciona un pipeline entrenado y procesa tu imagen.</p>
+    
+    <form id="uploadForm">
+        <div class="form-group">
+            <label for="id_pipeline">Selecciona Pipeline:</label>
+            <select id="id_pipeline" name="id_pipeline" required>
+                <option value="">Cargando motores...</option>
+            </select>
         </div>
-    </div>
-</main>
+        
+        <div class="form-group">
+            <label for="configEditor">Parámetros de Inferencia (Opcional JSON):</label>
+            <button type="button" id="btnCargarConfig" class="btn btn-outline" style="margin-bottom:12px; font-size: 0.8rem; padding: 8px 12px;">Cargar Configuración por Defecto</button>
+            <textarea id="configEditor" name="config_personalizada" style="height: 150px; font-family: monospace; display: none;" placeholder="Sobrescribe los hiperparámetros aquí..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="imagen">Imagen a analizar:</label>
+            <input id="imagen" type="file" name="imagen" accept="image/*" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block" id="btnAnalizar" style="font-size: 1.1rem; margin-top: 10px;">⚡ Ejecutar Red Neuronal</button>
+    </form>
+</div>
 
+<div id="areaResultado" class="card" style="display: none; border-color: var(--primary);">
+    <h3 style="margin-top: 0; color: var(--primary);">Resultados de la Inferencia</h3>
+    <div id="contenedorEtapas" style="margin-top: 25px;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const token = sessionStorage.getItem('jwt_token');
         const roles = JSON.parse(sessionStorage.getItem('roles') || "[]");
-
         if (!token) { window.location.replace('/login'); return; }
         if (roles.includes('admin')) { window.location.replace('/admin'); return; }
-
-        document.getElementById('userName').innerText = `Hola, ${sessionStorage.getItem('nombre_usuario')}`;
+        
+        document.getElementById('userName').innerText = `${sessionStorage.getItem('nombre_usuario')}`;
         cargarPipelines();
     });
 
-async function cargarPipelines() {
+    async function cargarPipelines() {
         const select = document.getElementById('id_pipeline');
-        const btnAnalizar = document.getElementById('btnAnalizar'); 
-        
-        select.innerHTML = '<option value="">Cargando pipelines...</option>';
-        select.disabled = false;
-        btnAnalizar.disabled = true; // Deshabilitado hasta comprobar que tiene acceso
-
+        const btnAnalizar = document.getElementById('btnAnalizar');
         try {
             const response = await fetch('/api/v1/listado', {
-                headers: { 
+                headers: {
                     'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
                     'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
                 }
             });
-            
-            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-            
             const data = await response.json();
-            if (!Array.isArray(data)) throw new Error(data.mensaje || "Respuesta inválida del servidor");
-
-            select.innerHTML = ''; 
-            
-            // Aviso si no tiene pipelines disponibles
+            select.innerHTML = '';
             if (data.length === 0) {
                 const opt = document.createElement('option');
-                opt.value = "";
-                opt.textContent = "No hay pipelines disponibles (Alquila un modelo o cambia de plan)";
-                select.appendChild(opt);
-                
-                select.disabled = true; 
-                btnAnalizar.disabled = true; 
+                opt.value = ""; opt.textContent = "No hay pipelines (Visita la Tienda)";
+                select.appendChild(opt); select.disabled = true; btnAnalizar.disabled = true;
             } else {
-                // Si tiene, los carga normal
                 data.forEach(p => {
                     const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = p.nombre;
+                    opt.value = p.id; opt.textContent = p.nombre;
                     select.appendChild(opt);
                 });
-                
-                select.disabled = false;
-                btnAnalizar.disabled = false; 
+                select.disabled = false; btnAnalizar.disabled = false;
             }
-
-        } catch (e) { 
-            console.error("Fallo al cargar pipelines:", e);
-            select.innerHTML = `<option value="">Error al cargar: ${e.message}</option>`; 
-            select.disabled = true;
-            btnAnalizar.disabled = true;
+        } catch (e) {
+            select.innerHTML = `<option value="">Error al cargar API</option>`;
+            select.disabled = true; btnAnalizar.disabled = true;
         }
     }
 
     document.getElementById('id_pipeline').addEventListener('change', function() {
         document.getElementById('configEditor').style.display = 'none';
         document.getElementById('configEditor').value = '';
-        document.getElementById('btnCargarConfig').innerText = "Cargar Configuración";
+        document.getElementById('btnCargarConfig').innerText = "Cargar Configuración por Defecto";
     });
 
     document.getElementById('btnCargarConfig').addEventListener('click', async function() {
         const id = document.getElementById('id_pipeline').value;
         if(!id) return alert("Selecciona un pipeline primero");
-        
         try {
             const response = await fetch(`/api/v1/configuracion_pipeline/${id}`, {
-                headers: { 
-                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-                }
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'), 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
             });
             const config = await response.json();
             const editor = document.getElementById('configEditor');
             editor.value = JSON.stringify(config, null, 4);
             editor.style.display = 'block';
-            this.innerText = "Configuración Cargada (Editable)";
-        } catch (e) {
-            alert("Error al cargar la configuración");
-        }
+            this.innerText = "Parámetros Cargados (Puedes editarlos)";
+        } catch (e) { alert("Error de servidor al cargar JSON"); }
     });
 
     document.getElementById('uploadForm').onsubmit = async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btnAnalizar');
-        btn.disabled = true; 
-        btn.innerText = "Procesando secuencias...";
+        btn.disabled = true; btn.innerText = "Analizando Red Neuronal...";
+        
+        // Efecto visual: ocultar resultados previos si lanza otro
+        document.getElementById('areaResultado').style.display = 'none';
+        const contenedor = document.getElementById('contenedorEtapas');
+        contenedor.innerHTML = '';
 
         const formData = new FormData(this);
-        
         try {
             const response = await fetch('/api/v1/analizar', {
                 method: 'POST',
-                headers: { 
-                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-                },
+                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'), 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
                 body: formData
             });
             const res = await response.json();
             
             if (response.ok) {
-                document.getElementById('areaResultado').classList.remove('oculto');
-                const contenedor = document.getElementById('contenedorEtapas');
-                contenedor.innerHTML = ''; 
-                
-                res.resultados_etapas.forEach(etapa => {
+                document.getElementById('areaResultado').style.display = 'block';
+                // Añadimos delay escalonado a la animación de cada etapa
+                res.resultados_etapas.forEach((etapa, idx) => {
                     const div = document.createElement('div');
-                    div.className = 'etapa-card';
+                    div.className = 'etapa-resultado';
+                    div.style.animationDelay = `${idx * 0.2}s`;
                     
                     let htmlImagenes = '';
-                    // RECORREMOS CADA IMAGEN Y GENERAMOS SU BOTÓN DE DESCARGA
                     etapa.imagenes.forEach((img, index) => {
                         htmlImagenes += `
-                            <div style="display: inline-block; vertical-align: top; margin: 10px; text-align: center;">
-                                <img src="/api/v1/outputs/${img}" style="max-height: 250px; border-radius: 8px; border: 1px solid #ddd; display: block; margin-bottom: 8px;">
-                                <a href="/api/v1/outputs/${img}" download="etapa_${etapa.etapa}_resultado_${index + 1}.jpg" class="btn-secundario" style="text-decoration: none; font-size: 0.85rem; padding: 5px 10px; display: inline-block;">
-                                    Descargar Imagen
-                                </a>
-                            </div>
-                        `;
+                            <div class="img-box">
+                                <img src="/api/v1/outputs/${img}" alt="Salida IA">
+                                <a href="/api/v1/outputs/${img}" download="E${etapa.etapa}_R${index + 1}.jpg" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;">Descargar</a>
+                            </div>`;
                     });
-
+                    
                     div.innerHTML = `
-                        <h4>Etapa ${etapa.etapa}: ${etapa.nombre_etapa} <span style="font-size: 0.9rem; color: #666;">(IA: ${etapa.ia} - Modo: ${etapa.modo})</span></h4>
-                        
-                        <div style="text-align: center; overflow-x: auto; white-space: nowrap; padding-bottom: 10px;">
-                            ${htmlImagenes}
+                        <h4>[ETAPA ${etapa.etapa}] ${etapa.nombre_etapa} <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">Model: ${etapa.ia} | Mode: ${etapa.modo}</span></h4>
+                        <div class="galeria-ia">${htmlImagenes}</div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button type="button" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;" onclick="toggleJson(this)">{ } Mostrar JSON</button>
+                            <a href="/api/v1/outputs/${etapa.token_json_descarga}" download="metricas_E${etapa.etapa}.json" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;">📥 Guardar JSON</a>
                         </div>
-                        
-                        <div style="text-align: center; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
-                            <button type="button" class="btn-toggle-json" onclick="toggleJson(this)">Mostrar JSON</button>
-                            <a href="/api/v1/outputs/${etapa.token_json_descarga}" download="datos_etapa_${etapa.etapa}.json" class="btn-secundario" style="text-decoration: none; margin-left: 10px; display: inline-block;">
-                                Descargar JSON
-                            </a>
-                        </div>
-                        
-                        <div class="json-container" style="display: none; margin-top: 15px;">
-                            <h5>Datos extraídos:</h5>
-                            <pre>${JSON.stringify(etapa.datos, null, 4)}</pre>
+                        <div class="json-container" style="display: none; margin-top: 15px; padding: 15px; overflow-x: auto;">
+                            <pre style="margin:0; font-size:0.85rem; color: #a6e22e;">${JSON.stringify(etapa.datos, null, 4)}</pre>
                         </div>
                     `;
                     contenedor.appendChild(div);
                 });
-
-            } else { 
-                alert("Error: " + res.mensaje); 
-            }
-        } catch (e) { 
-            alert("Error de conexión"); 
-        } finally { 
-            btn.disabled = false; 
-            btn.innerText = "Ejecutar Análisis"; 
-        }
+            } else { alert("Aviso de IA: " + res.mensaje); }
+        } catch (e) { alert("Error crítico de comunicación con el backend"); } 
+        finally { btn.disabled = false; btn.innerText = "⚡ Ejecutar Red Neuronal"; }
     };
 
-    function toggleJson(btnElement) {
-        const jsonContainer = btnElement.parentElement.nextElementSibling;
+    function toggleJson(btn) {
+        const jsonContainer = btn.parentElement.nextElementSibling;
         if (jsonContainer.style.display === "none") {
             jsonContainer.style.display = "block";
-            btnElement.innerText = "Ocultar JSON";
+            btn.innerHTML = "{ } Ocultar JSON";
         } else {
             jsonContainer.style.display = "none";
-            btnElement.innerText = "Mostrar JSON";
+            btn.innerHTML = "{ } Mostrar JSON";
         }
     }
-
-    function cerrarSesion() {
-        sessionStorage.clear();
-        localStorage.clear();
-        window.location.replace('/');
-    }
+    
+    function cerrarSesion() { sessionStorage.clear(); window.location.replace('/'); }
 </script>
-</body>
-</html>
+{% endblock %}

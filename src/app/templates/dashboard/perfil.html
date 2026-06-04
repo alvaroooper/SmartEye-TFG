@@ -1,278 +1,160 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Mi Perfil - IA Explorer</title>
-    <style>
-        /* Paleta de colores profesional */
-        :root { 
-            --primary: #0056b3; 
-            --primary-light: #e7f1ff;
-            --bg: #f4f7f6; 
-            --text: #2d3436;
-            --danger: #d63031;
-            --success: #27ae60;
-        }
+{% extends "base.html" %}
 
-        body { 
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            color: var(--text);
-            line-height: 1.6;
-        }
+{% block title %}Mi Perfil - SmartEye{% endblock %}
 
-        header { 
-            background: var(--primary); 
-            color: white; 
-            padding: 1.2rem 2rem; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+{% block header_title %}SmartEye | <span style="font-weight: 300; font-size: 1.1rem; color: var(--text-muted); margin-left: 8px;">Mi Perfil</span>{% endblock %}
 
-        .btn-header { 
-            background: rgba(255,255,255,0.15); 
-            color: white; 
-            padding: 8px 18px; 
-            border-radius: 6px; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
-            transition: 0.3s;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .btn-header:hover { background: rgba(255,255,255,0.25); }
+{% block header_actions %}
+    <a href="/dashboard" class="btn btn-outline">← Volver al Panel</a>
+{% endblock %}
 
-        main { max-width: 700px; margin: 40px auto; padding: 0 20px; }
+{% block extra_css %}
+<style>
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        background: rgba(255,255,255,0.03);
+        padding: 25px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        margin-bottom: 20px;
+    }
+    .info-item .info-label {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-bottom: 6px;
+        letter-spacing: 1px;
+    }
+    .info-item span {
+        font-size: 1.1rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+    .hint {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 6px;
+        display: block;
+    }
+    .danger-zone {
+        border: 1px dashed rgba(239, 68, 68, 0.5);
+        background: rgba(239, 68, 68, 0.05);
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+        animation: fadeInUp 0.6s ease-out backwards;
+    }
+    #match_error {
+        color: #fca5a5;
+        font-size: 0.85rem;
+        display: none;
+        margin-top: 8px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
 
-        /* Estilo de tarjetas */
-        .card { 
-            background: white; 
-            border-radius: 12px; 
-            padding: 30px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
-            margin-bottom: 30px;
-            border: 1px solid #edf2f7;
-        }
+{% block content %}
+<div id="statusAlert" class="alert"></div>
 
-        h3 { 
-            margin-top: 0; 
-            color: #1a202c; 
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-
-        /* Grid para visualizar datos actuales del usuario */
-        .info-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 20px;
-            background: var(--primary-light);
-            padding: 20px;
-            border-radius: 10px;
-        }
-        .info-item label { 
-            display: block; 
-            font-size: 0.75rem; 
-            text-transform: uppercase; 
-            color: #64748b; 
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        .info-item span { 
-            font-size: 1rem; 
-            color: var(--primary); 
-            font-weight: 600;
-        }
-
-        /* Estilos del formulario */
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
-        input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 2px solid #e2e8f0; 
-            border-radius: 8px; 
-            box-sizing: border-box;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-        }
-        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-light); }
-        
-        .hint { font-size: 0.75rem; color: #718096; margin-top: 6px; display: block; }
-
-        .btn-save { 
-            width: 100%; 
-            background: var(--success); 
-            color: white; 
-            border: none; 
-            padding: 14px; 
-            border-radius: 8px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            font-size: 1rem;
-            transition: transform 0.1s, background 0.2s;
-        }
-        .btn-save:hover { background: #219150; transform: translateY(-1px); }
-
-        /* Estilo para la zona de eliminación */
-        .danger-zone { 
-            border: 2px dashed #feb2b2; 
-            background: #fff5f5; 
-            padding: 25px; 
-            border-radius: 12px; 
-            text-align: center; 
-        }
-        .btn-delete { 
-            background: var(--danger); 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 6px; 
-            font-weight: 600; 
-            cursor: pointer;
-            margin-top: 15px;
-        }
-
-        /* Alertas de respuesta del servidor */
-        .alert { 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 20px; 
-            display: none; 
-            text-align: center; 
-            font-weight: 600;
-        }
-        .alert-success { background: #def7ec; color: #03543f; border: 1px solid #84e1bc; }
-        .alert-danger { background: #fde8e8; color: #9b1c1c; border: 1px solid #f8b4b4; }
-
-        /* Error visual de coincidencia de contraseña */
-        #match_error { 
-            color: var(--danger); 
-            font-size: 0.8rem; 
-            display: none; 
-            margin-top: 5px; 
-            font-weight: bold; 
-        }
-    </style>
-</head>
-<body>
-
-<header>
-    <div style="font-weight: 700; font-size: 1.4rem;">IA Explorer</div>
-    <a href="/dashboard" class="btn-header">← Volver al Panel</a>
-</header>
-
-<main>
-    <div id="statusAlert" class="alert"></div>
-
-    <div class="card">
-        <h3>👤 Información de mi Cuenta</h3>
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-label">Nombre Visible Actual</div>
-                <span id="cur_nombre">Cargando...</span>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Nombre de Usuario (Login)</div>
-                <span id="cur_username">Cargando...</span>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Correo Electrónico</div>
-                <span id="cur_email">Cargando...</span>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Fecha de Registro</div>
-                <span id="cur_fecha">Cargando...</span>
-            </div>
+<div class="card" style="animation: fadeInUp 0.4s ease-out backwards;">
+    <h3 style="margin-top: 0; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+        👤 Información de mi Cuenta
+    </h3>
+    <div class="info-grid">
+        <div class="info-item">
+            <div class="info-label">Nombre Visible Actual</div>
+            <span id="cur_nombre">Cargando...</span>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Usuario (Login)</div>
+            <span id="cur_username">Cargando...</span>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Correo Electrónico</div>
+            <span id="cur_email" style="color: var(--text-main);">Cargando...</span>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Miembro desde</div>
+            <span id="cur_fecha" style="color: var(--text-main);">Cargando...</span>
         </div>
     </div>
+</div>
 
-    <div class="card">
-        <h3>⚙️ Editar mi Perfil</h3>
-        <form id="profileForm">
+<div class="card" style="animation: fadeInUp 0.5s ease-out backwards;">
+    <h3 style="margin-top: 0; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+        ⚙️ Editar mi Perfil
+    </h3>
+    <form id="profileForm">
+        <div class="form-group">
+            <label for="input_nombre">Nuevo Nombre Visible:</label>
+            <input type="text" id="input_nombre" placeholder="¿Cómo quieres aparecer?">
+            <span class="hint">Esto cambiará cómo te saludamos en el panel. No afecta a tu login.</span>
+        </div>
+        
+        <div style="margin: 35px 0 25px; border-top: 1px solid var(--border); padding-top: 25px;">
+            <h4 style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Cambiar Seguridad</h4>
+            
             <div class="form-group">
-                <label for="input_nombre">Nuevo Nombre Visible:</label>
-                <input type="text" id="input_nombre" placeholder="¿Cómo quieres aparecer?">
-                <span class="hint">Esto cambiará cómo te saludamos en el panel. No afecta a tu login.</span>
+                <label for="old_password">Contraseña Actual:</label>
+                <input type="password" id="old_password" placeholder="Indispensable para autorizar cambios">
             </div>
-
-            <div style="margin: 30px 0; border-top: 1px solid #edf2f7; padding-top: 25px;">
-                <h4 style="margin-bottom: 20px; font-size: 0.9rem; color: #718096; text-transform: uppercase;">Cambiar Seguridad</h4>
-                
-                <div class="form-group">
-                    <label for="old_password">Contraseña Actual:</label>
-                    <input type="password" id="old_password" placeholder="Indispensable para autorizar cambios">
-                </div>
-
-                <div class="form-group">
-                    <label for="new_password">Nueva Contraseña (Opcional):</label>
-                    <input type="password" id="new_password" 
-                           pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                           placeholder="Mínimo 8 caracteres, Mayús, Minús y Número">
-                    <span class="hint">Déjalo en blanco si no quieres cambiar tu contraseña.</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirm_password">Repetir Nueva Contraseña:</label>
-                    <input type="password" id="confirm_password" placeholder="Confirma tu nueva contraseña">
-                    <span id="match_error">⚠️ Las nuevas contraseñas no coinciden.</span>
-                </div>
+            <div class="form-group">
+                <label for="new_password">Nueva Contraseña (Opcional):</label>
+                <input type="password" id="new_password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" placeholder="Mínimo 8 caracteres, Mayús, Minús y Número">
+                <span class="hint">Déjalo en blanco si no quieres cambiar tu contraseña actual.</span>
             </div>
+            <div class="form-group">
+                <label for="confirm_password">Repetir Nueva Contraseña:</label>
+                <input type="password" id="confirm_password" placeholder="Confirma tu nueva contraseña">
+                <span id="match_error">⚠️ Las nuevas contraseñas no coinciden.</span>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block" style="font-size: 1.05rem;">Guardar Cambios</button>
+    </form>
+</div>
 
-            <button type="submit" class="btn-save">Guardar Cambios</button>
-        </form>
-    </div>
+<div class="danger-zone">
+    <h4 style="margin-top: 0; font-size: 1.2rem; color: #fca5a5; font-weight: 800;">Zona de Peligro</h4>
+    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 20px;">
+        Al borrar tu cuenta, se anonimizarán tus datos y perderás el acceso a los servicios y compras permanentemente.
+    </p>
+    <button id="btnDelete" class="btn btn-danger" style="box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);">Eliminar mi cuenta definitivamente</button>
+</div>
+{% endblock %}
 
-    <div class="danger-zone">
-        <h4 style="margin: 0; color: var(--danger);">Zona de Peligro</h4>
-        <p style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">Al borrar tu cuenta, se anonimizarán tus datos y perderás el acceso permanentemente.</p>
-        <button id="btnDelete" class="btn-delete">Eliminar mi cuenta definitivamente</button>
-    </div>
-</main>
-
+{% block scripts %}
 <script>
-    // Al cargar la página, verificamos si hay sesión activa
     document.addEventListener('DOMContentLoaded', () => {
         const token = sessionStorage.getItem('jwt_token');
         if (!token) { window.location.replace('/login'); return; }
         cargarDatosPerfil();
     });
 
-    /**
-     * Obtiene los datos del usuario desde el servidor
-     */
     async function cargarDatosPerfil() {
         try {
             const response = await fetch('/api/v1/auth/perfil', {
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                headers: {
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
                     'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-                 }
+                }
             });
             const res = await response.json();
-            
             if (response.ok) {
                 document.getElementById('cur_email').innerText = res.datos.email;
                 document.getElementById('cur_username').innerText = res.datos.username;
                 document.getElementById('cur_nombre').innerText = res.datos.nombre_visible || 'No definido';
                 document.getElementById('cur_fecha').innerText = res.datos.fecha_registro;
-                
-                // Rellenamos el input para facilitar la edición
                 document.getElementById('input_nombre').value = res.datos.nombre_visible;
             }
-        } catch (e) {
-            console.error("Error cargando perfil:", e);
-        }
+        } catch (e) {}
     }
 
-    /**
-     * Muestra mensajes de alerta en la parte superior
-     */
     function showAlert(mensaje, tipo) {
         const div = document.getElementById('statusAlert');
         div.innerText = mensaje;
@@ -282,12 +164,8 @@
         setTimeout(() => div.style.display = 'none', 5000);
     }
 
-    /**
-     * Manejo del formulario de actualización
-     */
     document.getElementById('profileForm').onsubmit = async function(e) {
         e.preventDefault();
-        
         const payload = {};
         const nombreVisible = document.getElementById('input_nombre').value;
         const oldPass = document.getElementById('old_password').value;
@@ -295,18 +173,14 @@
         const confirmPass = document.getElementById('confirm_password').value;
         const matchError = document.getElementById('match_error');
 
-        // Solo enviamos el nombre si el campo tiene contenido
         if (nombreVisible) payload.nombre_visible = nombreVisible;
 
-        // Lógica de Doble Verificación de contraseña
         if (newPass || confirmPass) {
-            // 1. ¿Coinciden las dos nuevas?
             if (newPass !== confirmPass) {
                 matchError.style.display = 'block';
                 showAlert("Las nuevas contraseñas no coinciden.", "danger");
                 return;
             }
-            // 2. ¿Ha puesto la vieja para autorizar?
             if (!oldPass) {
                 showAlert("Debes introducir tu contraseña ACTUAL para poder cambiarla.", "danger");
                 return;
@@ -316,7 +190,6 @@
             payload.old_password = oldPass;
         }
 
-        // Si no se ha escrito nada
         if (Object.keys(payload).length === 0) {
             showAlert("No hay cambios que guardar.", "danger");
             return;
@@ -325,28 +198,21 @@
         try {
             const response = await fetch('/api/v1/auth/perfil', {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
                     'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify(payload)
             });
-            
+
             const res = await response.json();
-            
             if (response.ok) {
                 showAlert("✅ " + res.mensaje, "success");
-                
-                // Actualizamos el nombre en el navegador (para el saludo del Dashboard)
                 if (res.nuevo_nombre) sessionStorage.setItem('nombre_usuario', res.nuevo_nombre);
-                
-                // Limpiamos los campos de texto de seguridad por privacidad
                 document.getElementById('old_password').value = '';
                 document.getElementById('new_password').value = '';
                 document.getElementById('confirm_password').value = '';
-                
-                // Refrescamos los datos actuales de la tarjeta superior
                 cargarDatosPerfil();
             } else {
                 showAlert("❌ " + res.mensaje, "danger");
@@ -356,10 +222,6 @@
         }
     };
 
-    /**
-     * Validador visual en tiempo real:
-     * Compara las claves mientras el usuario escribe en el segundo campo.
-     */
     document.getElementById('confirm_password').oninput = function() {
         const newPass = document.getElementById('new_password').value;
         const matchError = document.getElementById('match_error');
@@ -370,18 +232,16 @@
         }
     };
 
-    /**
-     * Borrado de cuenta (Lógica DELETE)
-     */
     document.getElementById('btnDelete').onclick = async function() {
         if (!confirm("⚠️ ¿Estás COMPLETAMENTE seguro? Esta acción no se puede deshacer.")) return;
-        
         try {
             const response = await fetch('/api/v1/auth/cuenta', {
                 method: 'DELETE',
-                headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'), 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
+                headers: {
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('jwt_token'),
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                }
             });
-            
             if (response.ok) {
                 alert("Cuenta eliminada correctamente.");
                 sessionStorage.clear();
@@ -392,5 +252,4 @@
         }
     };
 </script>
-</body>
-</html>
+{% endblock %}

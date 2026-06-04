@@ -1,81 +1,81 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Crear Cuenta - IA Explorer</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .register-card { background: white; padding: 2.5rem 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        h2 { color: #1c1e21; text-align: center; margin-top: 0; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1.2rem; }
-        label { display: block; margin-bottom: 0.4rem; color: #4b4f56; font-size: 0.95rem; font-weight: 500; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; transition: border-color 0.2s; }
-        input:focus { border-color: #0056b3; outline: none; }
-        
-        .password-hint { color: #666; font-size: 0.8rem; margin-top: 6px; display: block; line-height: 1.4; }
-        
-        button { width: 100%; padding: 14px; background-color: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 1rem; transition: background-color 0.2s; }
-        button:hover { background-color: #218838; }
-        button:disabled { background-color: #6c757d; cursor: not-allowed; }
-        
-        .error-msg { color: #dc3545; background: #f8d7da; padding: 12px; border-radius: 6px; display: none; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem; border: 1px solid #f5c6cb; }
-        .success-msg { color: #155724; background: #d4edda; padding: 12px; border-radius: 6px; display: none; margin-bottom: 1.5rem; text-align: center; font-size: 0.9rem; border: 1px solid #c3e6cb; }
-        
-        .footer-link { text-align: center; margin-top: 1.5rem; font-size: 0.95rem; color: #555; }
-        .footer-link a { color: #0056b3; text-decoration: none; font-weight: 600; transition: color 0.2s; }
-        .footer-link a:hover { text-decoration: underline; color: #004494; }
-        
-        .back-link { margin-top: 2rem; }
-        .back-link a { color: #888; font-weight: 500; }
-        .back-link a:hover { color: #333; text-decoration: none; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-<div class="register-card">
-    <h2>Registro de Usuario</h2>
-    <div id="errorBox" class="error-msg"></div>
-    <div id="successBox" class="success-msg"></div>
+{% block title %}Crear Cuenta - SmartEye{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Forzamos pantalla completa sin scroll */
+    body, html { 
+        margin: 0; padding: 0; height: 100vh; overflow: hidden; 
+        background-color: var(--bg-main);
+    }
+    main.container { 
+        max-width: 480px; 
+        width: 100%; 
+        height: 100vh;
+        margin: 0 auto; 
+        padding: 20px; 
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
+        animation: fadeInUp 0.6s ease-out; 
+    }
+    .auth-card { padding: 40px; margin: 0; box-sizing: border-box; }
+    .text-center { text-align: center; }
+    .hint { color: var(--text-muted); font-size: 0.8rem; margin-top: 8px; display: block; line-height: 1.4; }
     
+    @media (max-height: 700px) {
+        body, html { height: auto; overflow-y: auto; }
+        main.container { height: auto; margin-top: 20px; margin-bottom: 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card auth-card">
+    <h2 class="text-center" style="font-size: 2rem; margin-top: 0; margin-bottom: 5px;">Únete a SmartEye</h2>
+    <p class="text-center" style="color: var(--text-muted); margin-bottom: 25px;">Crea tu cuenta para comenzar a analizar</p>
+    
+    <div id="errorBox" class="alert alert-danger"></div>
+    <div id="successBox" class="alert alert-success"></div>
+
     <form id="formRegistro">
         <div class="form-group">
-            <label for="nombre_visible">Nombre Completo / Visible</label>
-            <input type="text" id="nombre_visible" name="nombre_visible" placeholder="Ej: Alvaro Pérez" required>
+            <label for="nombre_visible">Nombre Visible (Opcional)</label>
+            <input type="text" id="nombre_visible" placeholder="¿Cómo quieres que te llamemos?">
         </div>
         <div class="form-group">
-            <label for="username">Nombre de Usuario (Username)</label>
-            <input type="text" id="username" name="username" placeholder="ej: alvaro99" required>
+            <label for="username">Usuario</label>
+            <input type="text" id="username" placeholder="Elige un alias único" required>
         </div>
         <div class="form-group">
             <label for="email">Correo Electrónico</label>
-            <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required>
+            <input type="email" id="email" placeholder="tu@email.com" required>
         </div>
         <div class="form-group">
             <label for="password">Contraseña</label>
-            <input type="password" id="password" 
-                   pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" 
-                   title="Debe contener al menos 8 caracteres, incluyendo una letra mayúscula, una minúscula y un número." 
-                   placeholder="Crea una contraseña segura" 
-                   required>
-            <span class="password-hint">🛡️ Mínimo 8 caracteres. Debe incluir al menos una mayúscula, una minúscula y un número.</span>
+            <input type="password" id="password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Debe contener al menos 8 caracteres, incluyendo una letra mayúscula, una minúscula y un número." placeholder="Crea una contraseña segura" required>
+            <span class="hint">🛡️ Mínimo 8 caracteres. Debe incluir al menos una mayúscula, una minúscula y un número.</span>
         </div>
-        <button type="submit" id="btnRegistrar">Crear Cuenta</button>
+        <button type="submit" id="btnRegistrar" class="btn btn-primary btn-block" style="margin-top: 10px; font-size: 1.05rem;">Crear Cuenta</button>
     </form>
 
-    <div class="footer-link">
-        ¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a>
-    </div>
-
-    <div class="footer-link back-link">
-        <a href="/">← Volver al inicio</a>
+    <div class="text-center" style="margin-top: 1.5rem; font-size: 0.95rem; color: var(--text-muted);">
+        ¿Ya tienes cuenta? <a href="/login" style="color: var(--primary); font-weight: 600; text-decoration: none;">Inicia sesión aquí</a>
+        <div style="margin-top: 1.5rem;">
+            <a href="/" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;">← Volver al inicio</a>
+        </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
     document.getElementById('formRegistro').onsubmit = async function(e) {
         e.preventDefault();
-        
         const errorBox = document.getElementById('errorBox');
         const successBox = document.getElementById('successBox');
         const btn = document.getElementById('btnRegistrar');
@@ -95,21 +95,21 @@
         try {
             const response = await fetch('/api/v1/auth/register', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify(payload)
             });
-            
-            const data = await response.json();
 
+            const data = await response.json();
+            
             if (response.ok) {
                 sessionStorage.setItem('jwt_token', data.token);
                 sessionStorage.setItem('nombre_usuario', data.usuario);
                 sessionStorage.setItem('roles', JSON.stringify(data.roles));
                 
-                successBox.innerText = "¡Cuenta creada con éxito! Entrando...";
+                successBox.innerText = "¡Cuenta creada con éxito! Redirigiendo...";
                 successBox.style.display = 'block';
                 
                 setTimeout(() => {
@@ -133,6 +133,4 @@
         }
     };
 </script>
-
-</body>
-</html>
+{% endblock %}
