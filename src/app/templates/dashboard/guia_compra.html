@@ -1,127 +1,159 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Guía de Pipelines - IA Explorer</title>
-    <style>
-        :root { --primary: #0056b3; --bg: #f4f7f6; --success: #28a745; --text: #333; --warning: #ffc107; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
-        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn-header { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; transition: background 0.3s; }
-        .btn-header:hover { background: rgba(255,255,255,0.3); }
-        
-        main { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-        .intro-text { text-align: center; margin-bottom: 40px; color: #555; font-size: 1.1rem; }
-        
-        .grid-guias { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-        .card-guia { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid var(--primary); display: flex; flex-direction: column; }
-        
-        .guia-nombre { font-size: 1.3rem; font-weight: bold; margin: 0 0 10px 0; color: #1c1e21; }
-        .guia-desc { font-size: 0.95rem; color: #666; margin-bottom: 20px; line-height: 1.5; flex-grow: 1; }
-        
-        .requisitos-box { background: #f8f9fa; border: 1px dashed #ccc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .requisitos-titulo { font-size: 0.85rem; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 10px; display: block; }
-        .badge-ia { padding: 4px 10px; border-radius: 15px; font-size: 0.85rem; font-weight: bold; display: inline-block; margin: 0 5px 5px 0; }
-        .badge-comprada { background-color: var(--success); color: white; } 
-        .badge-falta { background-color: #f8d7da; color: var(--danger); border: 1px solid #f5c6cb; }
-        
-        .etapas-list { list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 0.9rem; color: #555; }
-        .etapas-list li { padding: 5px 0; border-bottom: 1px solid #eee; }
-        .etapas-list li:last-child { border-bottom: none; }
-        
-        .btn-tienda { background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.3s; text-decoration: none; text-align: center; display: block; box-sizing: border-box; }
-        .btn-tienda:hover { background: #218838; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-<header>
-    <h2>Guía de Pipelines</h2>
-    <div>
-        <a href="/dashboard" class="btn-header">← Volver al Panel</a>
-    </div>
-</header>
+{% block title %}Guía de Pipelines - SmartEye{% endblock %}
 
-<main>
-    <div class="intro-text">
-        <p>Descubre los flujos de análisis disponibles en el sistema y averigua qué <b>Motores de IA</b> necesitas alquilar en la tienda para desbloquearlos.</p>
-    </div>
-    
-    <div id="contenedorGuias" class="grid-guias">
-        <p style="grid-column: 1 / -1; text-align: center; color: #666;">Cargando catálogo de pipelines...</p>
-    </div>
-</main>
+{% block header_title %}SmartEye | <span style="font-weight: 300; font-size: 1.1rem; color: var(--text-muted); margin-left: 8px;">Guía de Pipelines</span>{% endblock %}
 
+{% block header_actions %}
+    <a href="/shop" class="btn btn-outline">← Volver a la Tienda</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .intro-text {
+        text-align: center;
+        margin-bottom: 40px;
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .grid-guias {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+    .card-guia {
+        border-top: 4px solid var(--primary);
+        display: flex;
+        flex-direction: column;
+        animation: fadeInUp 0.5s ease-out backwards;
+    }
+    .requisitos-box {
+        background: rgba(255,255,255,0.03);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        margin-bottom: 20px;
+    }
+    .requisitos-titulo {
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        display: block;
+        letter-spacing: 1px;
+    }
+    .badge-ia {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        margin: 0 5px 5px 0;
+    }
+    .badge-comprada {
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge-falta {
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .etapas-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 25px 0;
+        font-size: 0.95rem;
+        color: var(--text-main);
+    }
+    .etapas-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .etapas-list li:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="intro-text">
+    <p>Descubre los flujos de análisis disponibles en el sistema y averigua qué <b>Motores de IA</b> necesitas alquilar en la tienda para desbloquearlos de forma inmediata.</p>
+</div>
+
+<div id="contenedorGuias" class="grid-guias">
+    <p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted);">Cargando catálogo de flujos de trabajo...</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', cargarGuia);
 
     async function cargarGuia() {
         const contenedor = document.getElementById('contenedorGuias');
         const token = sessionStorage.getItem('jwt_token');
+
         if (!token) { window.location.replace('/login'); return; }
 
         try {
             const response = await fetch('/api/v1/shop/guia_pipelines', {
-                headers: { 'Authorization': 'Bearer ' + token, 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                }
             });
-            
-            if (!response.ok) throw new Error("Error al cargar la guía");
-            
+
+            if (!response.ok) throw new Error("Error al cargar la guía técnica");
             const pipelines = await response.json();
-            contenedor.innerHTML = ''; 
+            contenedor.innerHTML = '';
 
             if (pipelines.length === 0) {
-                contenedor.innerHTML = '<p style="grid-column: 1 / -1; text-align: center;">No hay pipelines públicos disponibles en este momento.</p>';
+                contenedor.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted);">No hay flujos públicos disponibles en este momento.</p>';
                 return;
             }
 
-            pipelines.forEach(p => {
+            pipelines.forEach((p, idx) => {
                 const card = document.createElement('div');
-                card.className = 'card-guia';
-                
-                // Generar los badges de IA requeridas
-                let badgesHtml = p.ias_requeridas.length > 0 
-                    ? p.ias_requeridas.map(ia => {
+                card.className = 'card card-guia';
+                card.style.animationDelay = `${idx * 0.1}s`;
+
+                let badgesHtml = p.ias_requeridas.length > 0 ? 
+                    p.ias_requeridas.map(ia => {
                         if (ia.comprada) {
                             return `<span class="badge-ia badge-comprada">✔️ ${ia.nombre}</span>`;
                         } else {
                             return `<span class="badge-ia badge-falta">❌ Falta: ${ia.nombre}</span>`;
                         }
-                    }).join('')
-                    : '<span style="color:#666; font-size:0.9rem;">Ninguna IA requerida</span>';
+                    }).join('') : '<span style="color:var(--text-muted); font-size:0.9rem;">Ninguna IA requerida</span>';
 
-                // Generar la lista de etapas detallada
                 let etapasHtml = '';
                 p.etapas.forEach(e => {
-                    etapasHtml += `<li><b>${e.orden}. ${e.nombre}</b> <span style="color:#888;">(${e.modo})</span></li>`;
+                    etapasHtml += `<li><b style="color: var(--primary);">${e.orden}.</b> ${e.nombre} <br><span style="color:var(--text-muted); font-size:0.8rem; margin-left: 15px;">(${e.ia} / ${e.modo})</span></li>`;
                 });
 
                 card.innerHTML = `
-                    <h3 class="guia-nombre">${p.nombre}</h3>
-                    <p class="guia-desc">${p.descripcion}</p>
+                    <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 1.4rem;">${p.nombre}</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">${p.descripcion}</p>
                     
                     <div class="requisitos-box">
-                        <span class="requisitos-titulo">IAs Necesarias para desbloquear:</span>
+                        <span class="requisitos-titulo">Motores Requeridos:</span>
                         <div>${badgesHtml}</div>
                     </div>
                     
-                    <span class="requisitos-titulo" style="margin-bottom:5px;">Secuencia Técnica:</span>
-                    <ul class="etapas-list">
-                        ${etapasHtml}
-                    </ul>
-                    
-                    <div style="margin-top: auto;">
-                        <a href="/shop" class="btn-tienda">🛒 Ir a la Tienda</a>
-                    </div>
+                    <span class="requisitos-titulo" style="margin-bottom:5px;">Secuencia de Ejecución:</span>
+                    <ul class="etapas-list">${etapasHtml}</ul>
                 `;
                 contenedor.appendChild(card);
             });
-
         } catch (error) {
-            contenedor.innerHTML = `<p style="color: red; text-align: center; grid-column: 1 / -1;">Error de conexión: ${error.message}</p>`;
+            contenedor.innerHTML = `<p style="color: var(--danger); text-align: center; grid-column: 1 / -1;">Error de conexión: ${error.message}</p>`;
         }
     }
 </script>
-</body>
-</html>
+{% endblock %}

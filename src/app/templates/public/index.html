@@ -1,76 +1,194 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA-Pipeline Explorer - TFG</title>
-    <style>
-        :root { --primary: #0056b3; --secondary: #28a745; --dark: #1c1e21; --light: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background-color: var(--light); color: var(--dark); line-height: 1.6; }
-        
-        /* Hero Section */
-        .hero { background: linear-gradient(135deg, #004494 0%, #007bff 100%); color: white; padding: 100px 20px; text-align: center; }
-        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; }
-        .hero p { font-size: 1.2rem; max-width: 800px; margin: 0 auto 2rem; opacity: 0.9; }
-        
-        /* Botones */
-        .cta-container { display: flex; justify-content: center; gap: 20px; }
-        .btn { padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; transition: transform 0.2s; }
-        .btn:hover { transform: translateY(-3px); }
-        .btn-login { background-color: white; color: var(--primary); }
-        .btn-register { background-color: var(--secondary); color: white; }
-        
-        /* Features */
-        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
-        .feature-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
-        .feature-card h3 { color: var(--primary); margin-top: 0; }
-        
-        footer { text-align: center; padding: 40px; color: #666; font-size: 0.9rem; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
 
-    <section class="hero">
-        <h1>Análisis de Imágenes con IA Multi-Etapa</h1>
-        <p>Potencia tus flujos de trabajo utilizando detección de objetos, seguimiento de manos y estimación de pose en una única ejecución secuencial.</p>
-        <div class="cta-container">
-            <a href="/login" class="btn btn-login">Iniciar Sesión</a>
-            <a href="/registro" class="btn btn-register">Comenzar Gratis</a>
-        </div>
-    </section>
+{% block title %}SmartEye - Análisis de IA Simplificado{% endblock %}
 
-    <section class="features">
-        <div class="feature-card">
-            <h3>MediaPipe Pose</h3>
-            <p>Detección precisa de puntos clave de la pose humana en tiempo real.</p>
-        </div>
-        <div class="feature-card">
-            <h3>MediaPipe Hands</h3>
-            <p>Detección precisa de puntos clave por mano.</p>
-        </div>
-        <div class="feature-card">
-            <h3>Detección YOLOv8</h3>
-            <p>Identifica clases de objetos en tiempo real con la precisión de los últimos modelos de Ultralytics.</p>
-        </div>
-        <div class="feature-card">
-            <h3>Pipelines Personalizados</h3>
-            <p>Configura secuencias de modelos donde el resultado de una etapa alimenta a la siguiente de forma automática.</p>
-        </div>
-    </section>
+{% block header %}
+<header class="header-main" style="background: transparent; backdrop-filter: none; border: none; position: absolute; top: 0; left: 0; right: 0; box-shadow: none; box-sizing: border-box; z-index: 100;">
+    <h2 style="color: white; margin-left: 20px; font-size: 1.8rem; letter-spacing: 1px;">SmartEye</h2>
+</header>
+{% endblock %}
 
-    <footer>
-        &copy; 2026 Trabajo de Fin de Grado - Plataforma de IA Orquestada.
-    </footer>
+{% block extra_css %}
+<style>
+    /* Bloqueamos el scroll y forzamos a que todo mida exactamente el alto de la ventana */
+    body, html { 
+        margin: 0; 
+        padding: 0; 
+        height: 100vh; 
+        overflow: hidden; 
+        background-color: var(--bg-main);
+    }
+    
+    main.container { 
+        max-width: 1300px; 
+        width: 100%; 
+        height: 100vh; 
+        margin: 0 auto; 
+        padding: 70px 20px 20px 20px; /* Espacio superior para el logo */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+    }
+    
+    .hero { 
+        text-align: center;
+        margin-bottom: 40px;
+        width: 100%;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .hero h1 { 
+        font-size: clamp(2.5rem, 5vw, 4.5rem); /* Se adapta al tamaño de pantalla */
+        font-weight: 800;
+        margin-top: 0;
+        margin-bottom: 1rem; 
+        background: var(--primary-gradient);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.1;
+    }
+    
+    .hero p { 
+        font-size: clamp(1rem, 1.5vw, 1.2rem); 
+        max-width: 800px; 
+        margin: 0 auto 2rem; 
+        color: var(--text-muted);
+        font-weight: 300;
+    }
+    
+    .cta-container { 
+        display: flex; 
+        gap: 20px; 
+        justify-content: center; 
+    }
+    
+    /* El grid de tarjetas se adapta para entrar en la mitad inferior de la pantalla */
+    .features { 
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 20px; 
+        width: 100%; 
+        animation: fadeInUp 0.8s ease-out backwards;
+    }
+    
+    .feature-card { 
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        padding: 25px 20px; 
+        border-radius: 16px; 
+        border: 1px solid var(--border);
+        text-align: center;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .feature-card:hover { 
+        transform: translateY(-8px); 
+        border-color: var(--primary);
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+    }
+    
+    .feature-card h3 { 
+        color: var(--text-main); 
+        font-size: 1.2rem; 
+        margin-top: 0;
+        margin-bottom: 12px; 
+    }
+    
+    .feature-card p { 
+        color: var(--text-muted); 
+        font-size: 0.95rem; 
+        line-height: 1.5; 
+        margin: 0; 
+    }
+    
+    footer { 
+        position: absolute; 
+        bottom: 15px; 
+        text-align: center; 
+        width: 100%; 
+        color: var(--text-muted); 
+        font-size: 0.85rem; 
+    }
 
-    <script>
-        // Si el usuario ya está logueado, le ofrecemos ir directo a su panel
-        if (localStorage.getItem('jwt_token')) {
-            const heroP = document.querySelector('.hero p');
-            heroP.innerHTML += `<br><br><strong>Ya tienes una sesión activa.</strong>`;
-            document.querySelector('.btn-login').innerText = "Ir a mi Panel";
-            document.querySelector('.btn-login').href = "/dashboard";
+    /* Responsividad: Si la pantalla es muy pequeña (móviles), permitimos el scroll */
+    @media (max-width: 900px) {
+        body, html { height: auto; overflow-y: auto; }
+        main.container { height: auto; padding-top: 100px; padding-bottom: 60px; }
+        .features { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        footer { position: relative; margin-top: 30px; }
+    }
+    
+    @media (max-width: 600px) {
+        .features { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Inteligencia Visual<br>Simplificada</h1>
+    <p>SmartEye te permite detectar objetos automáticamente, rastrear movimientos corporales y analizar imágenes a través de una plataforma intuitiva y fácil de usar.</p>
+    <div class="cta-container">
+        <a href="/login" class="btn btn-outline" style="padding: 12px 28px; font-size: 1.05rem;" id="btnLoginIndex">Iniciar Sesión</a>
+        <a href="/registro" class="btn btn-primary" style="padding: 12px 28px; font-size: 1.05rem;">Comenzar Gratis</a>
+    </div>
+</section>
+
+<section class="features">
+    <div class="feature-card">
+        <h3>Seguimiento Corporal</h3>
+        <p>Identifica fácilmente posturas humanas y puntos clave en tus imágenes.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Análisis de Manos</h3>
+        <p>Detección precisa de manos y posición de los dedos para análisis de gestos.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Detección de Objetos</h3>
+        <p>Localiza y clasifica automáticamente objetos cotidianos en cualquier fotografía.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Flujos Personalizados</h3>
+        <p>Conecta modelos de IA para crear procesos de análisis en múltiples etapas.</p>
+    </div>
+</section>
+
+<footer>
+    &copy; 2026 Plataforma SmartEye - Trabajo de Fin de Grado.<br>
+    <a href="https://github.com/alvaroooper/SmartEye-TFG.git" target="_blank" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; margin-top: 10px; display: inline-flex; align-items: center; gap: 5px; transition: color 0.2s;">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+        </svg>
+        Código Fuente bajo licencia AGPL-3.0
+    </a>
+</footer>
+
+<style>
+    footer a:hover { color: var(--primary) !important; }
+</style>
+
+<style>
+    footer a:hover { color: var(--primary) !important; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Validamos si ya hay una sesión activa para modificar el Call To Action
+    if (localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token')) {
+        const heroP = document.querySelector('.hero p');
+        heroP.innerHTML += `<br><br><strong style="color: var(--success);">Ya tienes una sesión activa.</strong>`;
+        const btnLogin = document.getElementById('btnLoginIndex');
+        if(btnLogin){
+            btnLogin.innerText = "Ir a mi Panel";
+            btnLogin.href = "/dashboard";
         }
-    </script>
-
-</body>
-</html>
+    }
+</script>
+{% endblock %}

@@ -1,199 +1,116 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Iniciar Sesión - IA Explorer</title>
-    <style>
-        /* Configuración de estilos base y layout centralizado */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f0f2f5; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
+{% extends "base.html" %}
 
-        /* Tarjeta contenedora del formulario */
-        .login-card { 
-            background: white; 
-            padding: 2.5rem 2rem; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            width: 100%; 
-            max-width: 400px; 
-        }
+{% block title %}Iniciar Sesión - SmartEye{% endblock %}
 
-        h2 { 
-            color: #1c1e21; 
-            text-align: center; 
-            margin-bottom: 1.5rem; 
-            font-weight: 600;
-        }
+{% block header %}{% endblock %}
 
-        .form-group { margin-bottom: 1.2rem; }
-
-        label { 
-            display: block; 
-            margin-bottom: 0.5rem; 
-            color: #4b4f56; 
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #ddd; 
-            border-radius: 6px; 
-            box-sizing: border-box; 
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: #0056b3;
-            outline: none;
-        }
-
-        /* Botón de acción principal */
-        button { 
-            width: 100%; 
-            padding: 14px; 
-            background-color: #0056b3; 
-            color: white; 
-            border: none; 
-            border-radius: 6px; 
-            font-weight: bold; 
-            font-size: 1rem;
-            cursor: pointer; 
-            margin-top: 1rem; 
-            transition: background-color 0.2s;
-        }
-
-        button:hover { background-color: #004494; }
-
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Mensajes de error del servidor */
-        .error-msg { 
-            color: #dc3545; 
-            background: #f8d7da; 
-            padding: 12px; 
-            border-radius: 6px; 
-            display: none; 
-            margin-bottom: 1rem; 
-            text-align: center; 
-            font-size: 0.9rem;
-            border: 1px solid #f5c6cb;
-        }
-
-        /* Enlaces de navegación inferior */
-        .footer-link { text-align: center; margin-top: 1.2rem; font-size: 0.9rem; color: #606770; }
-        .footer-link a { color: #0056b3; text-decoration: none; font-weight: 600; }
-        .footer-link a:hover { text-decoration: underline; }
-
-        .back-link { margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1rem; }
-        .back-link a { color: #888; font-weight: 500; }
-    </style>
-</head>
-<body>
-
-<div class="login-card">
-    <h2>Identificación</h2>
+{% block extra_css %}
+<style>
+    /* Forzamos pantalla completa sin scroll */
+    body, html { 
+        margin: 0; padding: 0; height: 100vh; overflow: hidden; 
+        background-color: var(--bg-main);
+    }
+    main.container { 
+        max-width: 420px; 
+        width: 100%; 
+        height: 100vh;
+        margin: 0 auto; 
+        padding: 20px; 
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
+        animation: fadeInUp 0.5s ease-out; 
+    }
+    .auth-card { padding: 40px; margin: 0; box-sizing: border-box; }
+    .text-center { text-align: center; }
     
-    <div id="errorBox" class="error-msg"></div>
+    @media (max-height: 600px) {
+        body, html { height: auto; overflow-y: auto; }
+        main.container { height: auto; margin-top: 20px; margin-bottom: 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card auth-card">
+    <h2 class="text-center" style="font-size: 2rem; margin-top: 0; margin-bottom: 5px;">Bienvenido</h2>
+    <p class="text-center" style="color: var(--text-muted); margin-bottom: 30px;">Inicia sesión en tu panel de SmartEye</p>
     
+    <div id="errorBox" class="alert alert-danger"></div>
+
     <form id="formLogin">
         <div class="form-group">
-            <label for="identificador">Email o Nombre de Usuario</label>
-            <input type="text" id="identificador" placeholder="ejemplo@tfg.es o usuario99" required>
+            <label for="identificador">Correo o Usuario</label>
+            <input type="text" id="identificador" placeholder="Introduce tu alias o email" required>
         </div>
         <div class="form-group">
             <label for="password">Contraseña</label>
             <input type="password" id="password" placeholder="••••••••" required>
         </div>
-        <button type="submit" id="btnEntrar">Entrar al Panel</button>
+        <button type="submit" id="btnLogin" class="btn btn-primary btn-block" style="margin-top: 15px; font-size: 1.05rem;">Acceder al Panel</button>
     </form>
 
-    <div class="footer-link">
-        ¿No tienes cuenta? <a href="/registro">Regístrate aquí</a>
-    </div>
-
-    <div class="footer-link back-link">
-        <a href="/">← Volver al inicio</a>
+    <div class="text-center" style="margin-top: 1.8rem; font-size: 0.95rem; color: var(--text-muted);">
+        ¿Nuevo en SmartEye? <a href="/registro" style="color: var(--primary); font-weight: 600; text-decoration: none;">Crea una cuenta</a>
+        <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+            <a href="/" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;">← Volver al inicio</a>
+        </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    /**
-     * Gestión del proceso de autenticación mediante Fetch API.
-     * Soporta acceso dual (email/username) según la nueva lógica del backend.
-     */
     document.getElementById('formLogin').onsubmit = async function(e) {
         e.preventDefault();
-        
-        // Limpieza de estados previos para evitar conflictos de sesión
-        localStorage.clear(); 
-        sessionStorage.clear();
-
         const errorBox = document.getElementById('errorBox');
-        const btn = document.getElementById('btnEntrar');
+        const btn = document.getElementById('btnLogin');
         
         errorBox.style.display = 'none';
-        btn.innerText = "Verificando...";
         btn.disabled = true;
+        btn.innerText = "Autenticando...";
 
-        // Recogida de datos del formulario
-        const identificador = document.getElementById('identificador').value;
-        const password = document.getElementById('password').value;
+        const payload = {
+            identificador: document.getElementById('identificador').value,
+            password: document.getElementById('password').value
+        };
 
         try {
-            // Petición al endpoint de autenticación unificado
             const response = await fetch('/api/v1/auth/login', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content 
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
                 },
-                body: JSON.stringify({ identificador, password })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
-
+            
             if (response.ok) {
-                // Almacenamiento seguro del token y datos de sesión en sessionStorage
                 sessionStorage.setItem('jwt_token', data.token);
                 sessionStorage.setItem('nombre_usuario', data.usuario);
                 sessionStorage.setItem('roles', JSON.stringify(data.roles));
-
-                // Redirección inteligente basada en los privilegios del usuario
+                
                 if (data.roles.includes('admin')) {
                     window.location.replace('/admin');
                 } else {
                     window.location.replace('/dashboard');
                 }
             } else {
-                // Gestión de errores controlados (401, 403, etc.)
-                errorBox.innerText = data.mensaje || "Error al iniciar sesión";
+                errorBox.innerText = data.mensaje || "Credenciales incorrectas";
                 errorBox.style.display = 'block';
                 btn.disabled = false;
-                btn.innerText = "Entrar al Panel";
+                btn.innerText = "Acceder al Panel";
             }
         } catch (err) {
-            // Gestión de errores de red o servidor caído
-            errorBox.innerText = "Error de conexión con el servidor";
+            errorBox.innerText = "Error de conexión con el servidor.";
             errorBox.style.display = 'block';
             btn.disabled = false;
-            btn.innerText = "Entrar al Panel";
+            btn.innerText = "Acceder al Panel";
         }
     };
 </script>
-
-</body>
-</html>
+{% endblock %}
