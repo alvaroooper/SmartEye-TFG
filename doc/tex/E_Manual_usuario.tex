@@ -46,16 +46,40 @@ En esta sección se describe el uso principal de la aplicación desde el punto d
 
 \subsection{Pantalla principal}
 
-Al acceder a la URL de la aplicación se muestra la pantalla pública inicial. Esta pantalla presenta brevemente la finalidad de SmartEye y permite acceder al inicio de sesión o al registro de una nueva cuenta. La Figura~\ref{fig:manual_public_index} muestra esta pantalla de bienvenida.
+Al acceder a la URL de la aplicación se muestra la pantalla pública inicial. Esta pantalla presenta brevemente la finalidad de SmartEye y permite acceder al inicio de sesión o al registro de una nueva cuenta. Además, desde esta pantalla el usuario puede alternar entre modo oscuro y modo claro mediante el botón de cambio de tema.
+
+Las Figuras~\ref{fig:manual_public_index} y~\ref{fig:manual_public_index_claro} muestran la página principal en modo oscuro y en modo claro.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_public_index.png}
-	\caption[Pantalla inicial de SmartEye]{Pantalla inicial pública de SmartEye.}
+	\includegraphics[
+	width=\linewidth,
+	height=0.72\textheight,
+	keepaspectratio
+	]{interfaces/interfaz_public_index.png}
+	\caption[Pantalla inicial en modo oscuro]{Pantalla inicial pública de SmartEye en modo oscuro.}
 	\label{fig:manual_public_index}
 \end{figure}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[
+	width=\linewidth,
+	height=0.72\textheight,
+	keepaspectratio
+	]{interfaces/interfaz_public_index_claro.png}
+	\caption[Pantalla inicial en modo claro]{Pantalla inicial pública de SmartEye en modo claro.}
+	\label{fig:manual_public_index_claro}
+\end{figure}
+
 Desde esta pantalla el usuario puede pulsar en \textit{Iniciar Sesión} si ya dispone de una cuenta, o en \textit{Comenzar Gratis} para crear una nueva.
+
+\subsection{Cambio entre modo claro y modo oscuro}
+
+
+Para cambiar el modo de visualización, el usuario debe pulsar el botón de tema situado en la parte superior de la interfaz. Al activarlo, la aplicación cambia la gama de colores, fondos, bordes y textos para adaptarse al modo seleccionado. La preferencia queda guardada durante la navegación, de forma que el usuario mantiene el mismo tema visual al cambiar entre pantallas.
+
+Esta funcionalidad mejora la adaptación de la interfaz a distintos entornos de uso. El modo oscuro resulta adecuado para condiciones de baja iluminación, mientras que el modo claro ofrece una visualización más limpia en entornos con mayor luz.
 
 \subsection{Registro e inicio de sesión}
 
@@ -63,14 +87,14 @@ El acceso a la plataforma se realiza mediante las pantallas de registro e inicio
 
 \begin{figure}[!htbp]
 	\centering
-	\begin{minipage}{0.47\textwidth}
+	\begin{minipage}{0.45\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{interfaces/interfaz_public_login.png}
 		\caption[Inicio de sesión]{Interfaz de inicio de sesión en SmartEye.}
 		\label{fig:manual_public_login}
 	\end{minipage}
 	\hfill
-	\begin{minipage}{0.47\textwidth}
+	\begin{minipage}{0.45\textwidth}
 		\centering
 		\includegraphics[width=\textwidth]{interfaces/interfaz_public_registro.png}
 		\caption[Registro de usuario]{Interfaz de registro de una nueva cuenta de usuario.}
@@ -84,13 +108,33 @@ En el registro se solicitan los datos básicos de la cuenta: nombre visible, nom
 
 \subsection{Panel principal del usuario}
 
-Una vez autenticado, el usuario accede al panel principal. Esta pantalla permite seleccionar un pipeline de inteligencia artificial, cargar una configuración opcional y subir la imagen que se desea analizar. La Figura~\ref{fig:manual_dashboard_usuario_panel} muestra el panel de ejecución principal.
+Una vez autenticado, el usuario accede al panel principal. Esta pantalla permite seleccionar un pipeline de inteligencia artificial, cargar una configuración opcional y subir la imagen que se desea analizar. Además, desde esta vista también puede alternar entre modo oscuro y modo claro mediante el botón de cambio de tema.
 
-\begin{figure}[H]
+Las Figuras~\ref{fig:manual_dashboard_usuario_panel} y~\ref{fig:manual_dashboard_usuario_panel_claro} muestran el panel principal del usuario en sus dos modos de visualización.
+
+\begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_usuario_panel.png}
-	\caption[Panel principal del usuario]{Panel principal para lanzar una secuencia de inteligencia artificial.}
-	\label{fig:manual_dashboard_usuario_panel}
+	\begin{minipage}{0.49\textwidth}
+		\centering
+		\includegraphics[
+		width=\linewidth,
+		height=0.49\textheight,
+		keepaspectratio
+		]{interfaces/interfaz_dashboard_usuario_panel.png}
+		\caption[Panel principal en modo oscuro]{Panel principal del usuario en modo oscuro.}
+		\label{fig:manual_dashboard_usuario_panel}
+	\end{minipage}
+	\hfill
+	\begin{minipage}{0.49\textwidth}
+		\centering
+		\includegraphics[
+		width=\linewidth,
+		height=0.49\textheight,
+		keepaspectratio
+		]{interfaces/interfaz_dashboard_usuario_panel_claro.png}
+		\caption[Panel principal en modo claro]{Panel principal del usuario en modo claro.}
+		\label{fig:manual_dashboard_usuario_panel_claro}
+	\end{minipage}
 \end{figure}
 
 El flujo habitual de uso es el siguiente:
@@ -211,7 +255,7 @@ La aplicación incluye una tienda desde la que se pueden consultar los planes y 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_shop.png}
+	\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{interfaces/interfaz_dashboard_shop.png}
 	\caption[Tienda de IA]{Tienda de IA con planes y motores disponibles.}
 	\label{fig:manual_dashboard_shop}
 \end{figure}
@@ -224,7 +268,7 @@ Antes de contratar un modelo, el usuario puede consultar la guía de pipelines. 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth,height=0.78\textheight,keepaspectratio]{interfaces/interfaz_dashboard_guia_compra.png}
+	\includegraphics[width=\linewidth,height=0.5\textheight,keepaspectratio]{interfaces/interfaz_dashboard_guia_compra.png}
 	\caption[Guía de pipelines]{Guía de pipelines disponibles y motores requeridos por cada flujo.}
 	\label{fig:manual_dashboard_guia_compra}
 \end{figure}

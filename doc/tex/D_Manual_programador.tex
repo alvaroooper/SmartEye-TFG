@@ -40,7 +40,7 @@ El código fuente ejecutable se encuentra dentro del directorio \texttt{src}. A 
 	|-- execution_data/
 	|-- tests/
 	|-- .github/
-	|   |-- workflows/
+	|	|-- workflows/
 \end{bloqueCodigo}
 
 La finalidad de cada directorio se resume en la Tabla~\ref{tabla:directorios_programador}.
@@ -73,8 +73,8 @@ La finalidad de cada directorio se resume en la Tabla~\ref{tabla:directorios_pro
 	\path{app/controllers/} & Controladores HTTP: autenticación, tienda, usuario, administración y ejecución de pipelines. \\
 	\path{app/services/} & Lógica interna de la aplicación, especialmente ejecución de pipelines y procesamiento de IA. \\
 	\path{app/services/ai_factory/} & Factoría de modelos de IA e interfaz común para los lanzadores. \\
-	\path{app/services/ai_factory/mediapipe_modelo/} & Implementación de los modos asociados a MediaPipe. \\
-	\path{app/services/ai_factory/yolo/} & Implementación de los modos asociados a YOLO. \\
+	\path{./mediapipe_modelo/} & Implementación de los modos asociados a MediaPipe. \\
+	\path{./yolo/} & Implementación de los modos asociados a YOLO. \\
 	\path{app/templates/} & Plantillas HTML de la interfaz web. \\
 	\path{app/templates/admin/} & Vistas del panel de administración. \\
 	\path{app/templates/dashboard/} & Vistas del usuario autenticado. \\
@@ -212,12 +212,13 @@ Las implementaciones actuales se resumen en la Tabla~\ref{tabla:launchers_existe
 	\centering
 	\small
 	\renewcommand{\arraystretch}{1.0}
-	\begin{tabularx}{\linewidth}{p{0.13\linewidth}p{0.45\linewidth}X}
+	\begin{tabularx}{\linewidth}{p{0.13\linewidth}p{0.50\linewidth}X}
 		\toprule
 		\textbf{Modelo} & \textbf{Launcher} & \textbf{Modos principales} \\
 		\midrule
-		YOLO & \path{app/services/ai_factory/yolo/launcher.py} & \texttt{deteccion}, \texttt{recortes\_personas}. \\
-		MediaPipe & \path{app/services/ai_factory/mediapipe\_modelo/launcher.py} & \texttt{manos}, \texttt{pose}. \\
+		 & \path{app/services/ai_factory/} & \\
+		YOLO & \path{./yolo/launcher.py} & \texttt{deteccion}, \texttt{recortes\_personas}. \\
+		MediaPipe & \path{./mediapipe_modelo/launcher.py} & \texttt{manos}, \texttt{pose}. \\
 		\bottomrule
 	\end{tabularx}
 	\caption[Launchers existentes]{Launchers existentes para los modelos de inteligencia artificial.}
@@ -597,7 +598,7 @@ Una vez inicializada la base de datos, los comandos más frecuentes se resumen e
 	docker compose restart web
 \end{bloqueTerminal}
 
-\subsubsection{Reinicialización}
+\subsubsection{Reinicio}
 
 Si se desea volver a cargar los datos iniciales de demostración, puede ejecutarse:
 
