@@ -14,7 +14,7 @@ El aprendizaje automático puede ser supervisado, no supervisado o por refuerzo.
 
 \section{Redes neuronales artificiales}
 
-Las redes neuronales artificiales son modelos formados por capas de unidades conectadas entre sí. Cada conexión tiene un peso asociado, y cada unidad transforma sus entradas para generar una salida. La combinación de muchas unidades permite aproximar funciones complejas \cite{goodfellow2016deep}.
+Las redes neuronales artificiales son modelos computacionales inspirados, en el funcionamiento de las redes de neuronas del cerebro, de ahí su nombre. Su objetivo es intentar emular ciertos procesos de transmisión, combinación y transformación de información mediante capas de unidades conectadas entre sí. Cada conexión tiene un peso asociado, y cada unidad transforma sus entradas para generar una salida. La combinación de muchas unidades permite aproximar funciones complejas \cite{goodfellow2016deep}.
 
 Una red neuronal suele organizarse en una capa de entrada, una o varias capas ocultas y una capa de salida. La Figura~\ref{fig:red_neuronal_artificial} muestra una representación simplificada de esta estructura, formada por nodos conectados entre capas.
 
@@ -25,15 +25,18 @@ Una red neuronal suele organizarse en una capa de entrada, una o varias capas oc
 	\label{fig:red_neuronal_artificial}
 \end{figure}
 
-Durante el entrenamiento, la red ajusta sus pesos para reducir el error entre la salida estimada y la salida esperada. Este error se mide mediante una función de pérdida, y uno de los mecanismos más utilizados para actualizar los pesos es la retropropagación del error \cite{goodfellow2016deep}.
+Durante el entrenamiento, la red ajusta sus pesos para reducir el error entre la salida estimada y la salida esperada. Este error se mide mediante una función de pérdida, y uno de los mecanismos más utilizados para actualizar los pesos es la \textit{backpropagation} del error \cite{goodfellow2016deep}.
 
 Una vez entrenada, la red puede utilizarse en fase de inferencia. En esta fase, los pesos no se modifican: el modelo aplica lo aprendido a nuevas entradas. En visión por computador, la entrada suele ser una imagen representada numéricamente, y la salida puede ser una clase, una probabilidad, una caja delimitadora, un conjunto de puntos o una máscara de segmentación.
 
-\section{Redes neuronales convolucionales}
+\subsection{Redes neuronales convolucionales}
 
-Las redes neuronales convolucionales son redes especialmente adecuadas para trabajar con imágenes. Su operación principal es la convolución, que aplica filtros sobre regiones locales de la imagen para extraer características visuales \cite{lecun1998gradient}.
+Las redes neuronales convolucionales son redes especialmente adecuadas para trabajar con imágenes. En este tipo de redes, las capas convolucionales aplican operaciones de convolución mediante filtros sobre regiones locales de la imagen, con el objetivo de extraer características visuales relevantes \cite{lecun1998gradient}.
 
 En las primeras capas se suelen aprender patrones simples, como bordes, texturas o cambios de intensidad. En capas posteriores, esos patrones se combinan para representar formas y estructuras más complejas \cite{goodfellow2016deep}. La Figura~\ref{fig:red_convolucional} ilustra de forma esquemática esta transformación progresiva.
+
+En cada unidad de la red se calcula una combinación ponderada de las salidas procedentes de la capa anterior, junto con un término de sesgo o \textit{bias}. Sobre ese valor se aplica una función de activación, que determina la salida de la neurona. Esta función introduce no linealidad en el modelo, permitiendo que la red aprenda relaciones más complejas que una simple transformación lineal \cite{goodfellow2016deep}.
+
 
 \begin{figure}[htbp]
 	\centering
@@ -42,14 +45,12 @@ En las primeras capas se suelen aprender patrones simples, como bordes, texturas
 	\label{fig:red_convolucional}
 \end{figure}
 
-\subsection{Capas habituales en redes convolucionales}
+\subsubsection{Capas habituales en redes convolucionales}
 
 Las redes convolucionales combinan distintos tipos de capas. Las más habituales son las siguientes:
 
 \begin{itemize}
 	\item \textbf{Capa convolucional.} Aplica filtros sobre la imagen o sobre mapas de características intermedios. Cada filtro aprende a detectar un patrón visual concreto \cite{lecun1998gradient}.
-	
-	\item \textbf{Función de activación.} Introduce no linealidad en la red y permite aprender relaciones más complejas que una transformación lineal \cite{goodfellow2016deep}.
 	
 	\item \textbf{Capa de agrupación.} Reduce la resolución espacial de los mapas de características, disminuyendo el coste computacional y conservando la información más relevante \cite{goodfellow2016deep}.
 	
@@ -72,19 +73,21 @@ Entre sus tareas más habituales se encuentran la clasificación de imágenes, l
 
 \subsection{Clasificación de imágenes}
 
-La clasificación de imágenes consiste en asignar una o varias etiquetas a una imagen completa. El modelo recibe la imagen como entrada y devuelve una clase o una distribución de probabilidades entre varias clases posibles \cite{bishop2006pattern}.
+La clasificación de imágenes consiste en asignar una o varias etiquetas a una imagen completa. El modelo recibe la imagen como entrada y devuelve una clase o una distribución de probabilidades entre varias clases posibles\cite{bishop2006pattern}.
+
+Una \textit{bounding box} representa la región rectangular en la que el modelo estima que se encuentra un objeto. Normalmente se define mediante las coordenadas de sus esquinas o mediante una posición inicial junto con su anchura y altura. Esta representación permite indicar no solo qué objeto se ha detectado, sino también su localización aproximada dentro de la imagen.
 
 Esta tarea es útil cuando interesa conocer la categoría global de una imagen. Sin embargo, no proporciona información precisa sobre la posición de los elementos que aparecen en ella.
 
 \subsection{Detección de objetos}
 
-La detección de objetos consiste en localizar entidades dentro de una imagen y asignarles una clase. Su salida habitual incluye una caja delimitadora, una etiqueta y una puntuación de confianza \cite{szeliski2022computer}.
+La detección de objetos consiste en localizar entidades dentro de una imagen y asignarles una clase. Su salida habitual incluye una caja delimitadora, también denominada \textit{bounding box}, una etiqueta y una puntuación de confianza \cite{szeliski2022computer}.
 
 La Figura~\ref{fig:deteccion_objetos} muestra un ejemplo de detección mediante cajas delimitadoras, donde cada objeto se representa con una región rectangular asociada.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.75\textwidth]{figuras/deteccion_objetos.png}
+	\includegraphics[width=0.60\textwidth]{figuras/deteccion_objetos.png}
 	\caption[Ejemplo de detección de objetos.]{Ejemplo de detección de objetos mediante cajas delimitadoras. Fuente: \href{https://commons.wikimedia.org/wiki/File:ObjectDetectionExample.png}{Hughesperreault, Wikimedia Commons}.}
 	\label{fig:deteccion_objetos}
 \end{figure}
@@ -110,7 +113,7 @@ La Tabla~\ref{tabla:deteccion-puntos-clave} recoge las diferencias principales e
 		\midrule
 		Salida habitual & Caja delimitadora, clase y confianza. & Coordenadas de puntos clave y posibles conexiones entre ellos. \\
 		\midrule
-		Representación visual & Rectángulos y etiquetas sobre la imagen. & Puntos, esqueleto o malla sobre la imagen. \\
+		\shortstack[l]{Representación\\visual} & Rectángulos y etiquetas sobre la imagen. & Puntos, esqueleto o malla sobre la imagen. \\
 		\midrule
 		Nivel de detalle & Describe la posición global del objeto. & Describe la estructura interna del elemento analizado. \\
 		\bottomrule
@@ -129,18 +132,18 @@ La Figura~\ref{fig:segmentacion_imagen} muestra un ejemplo visual en el que la i
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.75\textwidth]{figuras/segmentacion_imagen.png}
+	\includegraphics[width=0.60\textwidth]{figuras/segmentacion_imagen.png}
 	\caption[Ejemplo de segmentación de imágenes.]{Ejemplo de segmentación de imágenes a nivel de regiones. Fuente: \href{https://commons.wikimedia.org/wiki/File:Image-segmentation-example-segmented.png}{Martin Thoma, Wikimedia Commons}.}
 	\label{fig:segmentacion_imagen}
 \end{figure}
 
 La segmentación proporciona una descripción más precisa que la detección mediante cajas, ya que permite delimitar la forma real de los elementos. Sin embargo, suele requerir modelos más específicos y conjuntos de datos anotados con mayor detalle.
-
+\clearpage
 \section{Arquitecturas de detección de objetos en una etapa}
 
 Las arquitecturas de detección de objetos pueden clasificarse, de forma general, en detectores de dos etapas y detectores de una etapa. Los detectores de dos etapas generan primero regiones candidatas y después las clasifican. Los detectores de una etapa realizan la localización y la clasificación de forma directa \cite{redmon2016yolo}.
 
-La familia de modelos YOLO pertenece al grupo de detectores de una etapa. Su planteamiento original formula la detección como un único problema de regresión, en el que una red predice cajas delimitadoras y probabilidades de clase en una sola evaluación de la imagen \cite{redmon2016yolo}.
+Su planteamiento original formula la detección como un único problema de regresión, en el que una red predice cajas delimitadoras y probabilidades de clase en una sola evaluación de la imagen \cite{redmon2016yolo}.
 
 De forma simplificada, una arquitectura de detección en una etapa incluye tres bloques: extracción de características visuales, combinación de información a distintas escalas y generación de predicciones finales. Estas predicciones contienen coordenadas de cajas, puntuaciones de confianza y clases asociadas.
 

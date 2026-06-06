@@ -355,7 +355,7 @@
 \newcommand{\nombre}{Álvaro Pérez Mella} %%% cambio de comando
 
 % Datos de portada
-\title{\HUGE SmartEye Flow\\[0.5cm]\Large Analizador de imágenes con flujos encadenados de inteligencia artificial.}
+\title{\HUGE SmartEye\\[0.5cm]\Large Analizador de imágenes con flujos encadenados de inteligencia artificial}
 \author{\nombre}
 \tutor{José Luis Garrido Labrador y José Miguel Ramírez Sanz}
 \date{\today}
@@ -374,11 +374,11 @@
 
 \noindent\includegraphics[width=\textwidth]{cabecera}\vspace{1cm}
 
-\noindent D. José Luis Garrido Labrador y D. José Miguel Ramírez Sanz, profesores del departamento de Ingeniería Informática, área de Sistemas Informáticos.
+\noindent D. José Luis Garrido Labrador y D. José Miguel Ramírez Sanz, profesores del departamento de Ingeniería Informática, área de Lenguajes y Sistemas Informáticos.
 
 \noindent Expone:
 
-\noindent Que el alumno D. \nombre, con DNI 71956263G, ha realizado el Trabajo final de Grado en Ingeniería Informática titulado ``SmartEye Flow - Analizador de imágenes con flujos encadenados de inteligencia artificial.''.
+\noindent Que el alumno D. \nombre, con DNI 71956263G, ha realizado el Trabajo final de Grado en Ingeniería Informática titulado ``SmartEye- Analizador de imágenes con flujos encadenados de inteligencia artificial''.
 
 \noindent Y que dicho trabajo ha sido realizado por el alumno bajo la dirección del que suscribe, en virtud de lo cual se autoriza su presentación y defensa.
 
@@ -424,7 +424,7 @@ D. José Miguel Ramírez Sanz
 \begin{abstract}
 Este Trabajo de Fin de Grado presenta el diseño e implementación de una aplicación web orientada al procesamiento de imágenes mediante modelos de inteligencia artificial. El sistema permite a los usuarios autenticados seleccionar flujos de análisis, subir imágenes, ejecutar modelos de visión por computador y obtener como resultado tanto una o varias imágenes procesadas como información estructurada en formato JSON.
 
-El proyecto parte de una primera fase experimental, centrada en validar la integración de modelos como YOLO y MediaPipe, y evoluciona hacia una plataforma más completa basada en Flask, SQLAlchemy y JWT. La aplicación incorpora una arquitectura modular organizada en controladores, servicios, modelos de datos y vistas web, lo que facilita la separación de responsabilidades y la ampliación futura del sistema.
+La solución final se plantea como una plataforma web que unifica en un mismo entorno la ejecución de análisis visuales sobre imágenes, la configuración de flujos de procesamiento y la consulta de los resultados generados. De este modo, el sistema no se limita a ejecutar modelos de forma aislada, sino que ofrece una aplicación organizada para utilizar capacidades de visión por computador de manera controlada, accesible y preparada para futuras ampliaciones.
 
 Entre las funcionalidades implementadas destacan la gestión de usuarios y roles, el control de acceso mediante planes y licencias temporales de modelos de IA, la ejecución de \textit{pipelines} formados por varias etapas de procesamiento, la generación de resultados temporales descargables mediante \textit{tokens} y la existencia de una interfaz diferenciada para usuarios y administradores. Además, el proyecto incluye pruebas automatizadas orientadas a verificar el \textit{backend}, análisis estático de calidad mediante SonarCloud y una configuración Docker Compose que permite desplegar la aplicación y la base de datos de forma reproducible.
 
@@ -433,7 +433,7 @@ El resultado es una base funcional y extensible para una plataforma de análisis
 
 \renewcommand*\abstractname{Descriptores}
 \begin{abstract}
-	Visión por computador, inteligencia artificial, procesamiento de imágenes, aplicación web, Flask, YOLO, MediaPipe, \textit{pipelines}, SQLAlchemy, MariaDB, JWT, autenticación, pruebas automatizadas.
+	Visión por computador, inteligencia artificial, procesamiento de imágenes, aplicación web.
 \end{abstract}
 
 \clearpage
@@ -443,7 +443,7 @@ El resultado es una base funcional y extensible para una plataforma de análisis
 \begin{abstract}
 	This Final Degree Project presents the design and implementation of a web application for image processing using artificial intelligence models. The system allows authenticated users to select analysis workflows, upload images, execute computer vision models and obtain both a processed image or images and structured information in JSON format.
 	
-	The project began with an experimental stage focused on validating the integration of models such as YOLO and MediaPipe, and later evolved into a more complete platform based on Flask, SQLAlchemy and JWT. The application follows a modular architecture organised into controllers, services, data models and web views, which improves separation of concerns and facilitates future extensions.
+	The final solution is conceived as a web platform that brings together, within a single environment, the execution of visual analyses on images, the configuration of processing workflows and the consultation of the generated results. In this way, the system is not limited to running models in isolation, but provides an organised application for using computer vision capabilities in a controlled, accessible way, while remaining prepared for future extensions.
 	
 	The implemented features include user and role management, access control through plans and temporary AI model licences, execution of multi-stage processing pipelines, generation of temporary downloadable results through tokens, and separate interfaces for regular users and administrators. The project also includes automated tests to verify the backend, static code analysis through SonarCloud and a Docker Compose configuration that allows the application and the database to be deployed in a reproducible way.
 	
@@ -452,7 +452,7 @@ El resultado es una base funcional y extensible para una plataforma de análisis
 
 \renewcommand*\abstractname{Keywords}
 \begin{abstract}
-	Computer vision, artificial intelligence, image processing, web application, Flask, YOLO, MediaPipe, pipelines, SQLAlchemy, MariaDB, JWT, authentication, automated testing.
+	Computer vision, artificial intelligence, image processing, web application.
 \end{abstract}
 
 \clearpage
