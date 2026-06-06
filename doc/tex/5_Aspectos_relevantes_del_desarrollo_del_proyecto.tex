@@ -135,7 +135,8 @@ Esta lógica convierte la aplicación en algo más completo que una demo de infe
 
 \section{Consolidación funcional}
 
-La última fase consistió en completar la aplicación alrededor del diseño anterior: administración de \textit{pipelines}, resultados temporales, pruebas automatizadas, análisis estático y preparación de un entorno reproducible.
+La última fase consistió en completar la aplicación alrededor del diseño anterior. En esta fase se realizaron tareas de administración de \textit{pipelines}, gestión de resultados temporales, incorporación de pruebas automatizadas, análisis estático del código y preparación de un entorno reproducible.
+
 
 \subsection{Administración de pipelines sin modificar código}
 
@@ -143,7 +144,7 @@ Una de las funcionalidades más importantes fue permitir la creación y edición
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.86\textwidth]{admin_pipelines.png}
+	\includegraphics[width=0.70\textwidth]{admin_pipelines2.png}
 	\caption[Administración de pipelines.]{Interfaz de administración para crear y editar \textit{pipelines} a partir de modelos y modos registrados.}
 	\label{fig:admin-pipelines}
 \end{figure}
@@ -227,7 +228,7 @@ Durante este proceso se corrigieron avisos relacionados con:
 	\item \textbf{Seguridad}: revisión del 100 \% de los \textit{hotspots} detectados, especialmente los relacionados con el \texttt{tratamiento de \textit{tokens}} y el envío de \texttt{cabeceras de autorización} desde la interfaz hacia rutas protegidas del \textit{backend} además de corrección del \texttt{Dockerfile} para mejorar la seguridad y reproducibilidad de la imagen ya que se ajustó la instalación de dependencias para utilizar un entorno virtual interno, se incorporó un fichero \texttt{requirements.lock} con versiones fijadas y se revisaron los permisos de los directorios que requieren escritura, evitando depender innecesariamente del usuario \textit{root}.
 \end{itemize}
 
-La Figura~\ref{fig:sonarcloud-report} muestra el resultado del análisis en SonarCloud, donde se alcanzó una valoración A en seguridad, fiabilidad y mantenibilidad, se revisó el 100 \% de los \textit{hotspots} de seguridad y se obtuvo una cobertura del 92,9 \%.
+La Figura~\ref{fig:sonarcloud-report} muestra el resultado del análisis en SonarCloud, donde se alcanzó una valoración A en seguridad, fiabilidad y mantenibilidad, se revisó el 100 \% de los \textit{hotspots} de seguridad y se obtuvo una cobertura del 93 \%.
 
 \begin{figure}[htbp]
 	\centering
@@ -236,4 +237,15 @@ La Figura~\ref{fig:sonarcloud-report} muestra el resultado del análisis en Sona
 	\label{fig:sonarcloud-report}
 \end{figure}
 
-La combinación de pruebas automatizadas, cobertura y análisis estático permitió validar tanto el comportamiento funcional del \textit{backend} como aspectos internos de calidad del código antes de la entrega final.
+\subsection{Actualización visual de la aplicación}
+
+En la fase final del proyecto se realizó una actualización de los estilos de la aplicación. Esta mejora no modificó la lógica interna del sistema ni las funcionalidades implementadas, sino que se centró únicamente en renovar la apariencia visual de las interfaces.
+
+El cambio consistió en unificar la estética general de las distintas vistas, aplicando una línea visual más moderna. Para ello se revisaron colores, fondos, tarjetas, botones, formularios, tablas y distribución visual de los elementos.
+
+Como apoyo en esta tarea se utilizó inteligencia artificial generativa, principalmente para proponer alternativas de diseño, reorganizar reglas CSS y acelerar la adaptación visual de las pantallas. Las propuestas generadas fueron revisadas e integradas manualmente en el proyecto, manteniendo el control sobre los cambios aplicados.
+
+Además, se incorporó la posibilidad de alternar entre modo claro y modo oscuro, utilizando variables de estilo para mantener una apariencia consistente en ambos temas. De este modo, la aplicación conserva su funcionamiento original, pero presenta una interfaz visualmente más moderna.
+
+
+

@@ -14,7 +14,7 @@ Respecto a los objetivos técnicos, el resultado más importante ha sido la cons
 
 El modelo de datos y la gestión de resultados también se han diseñado con ese mismo enfoque. Los \textit{pipelines} se representan como elementos configurables y no como funciones cerradas dentro del código. Además, los resultados generados se asocian a ejecuciones concretas y se gestionan de forma temporal, evitando exponer rutas internas del servidor.
 
-La validación del sistema ha permitido comprobar y mejorar la calidad del desarrollo. Los tests unitarios automáticos del \textit{backend} ayudaron a detectar errores relacionados con entradas inválidas, valores nulos, configuraciones incorrectas, permisos insuficientes, archivos expirados y fallos de escritura. Además, el análisis con SonarCloud permitió corregir problemas de fiabilidad, mantenibilidad y seguridad, alcanzando una valoración A en esas categorías y una cobertura final del 92,9 \%.
+La validación del sistema ha permitido comprobar y mejorar la calidad del desarrollo. Los tests unitarios automáticos del \textit{backend} ayudaron a detectar errores relacionados con entradas inválidas, valores nulos, configuraciones incorrectas, permisos insuficientes, archivos expirados y fallos de escritura. Además, el análisis con SonarCloud permitió corregir problemas de fiabilidad, mantenibilidad y seguridad, alcanzando una valoración A en esas categorías y una cobertura final del 93 \%.
 
 La gestión del proyecto también ha sido clave para alcanzar el resultado final. La planificación por iteraciones permitió dividir el trabajo en fases revisables: primero la validación técnica, después el diseño escalable y, finalmente, la consolidación funcional, las pruebas, la documentación y el despliegue. Esta organización ayudó a priorizar los riesgos principales y a mantener una evolución constante del producto.
 
@@ -39,9 +39,7 @@ Aunque el proyecto cumple los objetivos definidos, existen varias líneas de mej
 	
 	\item \textbf{Pasarela de pago real.} Sustituir la lógica simulada de planes y licencias por una integración real con un proveedor de pagos, manteniendo el control de acceso ya definido.
 	
-	\item \textbf{Mejora del panel de administración.} Ampliar las herramientas de administración con métricas de uso, filtros avanzados, revisión de errores y mayor control sobre modelos, modos y ejecuciones.
-	
-	\item \textbf{Refuerzo de seguridad y privacidad.} Profundizar en medidas de protección de datos, auditoría de accesos, gestión de sesiones y endurecimiento del despliegue.
+	\item \textbf{Mejora del panel de administración.} Ampliar las herramientas de administración con métricas de uso, revisión de errores y mayor control sobre modelos, modos y ejecuciones.
 	
 	\item \textbf{Despliegue en entorno de producción.} Preparar una infraestructura con servidor \textit{web} de producción, monitorización, copias de seguridad y configuración segura de servicios.
 \end{itemize}

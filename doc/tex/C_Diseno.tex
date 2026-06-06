@@ -16,8 +16,8 @@ La Figura~\ref{fig:diagrama_er} muestra el diagrama entidad-relación del sistem
 
 \begin{figure}
 	\centering
-	\includegraphics[width=\textwidth]{img/DiagramaModeloER.png}
-	\caption[Diagrama entidad-relación del sistema]{Diagrama entidad-relación del sistema.}
+	\includegraphics[width=\textwidth]{img/Diagrama-ER.png}
+	\caption[Diagrama entidad-relación del sistema]{Diagrama entidad-relación sin atributos del sistema.}
 	\label{fig:diagrama_er}
 \end{figure}
 
@@ -40,28 +40,24 @@ Las relaciones muchos a muchos se resuelven mediante tablas intermedias, como \t
 
 A continuación se resumen las tablas principales del modelo relacional. Para evitar una extensión excesiva, se recoge únicamente la finalidad de cada atributo y las anotaciones más relevantes de diseño.
 
-% Tabla compacta no flotante para evitar grandes espacios en blanco.
+% Tabla compacta no divisible para el diccionario de datos.
 \newcommand{\tablaDiccionario}[3]{%
-	\begingroup
-	\footnotesize
-	\renewcommand{\arraystretch}{0.95}
-	\setlength{\tabcolsep}{4pt}
-	\vspace{-0.4em}
-	\begin{center}
-		\bottomcaption{#1.}
-		\begin{xtabular}{@{}p{0.25\linewidth}p{0.65\linewidth}@{}}
+	\begin{table}[H]
+		\centering
+		\footnotesize
+		\setlength{\tabcolsep}{3pt}
+		\renewcommand{\arraystretch}{0.90}
+		\begin{tabular}{@{}p{0.33\textwidth}p{0.57\textwidth}@{}}
 			\toprule
 			\textbf{Atributo} & \textbf{Descripción} \\
 			\midrule
 			#3
 			\bottomrule
-		\end{xtabular}
+		\end{tabular}
+		\caption{#1.}
 		\label{tabla:#2}
-	\end{center}
-	\vspace{-0.8em}
-	\endgroup
+	\end{table}
 }
-
 \noindent\textbf{Tabla \texttt{USUARIO}.} Se describe en la Tabla~\ref{tabla:usuario_atributos}.
 
 \tablaDiccionario{Atributos de la tabla USUARIO}{usuario_atributos}{
@@ -254,7 +250,7 @@ El modelo cubre las funcionalidades principales de la aplicación: autenticació
 
 Además, la separación entre \texttt{PIPELINE} y \texttt{PIPELINE\_ETAPA} permite definir flujos configurables sin codificarlos de forma fija. Para mantener la integridad, se usa \texttt{RESTRICT} en información histórica, \texttt{CASCADE} en dependencias fuertes y \texttt{SET NULL} cuando interesa conservar un registro aunque desaparezca su propietario.
 \endgroup
-
+\clearpage
 \section{Diseño arquitectónico}
 
 El diseño arquitectónico describe cómo se organiza internamente la aplicación y cómo se reparten las responsabilidades entre interfaz, controladores, servicios, modelos y base de datos.
@@ -273,7 +269,7 @@ De forma resumida, la arquitectura se organiza en los siguientes bloques:
 \end{itemize}
 
 A continuación se presentan tres vistas complementarias: la arquitectura general, la organización real de módulos y la estructura de la capa de servicios.
-
+\clearpage
 \subsection{Arquitectura MVC adaptada a Flask con capa de servicios}
 
 La Figura~\ref{fig:arquitectura_mvc_flask_servicios} muestra la arquitectura general de la aplicación. En ella se observa cómo el cliente se comunica con Flask mediante peticiones HTTP, que son atendidas por controladores y derivadas, cuando es necesario, hacia servicios internos o hacia la capa de persistencia.
@@ -326,7 +322,7 @@ El flujo parte de \texttt{pipeline\_controller}, que recibe la solicitud de ejec
 La factoría de IA desacopla el orquestador de las implementaciones concretas. Si una etapa requiere YOLO, se selecciona el lanzador correspondiente; si requiere MediaPipe, se utiliza el lanzador asociado a ese modelo. Cada lanzador encapsula la lógica específica y delega finalmente en los módulos funcionales de procesamiento.
 
 Gracias a esta estructura, los pipelines no quedan codificados como funciones fijas, sino como secuencias de etapas almacenadas y configurables. Esto permite que el administrador modifique la composición de los pipelines desde la aplicación y facilita la incorporación futura de nuevos modelos o modos de ejecución.
-
+\clearpage
 \section{Diseño procedimental}
 
 El diseño procedimental describe los principales flujos de ejecución del sistema a partir de los casos de uso definidos.
@@ -529,14 +525,6 @@ La Figura~\ref{fig:seq_cu19_mantenimiento} muestra el flujo de mantenimiento, do
 
 \FloatBarrier
 
-\subsection{Síntesis del diseño procedimental}
-
-Los diagramas anteriores muestran que los procedimientos principales siguen una estructura común: la interfaz recoge la acción del usuario, el controlador valida la petición y los permisos, la base de datos mantiene el estado persistente y, cuando se requiere procesamiento, los servicios internos ejecutan la lógica correspondiente.
-
-Esta organización permite separar autenticación, gestión de servicios, ejecución de pipelines, administración y mantenimiento. Como resultado, el sistema mantiene una estructura procedimental coherente, trazable y preparada para ampliaciones futuras.
-
-\FloatBarrier
-
 \section{Diseño de interfaces}
 
 El diseño de interfaces recoge la organización visual y de navegación de la aplicación web. La interfaz se ha construido mediante plantillas HTML renderizadas desde Flask y lógica JavaScript para consumir los endpoints del backend.
@@ -560,31 +548,31 @@ El diseño de la interfaz se ha realizado siguiendo los siguientes criterios:
 
 La Tabla~\ref{tabla:interfaces_principales} resume las principales interfaces de la aplicación y su finalidad.
 
-\begingroup
-\small
-\renewcommand{\arraystretch}{1.05}
-\begin{center}
-	\bottomcaption{Interfaces principales de la aplicación.}
-	\begin{xtabular}{@{}p{3cm}p{3cm}p{7cm}@{}}
+\begin{table}[H]
+	\centering
+	\scriptsize
+	\setlength{\tabcolsep}{3pt}
+	\renewcommand{\arraystretch}{0.92}
+	\begin{tabular}{@{}p{2.6cm}p{2.6cm}p{7.1cm}@{}}
 		\toprule
 		\textbf{Interfaz} & \textbf{Ruta} & \textbf{Finalidad} \\
 		\midrule
 		Página de inicio & \texttt{/} & Presenta la aplicación y permite acceder al registro o inicio de sesión.\\
 		Registro & \texttt{/registro} & Permite crear una cuenta de usuario.\\
 		Inicio de sesión & \texttt{/login} & Permite autenticar al usuario y redirigirlo según su rol.\\
-		Panel de usuario & \texttt{/dashboard} & Permite consultar pipelines, cargar configuración y ejecutar análisis de imágenes.\\
+		Panel de usuario & \texttt{/dashboard} & Permite consultar pipelines, cargar configuración y ejecutar análisis.\\
 		Perfil & \texttt{/perfil} & Permite consultar y modificar datos de la cuenta.\\
 		Tienda & \texttt{/shop} & Muestra planes y modelos disponibles para contratación.\\
 		Mis compras & \texttt{/mis-compras} & Presenta suscripciones y alquileres activos o programados.\\
-		Guía de compra & \texttt{/guia-compra} & Indica qué modelos o servicios necesita el usuario para utilizar cada pipeline.\\
+		Guía de compra & \texttt{/guia-compra} & Indica qué modelos o servicios necesita el usuario para cada pipeline.\\
 		Historial & \texttt{/historial} & Muestra las ejecuciones realizadas por el usuario.\\
 		Resultados & \texttt{/resultados/\{id\}} & Permite consultar los resultados de una ejecución concreta.\\
 		Panel de administración & \texttt{/admin} & Permite gestionar usuarios, actividad global y pipelines.\\
 		\bottomrule
-	\end{xtabular}
+	\end{tabular}
+	\caption{Interfaces principales de la aplicación.}
 	\label{tabla:interfaces_principales}
-\end{center}
-\endgroup
+\end{table}
 
 Estas interfaces cubren el flujo completo de uso: registro, autenticación, contratación de servicios, ejecución de pipelines, consulta de resultados e interacción administrativa.
 
@@ -629,7 +617,8 @@ El usuario selecciona un pipeline, carga su configuración, puede modificarla, a
 
 A continuación se incluyen capturas de la primera versión funcional de las interfaces. Estas pantallas no representan el diseño visual final de la aplicación, sino el estado inicial de la interfaz antes de aplicar mejoras de estilos visuales asistidas por inteligencia artificial.
 
-El objetivo de estas capturas es dejar constancia de que la aplicación ya disponía de una interfaz operativa para validar los principales casos de uso: registro, inicio de sesión, consulta de servicios, ejecución de pipelines, visualización de resultados, historial y administración. Las interfaces finales, junto con la explicación detallada de su uso, se recogen posteriormente en el manual de usuario.
+El objetivo de estas capturas es dejar constancia de que la aplicación ya disponía de una interfaz operativa para validar los principales casos de uso. Para evitar duplicar contenido, se muestran únicamente las pantallas más representativas: acceso público, panel de usuario, visualización de resultados y administración de pipelines. El resto de interfaces se recogen posteriormente en el manual de usuario.
+
 % Comando auxiliar para compactar capturas de interfaces.
 \newcommand{\capturaInterfaz}[5]{%
 	\begin{figure}[!htbp]
@@ -644,7 +633,6 @@ El objetivo de estas capturas es dejar constancia de que la aplicación ya dispo
 	\end{figure}
 }
 
-
 \subsubsection*{Interfaces públicas iniciales}
 
 La Figura~\ref{fig:interfaz_public_index} muestra la página inicial de la primera versión funcional de la aplicación.
@@ -655,112 +643,42 @@ La Figura~\ref{fig:interfaz_public_index} muestra la página inicial de la prime
 {Interfaz pública inicial de la aplicación antes del refinamiento visual}
 {fig:interfaz_public_index}
 
-Las Figuras~\ref{fig:interfaz_public_login} y~\ref{fig:interfaz_public_registro} muestran las pantallas iniciales de inicio de sesión y registro.
 
-\begin{figure}[!htbp]
-	\centering
-	\begin{minipage}{0.47\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_public_login.png}
-		\caption[Inicio de sesión inicial]{Interfaz inicial de inicio de sesión.}
-		\label{fig:interfaz_public_login}
-	\end{minipage}
-	\hfill
-	\begin{minipage}{0.47\textwidth}
-		\centering
-		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_public_registro.png}
-		\caption[Registro inicial]{Interfaz inicial de registro de usuario.}
-		\label{fig:interfaz_public_registro}
-	\end{minipage}
-\end{figure}
 
 \subsubsection*{Interfaces iniciales del usuario autenticado}
 
-La Figura~\ref{fig:interfaz_dashboard_usuario_panel} muestra el panel principal inicial del usuario autenticado, desde el que ya era posible seleccionar un pipeline, cargar configuración y enviar una imagen a procesar.
-
-\capturaInterfaz{0.70}
-{img/interfaces_basicas/interfaz_dashboard_usuario_panel.png}
-{Panel inicial del usuario}
-{Panel principal inicial del usuario para la ejecución de pipelines}
-{fig:interfaz_dashboard_usuario_panel}
-
-La Figura~\ref{fig:interfaz_dashboard_shop} muestra la primera versión de la tienda de servicios.
-
-\capturaInterfaz{0.70}
-{img/interfaces_basicas/interfaz_dashboard_shop.png}
-{Tienda inicial}
-{Interfaz inicial de tienda de planes y modelos de IA}
-{fig:interfaz_dashboard_shop}
-
-La Figura~\ref{fig:interfaz_dashboard_guia_compra} muestra la guía inicial de compra, utilizada para relacionar pipelines con los modelos necesarios.
-
-\capturaInterfaz{0.70}
-{img/interfaces_basicas/interfaz_dashboard_guia_compra.png}
-{Guía inicial de pipelines}
-{Interfaz inicial de guía de pipelines y modelos necesarios}
-{fig:interfaz_dashboard_guia_compra}
-
-La Figura~\ref{fig:interfaz_dashboard_mis_compras} muestra la pantalla inicial de suscripciones y alquileres del usuario.
-
-La Figura~\ref{fig:interfaz_dashboard_perfil} muestra la primera versión funcional de la pantalla de perfil.
-
+Las Figuras~\ref{fig:interfaz_dashboard_usuario_panel} y~\ref{fig:interfaz_dashboard_resultados_ejecucion} muestran el panel principal inicial del usuario autenticado y la primera versión de la vista de resultados de una ejecución.
 
 \begin{figure}[!htbp]
 	\centering
 	\begin{minipage}{0.47\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_mis_compras.png}
-		\caption[Suscripciones y alquileres iniciales]{Interfaz inicial de inicio de sesión.}
-		\label{fig:interfaz_dashboard_mis_compras}
+		\includegraphics[
+		width=\textwidth,
+		height=0.40\textheight,
+		keepaspectratio
+		]{img/interfaces_basicas/interfaz_dashboard_usuario_panel.png}
+		\caption[Panel inicial del usuario]{Panel principal inicial del usuario.}
+		\label{fig:interfaz_dashboard_usuario_panel}
 	\end{minipage}
 	\hfill
 	\begin{minipage}{0.47\textwidth}
 		\centering
-		\includegraphics[width=\textwidth]{img/interfaces_basicas/interfaz_dashboard_perfil.png}
-		\caption[Perfil inicial]{Interfaz inicial de consulta y edición del perfil de usuario}
-		\label{fig:interfaz_dashboard_perfil}
+		\includegraphics[
+		width=\textwidth,
+		height=0.40\textheight,
+		keepaspectratio
+		]{img/interfaces_basicas/interfaz_dashboard_resultados_ejecucion.png}
+		\caption[Resultados iniciales]{Interfaz de visualización de resultados de una ejecución.}
+		\label{fig:interfaz_dashboard_resultados_ejecucion}
 	\end{minipage}
 \end{figure}
 
-La Figura~\ref{fig:interfaz_dashboard_historial_ejecuciones} muestra el historial inicial de ejecuciones.
+\subsubsection*{Interfaz inicial de administración}
 
-\capturaInterfaz{0.70}
-{img/interfaces_basicas/interfaz_dashboard_historial_ejecuciones.png}
-{Historial inicial}
-{Interfaz inicial de historial de ejecuciones del usuario}
-{fig:interfaz_dashboard_historial_ejecuciones}
+La Figura~\ref{fig:interfaz_admin_pipelines} muestra la administración inicial de pipelines. Esta pantalla resulta especialmente relevante, ya que permitía validar la creación, edición, deshabilitación o eliminación de pipelines desde la propia aplicación, sin modificar directamente el código fuente.
 
-La Figura~\ref{fig:interfaz_dashboard_resultados_ejecucion} muestra la primera versión de la vista de resultados de una ejecución.
-
-\capturaInterfaz{0.40}
-{img/interfaces_basicas/interfaz_dashboard_resultados_ejecucion.png}
-{Resultados iniciales}
-{Interfaz inicial de visualización de resultados de una ejecución}
-{fig:interfaz_dashboard_resultados_ejecucion}
-
-\subsubsection*{Interfaces iniciales de administración}
-
-Las interfaces de administración iniciales permitían validar las operaciones restringidas al rol administrador antes del refinamiento visual.
-
-La Figura~\ref{fig:interfaz_admin_usuarios} muestra la gestión inicial de usuarios.
-
-\capturaInterfaz{0.70}
-{img/interfaces_basicas/interfaz_admin_usuarios.png}
-{Gestión inicial de usuarios}
-{Interfaz administrativa inicial de gestión de usuarios}
-{fig:interfaz_admin_usuarios}
-
-La Figura~\ref{fig:interfaz_admin_actividad} muestra la primera versión de la actividad global del sistema.
-
-\capturaInterfaz{0.70}
-{img/interfaces_basicas/interfaz_admin_actividad.png}
-{Actividad global inicial}
-{Interfaz administrativa inicial de actividad global}
-{fig:interfaz_admin_actividad}
-
-La Figura~\ref{fig:interfaz_admin_pipelines} muestra la administración inicial de pipelines. Esta pantalla ya permitía validar la creación, edición, deshabilitación o eliminación de pipelines desde la aplicación.
-
-\capturaInterfaz{0.70}
+\capturaInterfaz{1}
 {img/interfaces_basicas/interfaz_admin_pipelines.png}
 {Administración inicial de pipelines}
 {Interfaz administrativa inicial de gestión de pipelines}
@@ -768,3 +686,37 @@ La Figura~\ref{fig:interfaz_admin_pipelines} muestra la administración inicial 
 
 \FloatBarrier
 
+\subsubsection*{\textit{Prompt} utilizado para la mejora visual}
+
+Una vez validada la funcionalidad principal de la aplicación, se utilizó inteligencia artificial generativa como apoyo para actualizar los estilos visuales. El \textit{prompt} utilizado fue el siguiente:
+\newtcolorbox{promptbox}{
+	breakable,
+	colback=gray!5,
+	colframe=gray!60,
+	boxrule=0.4pt,
+	arc=2mm,
+	left=2mm,
+	right=2mm,
+	top=1.5mm,
+	bottom=1.5mm,
+	fontupper=\scriptsize\ttfamily,
+	before upper={
+		\setlength{\parindent}{0pt}
+		\setlength{\parskip}{0.65em}
+	}
+}
+\begin{promptbox}
+	Actúa como un desarrollador frontend senior especializado en aplicaciones web Flask. Analiza el proyecto completo que se proporciona en el archivo \texttt{proyecto\_completo.txt} y mejora únicamente la parte visual de las interfaces, sin modificar la lógica del backend ni los endpoints existentes.
+	
+	El objetivo es rediseñar las plantillas HTML para conseguir una interfaz moderna, profesional, responsive y coherente en todas las páginas de la aplicación: inicio, login, registro, panel de usuario, tienda, guía de compra, compras, historial, perfil, resultados y administración.
+	
+	La mejora debe unificar la gama de colores, tipografía, botones, formularios, tarjetas, tablas, menús y mensajes de estado. Para evitar repetición de código, crea estilos comunes reutilizables en ficheros CSS dentro de \texttt{app/static/css} y utiliza plantillas base, bloques Jinja o componentes reutilizables en \texttt{app/templates} cuando sea conveniente.
+	
+	No extraigas el JavaScript existente a ficheros \texttt{.js} externos. Si es necesario ajustar algo de JavaScript para adaptar la interfaz, mantenlo dentro de las propias plantillas HTML y conserva los identificadores, funciones y eventos que ya usa la aplicación.
+	
+	No cambies rutas, endpoints, identificadores usados por JavaScript, llamadas \texttt{fetch}, gestión de JWT ni comportamiento funcional. Solo puedes reorganizar HTML y CSS si la funcionalidad se mantiene intacta.
+	
+	El resultado debe incluir los archivos creados o modificados y el código completo necesario para aplicar el rediseño, asegurando que la aplicación sigue siendo mantenible, escalable y usable en dispositivos móviles, tabletas y escritorio.
+	
+	Además, la interfaz debe permitir alternar entre modo claro y modo oscuro. Ambos temas deben compartir la misma estructura visual y estar definidos mediante variables CSS reutilizables. El cambio de tema debe mantener la preferencia del usuario durante la navegación.
+\end{promptbox}

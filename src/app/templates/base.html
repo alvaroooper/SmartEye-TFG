@@ -6,12 +6,34 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}SmartEye{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <script>
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
+    
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+
+<body class="theme-wrapper">
+    <script>
+        if (document.documentElement.classList.contains('light-mode')) {
+            document.body.classList.add('light-mode');
+        }
+    </script>
+
     {% block header %}
-    <header class="header-main">
-        <h2>{% block header_title %}SmartEye{% endblock %}</h2>
+    <header class="header-main" style="position: sticky; top: 0; left: 0; right: 0; box-sizing: border-box; z-index: 1000;">
+        <div style="display: flex; align-items: center; gap: 25px;">
+            <h2>{% block header_title %}SmartEye{% endblock %}</h2>
+            
+            <!-- Botón del Tema Mejorado con Texto -->
+            <button id="theme-toggle" class="btn btn-outline" style="padding: 6px 16px; font-size: 0.9rem; border-radius: 20px; display: flex; align-items: center; gap: 8px;" title="Cambiar tema">
+                <span id="theme-icon">🌞</span> <span id="theme-text">Modo Claro</span>
+            </button>
+            
+        </div>
         <div id="header-actions" style="display: flex; gap: 12px; align-items: center;">
             {% block header_actions %}{% endblock %}
         </div>
@@ -23,5 +45,32 @@
     </main>
 
     {% block scripts %}{% endblock %}
+
+    <!-- Lógica del botón de Tema Oscuro / Claro Actualizada -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            if (!themeToggleBtn) return;
+
+            const iconSpan = document.getElementById('theme-icon');
+            const textSpan = document.getElementById('theme-text');
+
+            const actualizarBoton = (esClaro) => {
+                iconSpan.innerText = esClaro ? '🌙' : '🌞';
+                textSpan.innerText = esClaro ? 'Modo Oscuro' : 'Modo Claro';
+            };
+
+            // Estado inicial
+            actualizarBoton(document.body.classList.contains('light-mode'));
+
+            themeToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('light-mode');
+                const esClaro = document.body.classList.contains('light-mode');
+                
+                actualizarBoton(esClaro);
+                localStorage.setItem('theme', esClaro ? 'light' : 'dark');
+            });
+        });
+    </script>
 </body>
 </html>

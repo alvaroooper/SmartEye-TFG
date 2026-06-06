@@ -542,6 +542,49 @@ La Tabla~\ref{tabla:sprint15} y la Figura~\ref{fig:sprint15} recogen el trabajo 
 
 Este sprint se centró principalmente en completar y revisar los anexos del proyecto: estudio de viabilidad, diseño arquitectónico, diseño procedimental, diseño de interfaces, manual del programador y manual de usuario. Durante esta revisión se detectó también la necesidad de reforzar la calidad del código antes de cerrar la documentación técnica. Por ello, se añadió una tarea específica para ejecutar SonarQube, analizar los problemas señalados y aplicar las correcciones necesarias. Esta actividad permitió dejar constancia documental del proceso de revisión estática y mejorar la robustez del código antes de la entrega.
 
+\subsection*{Visión general del Sprint 16}
+\begin{itemize}
+	\item \textbf{Fechas:} 29/05/2026 -- 04/06/2026.
+	\item \textbf{Objetivo del sprint:} Perfeccionar la documentación final del proyecto y mejorar la visualización web de la aplicación.
+	\item \textbf{Criterio de aceptación global:} disponer de una memoria y unos anexos más ajustados, corregidos y coherentes con el estado final del sistema, además de una interfaz visualmente más moderna.
+\end{itemize}
+
+La Tabla~\ref{tabla:sprint16} y la Figura~\ref{fig:sprint16} recogen el último sprint del proyecto, centrado en el cierre documental y en el refinamiento visual de la aplicación.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{@{}p{11cm}r@{}}
+		\toprule
+		\textbf{Tarea} & \textbf{Pts} \\
+		\midrule
+		Mejorar Memoria Introducción y Objetivos del proyecto & 3 \\
+		Mejorar Memoria Conceptos teóricos & 4 \\
+		Mejorar Memoria Técnicas y herramientas & 4 \\
+		Mejorar Memoria Trabajos relacionados y Conclusiones & 3 \\
+		Mejorar Memoria Aspectos relevantes & 6 \\
+		Implementar filtros para ver ejecuciones como administrador & 8 \\
+		Reducir Anexos de tamaño y aplicar correcciones & 18 \\
+		Mejorar estilos de las interfaces mediante inteligencia artificial & 8 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Sprint 16 -- Resumen.}
+	\label{tabla:sprint16}
+\end{table}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.95\textwidth]{img/sprint16.png}
+	\caption{Informe de trabajo completado del Sprint 16.}
+	\label{fig:sprint16}
+\end{figure}
+
+Este último sprint se orientó principalmente al cierre del proyecto. Se revisaron y ajustaron distintos capítulos de la memoria, además, se redujo la extensión de los anexos y se aplicaron correcciones para dejar la documentación más clara y equilibrada.
+
+En la parte de aplicación, se incorporaron filtros en la vista administrativa de ejecuciones, permitiendo consultar la actividad global del sistema con mayor precisión. 
+
+Se realizó una actualización de estilos de las interfaces con apoyo de inteligencia artificial generativa. Esta mejora no modificó la lógica principal del sistema, sino que se centró en renovar la apariencia visual.
+
+Con este sprint se cerró el desarrollo principal del Trabajo de Fin de Grado.
 
 \section{Estudio de viabilidad}
 
@@ -633,52 +676,184 @@ El resumen aparece en la Tabla~\ref{tabla:costes_varios}.
 	\textbf{Total} & \textbf{280,80 €} \\
 }
 
-No se ha incluido alojamiento en producción, ya que la entrega se plantea como una aplicación reproducible en entorno local o de demostración. En una explotación real habría que añadir servidor, dominio, almacenamiento, copias de seguridad y mantenimiento.
+\paragraph{Costes de alojamiento en producción}
+
+Además de los costes de desarrollo, se ha realizado una estimación orientativa del coste mensual que tendría alojar la aplicación en un entorno de producción básico. Para esta estimación se ha tomado como referencia una arquitectura sencilla en AWS, manteniendo la idea actual del proyecto basada en Docker y consultando los precios públicos de Amazon EC2, Amazon EBS, Amazon S3 y direcciones IPv4 públicas~\cite{aws_ec2_pricing,aws_ebs_pricing,aws_s3_pricing,aws_public_ipv4_pricing}.
+
+La opción seleccionada sería desplegar la aplicación en una instancia EC2 con Docker Compose, ejecutando el contenedor de la aplicación Flask y el contenedor de MariaDB. Los archivos generados por las ejecuciones podrían almacenarse inicialmente en un volumen persistente EBS, aunque en un entorno de producción sería recomendable utilizar Amazon S3 para desacoplar los resultados temporales de la instancia principal.
+
+Los servicios considerados son los siguientes:
+
+\begin{itemize}
+	\item \textbf{Amazon EC2}: servidor principal para ejecutar los contenedores Docker de la aplicación y la base de datos.
+	\item \textbf{Amazon EBS}: volumen persistente para sistema, base de datos, modelos locales y ficheros necesarios por la aplicación.
+	\item \textbf{Amazon S3}: almacenamiento de imágenes y resultados temporales generados por los usuarios.
+	\item \textbf{IPv4 pública}: dirección necesaria para exponer la aplicación desde Internet.
+\end{itemize}
+
+Se ha descartado inicialmente el uso de una base de datos gestionada como Amazon RDS para mantener una estimación contenida y coherente con el despliegue actual mediante Docker. En una explotación más exigente, Amazon RDS para MariaDB sería una alternativa más robusta para gestionar copias de seguridad, disponibilidad y mantenimiento de la base de datos, aunque incrementaría el coste mensual~\cite{aws_rds_mariadb_pricing}.
+
+La Tabla~\ref{tabla:costes_alojamiento_fijo} recoge una estimación de costes fijos mensuales. Para homogeneizar el estudio económico, los importes se expresan en euros como valores aproximados de referencia, tomando como base precios públicos de AWS publicados en dólares y aplicando una equivalencia simplificada 1 USD $\approx$ 1 €. Estos costes pueden variar según región, impuestos, tipo de cambio, tráfico real y configuración final.
+
+Esta estimación no corresponde a un despliegue real realizado durante el TFG. La aplicación se ha preparado para ejecutarse de forma reproducible mediante Docker en entorno local o de demostración, pero no se ha desplegado en una infraestructura cloud permanente debido al coste económico que supondría mantener activos los recursos necesarios. Por ello, los importes indicados deben entenderse como una aproximación del gasto que tendría una posible puesta en producción futura, no como un desembolso realizado durante el desarrollo del proyecto.
+
+\tablaSmall{Costes fijos mensuales estimados de alojamiento.}{p{3.2cm} p{6cm} p{2cm}}{costes_alojamiento_fijo}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{l}{Motivo} & \multicolumn{1}{r}{Coste aprox.} \\}{
+	EC2 t3.large & Servidor para ejecutar Flask, MariaDB y los procesos de IA en Docker. & 60,74 € \\
+	EBS gp3 80 GB & Almacenamiento persistente para sistema, base de datos y modelos. & 6,40 € \\
+	S3 Standard 50 GB & Almacenamiento de imágenes y resultados temporales. & 1,15 € \\
+	IPv4 pública & Dirección pública para exponer el servicio. & 3,65 € \\
+	\textbf{Total fijo mensual} &  & \textbf{71,94 €} \\
+}
+
+Además del coste fijo, también existiría un coste variable asociado al uso de cada usuario. En esta estimación se ha considerado un uso medio de 20 ejecuciones mensuales por usuario. Para cada ejecución se supone un tamaño medio de 20 MB entre imagen de entrada, imágenes procesadas y resultados asociados. También se considera una descarga media de resultados de 0,60 GB mensuales por usuario.
+
+La Tabla~\ref{tabla:costes_usuario} muestra el coste variable estimado por usuario.
+
+\tablaSmall{Coste variable mensual estimado por usuario.}{p{3.2cm} p{5.8cm} p{2.4cm}}{costes_usuario}
+{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{l}{Estimación} & \multicolumn{1}{r}{Coste aprox.} \\}{
+	Almacenamiento S3 & 20 ejecuciones $\times$ 20 MB $\approx$ 0,40 GB/mes. & 0,01 €/mes \\
+	Transferencia de salida & Descarga media de resultados: 0,60 GB/mes. & 0,05 €/mes \\
+	Peticiones S3 & Subida, lectura y descarga de resultados. & 0,01 €/mes \\
+	Margen de variación & Variación por tamaño de imagen y uso real. & 0,03 €/mes \\
+	\textbf{Total variable} &  & \textbf{0,10 €/mes} \\
+}
+
+Por tanto, el coste mensual de explotación, expresado en euros, puede aproximarse mediante la siguiente expresión:
+
+\[
+C_{\text{mensual}} = 71,94 + 0,10 \times U
+\]
+
+donde \(U\) representa el número de usuarios activos mensuales.
+
+Estos costes no se incorporan al coste total de desarrollo del TFG, ya que no se han asumido durante el proyecto. Representan un gasto mensual de explotación posterior que sería necesario considerar únicamente si la aplicación se desplegase de forma permanente en una infraestructura cloud.
 
 \subsubsection{Costes totales}
 
-El coste total estimado se obtiene sumando personal, hardware amortizado, software y gastos varios. La Tabla~\ref{tabla:costes_totales} resume el resultado.
+El coste total estimado de desarrollo se obtiene sumando personal, hardware amortizado, software y gastos varios. La Tabla~\ref{tabla:costes_totales} resume el resultado.
 
-\tablaSmall{Costes totales del proyecto.}{l r}{costes_totales}
-{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Coste} \\}{
-	Personal & 4.501,03 € \\
-	Hardware amortizado & 305,63 € \\
-	Software & 395,82 € \\
-	Varios & 280,80 € \\
-	\textbf{Total} & \textbf{5.483,28 €} \\
-}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{@{}lr@{}}
+		\toprule
+		\textbf{Concepto} & \textbf{Coste} \\
+		\midrule
+		Personal & 4.501,03 € \\
+		Hardware amortizado & 305,63 € \\
+		Software & 395,82 € \\
+		Varios & 280,80 € \\
+		\midrule
+		\textbf{Total desarrollo} & \textbf{5.483,28 €} \\
+		\bottomrule
+	\end{tabular}
+	\caption{Costes totales de desarrollo del proyecto.}
+	\label{tabla:costes_totales}
+\end{table}
 
-Por tanto, el coste económico aproximado del proyecto asciende a 5.483,28 €. Esta cifra representa una estimación profesional del esfuerzo invertido, no un desembolso real completo durante el TFG.
+Por tanto, el coste económico aproximado de desarrollo del proyecto asciende a 5.483,28 €. Esta cifra representa una estimación profesional del esfuerzo invertido, no un desembolso real completo durante el TFG.
+
+Además del coste inicial de desarrollo, una explotación real de la aplicación tendría costes mensuales asociados al alojamiento. Estos costes no forman parte de la inversión inicial del TFG, pero sí deben considerarse para estimar la viabilidad económica del servicio. La Tabla~\ref{tabla:costes_explotacion_resumen} resume esta diferencia entre inversión inicial y costes recurrentes.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{@{}lr@{}}
+		\toprule
+		\textbf{Concepto} & \textbf{Coste estimado} \\
+		\midrule
+		Coste inicial de desarrollo & 5.483,28 € \\
+		Coste fijo mensual de alojamiento & 71,94 €/mes \\
+		Coste variable mensual por usuario & 0,10 €/usuario/mes \\
+		\bottomrule
+	\end{tabular}
+	\caption{Resumen de costes iniciales y recurrentes.}
+	\label{tabla:costes_explotacion_resumen}
+\end{table}
+
+De este modo, la inversión inicial corresponde al desarrollo de la aplicación, mientras que el alojamiento representa un gasto recurrente necesario para mantener el servicio disponible. Por ello, el coste acumulado de explotación puede expresarse como:
+
+\[
+C_{\text{total}}(m,U) = 5.483,28 + m \times (71,94 + 0,10 \times U)
+\]
+
+donde \(m\) representa el número de meses de explotación y \(U\) el número de usuarios activos mensuales.
 
 \subsubsection{Modelo de ingresos y recuperación de la inversión}
 
 La aplicación se plantea con un modelo de acceso por servicios: alquiler mensual de modelos de IA y plan Pro. La Tabla~\ref{tabla:modelo_ingresos} recoge los precios previstos.
 
-\tablaSmall{Modelo de ingresos previsto}{l r}{modelo_ingresos}
-{ \multicolumn{1}{l}{Concepto} & \multicolumn{1}{r}{Precio} \\}{
-	Alquiler mensual de un modelo IA & 9,99 €/mes \\
-	Plan Pro & 19,99 €/mes \\
-}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{@{}lr@{}}
+		\toprule
+		\textbf{Concepto} & \textbf{Precio} \\
+		\midrule
+		Alquiler mensual de un modelo IA & 9,99 €/mes \\
+		Plan Pro & 19,99 €/mes \\
+		\bottomrule
+	\end{tabular}
+	\caption{Modelo de ingresos previsto.}
+	\label{tabla:modelo_ingresos}
+\end{table}
 
-A partir del coste total estimado, la recuperación de la inversión sería:
+Para que la estimación sea más realista, la recuperación de la inversión no se calcula únicamente dividiendo el coste de desarrollo entre el precio del servicio. También se tienen en cuenta los costes mensuales de explotación definidos anteriormente:
 
 \[
-\frac{5.483,28\,\text{€}}{19,99\,\text{€/mes}} = 274,30\,\text{mensualidades}
+C_{\text{mensual}} = 71,94 + 0,10 \times U
 \]
+
+donde \(U\) representa el número de usuarios activos mensuales. A partir de ello, el margen mensual aproximado se calcula como:
 
 \[
-\frac{5.483,28\,\text{€}}{9,99\,\text{€/mes}} = 548,88\,\text{mensualidades}
+M = (P \times U) - (71,94 + 0,10 \times U)
 \]
 
-La Tabla~\ref{tabla:recuperacion_inversion} resume las mensualidades necesarias en cada vía de ingresos.
+donde \(P\) representa el precio mensual del servicio contratado por cada usuario. Finalmente, los meses necesarios para recuperar la inversión inicial se obtienen mediante:
 
-\tablaSmall{Estimación de recuperación de la inversión.}{l r r}{recuperacion_inversion}
-{ \multicolumn{1}{l}{Vía de ingresos} & \multicolumn{1}{r}{Precio mensual} & \multicolumn{1}{r}{Mensualidades necesarias} \\}{
-	Plan Pro & 19,99 € & 275 \\
-	Alquiler individual de modelo IA & 9,99 € & 549 \\
-}
+\[
+R = \frac{5.483,28}{M}
+\]
 
-La viabilidad económica dependería de alcanzar una base suficiente de usuarios recurrentes. El diseño basado en modelos, modos y pipelines favorece esta posibilidad, ya que permite ampliar el catálogo sin rehacer la aplicación desde cero.
+La Tabla~\ref{tabla:recuperacion_plan_pro} muestra la recuperación estimada si los usuarios contratasen el Plan Pro.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{@{}rrrr@{}}
+		\toprule
+		\textbf{Usuarios} & \textbf{Ingresos mensuales} & \textbf{Margen mensual} & \textbf{Meses recuperación} \\
+		\midrule
+		10 & 199,90 € & 126,96 € & 43,2 \\
+		20 & 399,80 € & 325,86 € & 16,8 \\
+		50 & 999,50 € & 922,56 € & 5,9 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Recuperación de la inversión con Plan Pro.}
+	\label{tabla:recuperacion_plan_pro}
+\end{table}
+
+La Tabla~\ref{tabla:recuperacion_alquiler} muestra el mismo cálculo suponiendo que los usuarios contratasen únicamente un alquiler individual de modelo IA.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{@{}rrrr@{}}
+		\toprule
+		\textbf{Usuarios} & \textbf{Ingresos mensuales} & \textbf{Margen mensual} & \textbf{Meses recuperación} \\
+		\midrule
+		10 & 99,90 € & 26,96 € & 203,4 \\
+		20 & 199,80 € & 125,86 € & 43,6 \\
+		50 & 499,50 € & 422,56 € & 13,0 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Recuperación de la inversión con alquiler individual de modelo.}
+	\label{tabla:recuperacion_alquiler}
+\end{table}
+
+Con esta estimación, el punto de equilibrio operativo se alcanzaría aproximadamente con 4 usuarios de Plan Pro o con 8 usuarios de alquiler individual de modelo IA. A partir de ese punto, los ingresos mensuales cubrirían los costes básicos de alojamiento.
+
+La recuperación completa del coste estimado de desarrollo dependería del número de usuarios recurrentes y del tipo de servicio contratado. El Plan Pro permite recuperar la inversión con menos usuarios, mientras que el alquiler individual requiere una base de usuarios mayor o un volumen más alto de contrataciones. En cualquier caso, la arquitectura basada en modelos, modos y \textit{pipelines} favorece la viabilidad económica, ya que permite ampliar el catálogo de servicios sin rehacer la aplicación desde cero.
+
+
+
 
 \subsection{Viabilidad legal}
 
@@ -688,7 +863,7 @@ La viabilidad legal se ha analizado teniendo en cuenta las dependencias de softw
 
 La Tabla~\ref{tabla:dependencias_licencias} recoge las dependencias más relevantes del proyecto, su licencia y la fuente utilizada para consultarla.
 
-\begin{table}[H]
+\begin{table}
 	\centering
 	\scriptsize
 	\begin{tabular}{@{}p{3.1cm}p{1.5cm}p{5.3cm}p{3.5cm}@{}}
@@ -779,11 +954,10 @@ Para la memoria, anexos, diagramas y material escrito se propone utilizar Creati
 
 \subsubsection{Protección de datos personales}
 
-La aplicación gestiona cuentas de usuario, correos electrónicos, nombres de usuario, contraseñas cifradas mediante hash, suscripciones, alquileres de modelos y registros de ejecuciones. Por ello, debe aproximarse a los principios del Reglamento General de Protección de Datos y de la Ley Orgánica 3/2018, especialmente en minimización, confidencialidad y limitación del plazo de conservación~\cite{rgpd_2016_articulo_17,boe_lopdgdd_2018}.
+La aplicación trata datos personales como cuentas de usuario, correos electrónicos, contraseñas cifradas, servicios contratados y registros de ejecuciones. Por ello, se han tenido en cuenta los principios del Reglamento General de Protección de Datos y de la Ley Orgánica 3/2018, especialmente en relación con la minimización, confidencialidad y limitación de conservación de los datos~\cite{rgpd_2016_articulo_17,boe_lopdgdd_2018}.
 
-Desde el diseño se han incorporado varias medidas: las contraseñas no se almacenan en texto plano, las imágenes y resultados se gestionan como archivos temporales, el acceso a resultados se realiza mediante tokens de descarga y las ejecuciones quedan asociadas al usuario autenticado. Además, se contempla la baja de cuenta, la revocación de servicios activos y la posterior anonimización de datos personales cuando proceda.
+Desde el diseño se han aplicado medidas como el almacenamiento de contraseñas mediante hash, la gestión temporal de imágenes y resultados, el acceso a archivos mediante tokens de descarga y la asociación de ejecuciones al usuario autenticado. En una explotación real sería necesario completar esta parte con una política de privacidad, condiciones de uso y procedimientos formales para el ejercicio de derechos.
 
-En una explotación real sería necesario completar esta parte con una política de privacidad, condiciones de uso, identificación del responsable del tratamiento, base jurídica, plazos de conservación y procedimiento formal para ejercer derechos.
 
 \subsubsection{Resumen de licencias del proyecto}
 

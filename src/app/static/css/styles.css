@@ -1,9 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 /* ==========================================================================
-   VARIABLES GLOBALES 
+   VARIABLES GLOBALES - DUAL THEME (DARK/LIGHT)
    ========================================================================== */
 :root {
+    /* MODO OSCURO (POR DEFECTO) */
     --bg-main: #070b14;
     --bg-card: rgba(16, 23, 42, 0.65);
     --primary: #3b82f6;
@@ -13,10 +14,37 @@
     --danger: #ef4444;
     --warning: #f59e0b;
     --text-main: #f8fafc;
-    --text-muted: #94a3b8;
+    --text-muted: #e3e3e3;
     --border: rgba(255, 255, 255, 0.08);
     --border-glow: rgba(139, 92, 246, 0.3);
+    --glass-header: rgba(11, 15, 25, 0.7);
+    --glass-hover: rgba(255, 255, 255, 0.05);
+    --input-bg: rgba(0, 0, 0, 0.3);
+    --select-opt-bg: #0f172a;
+    --shadow-base: rgba(0, 0, 0, 0.5);
+    --bg-radial-1: rgba(59, 130, 246, 0.08);
+    --bg-radial-2: rgba(139, 92, 246, 0.08);
     --font-main: 'Outfit', sans-serif;
+}
+
+body.light-mode {
+    /* MODO CLARO */
+    --bg-main: #f0f4f8;
+    --bg-card: rgba(255, 255, 255, 0.75);
+    --primary: #2563eb;
+    --primary-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    --primary-glow: rgba(37, 99, 235, 0.3);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --border: rgba(0, 0, 0, 0.1);
+    --border-glow: rgba(124, 58, 237, 0.4);
+    --glass-header: rgba(240, 244, 248, 0.8);
+    --glass-hover: rgba(0, 0, 0, 0.04);
+    --input-bg: rgba(255, 255, 255, 0.7);
+    --select-opt-bg: #ffffff;
+    --shadow-base: rgba(0, 0, 0, 0.05);
+    --bg-radial-1: rgba(59, 130, 246, 0.15);
+    --bg-radial-2: rgba(139, 92, 246, 0.15);
 }
 
 /* ==========================================================================
@@ -25,9 +53,7 @@
 body {
     font-family: var(--font-main);
     background-color: var(--bg-main);
-    background-image: 
-        radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+    background-image: radial-gradient(circle at 15% 50%, var(--bg-radial-1), transparent 25%), radial-gradient(circle at 85% 30%, var(--bg-radial-2), transparent 25%);
     color: var(--text-main);
     margin: 0;
     min-height: 100vh;
@@ -51,7 +77,7 @@ main.container {
 .header-main {
     position: fixed;
     top: 0; left: 0; right: 0;
-    background: rgba(11, 15, 25, 0.7);
+    background: var(--glass-header);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
@@ -67,6 +93,7 @@ main.container {
     font-weight: 800; 
     font-size: 1.5rem; 
     background: var(--primary-gradient);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -82,7 +109,7 @@ main.container {
     border-radius: 16px;
     padding: 30px;
     margin-bottom: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px var(--shadow-base);
     transition: transform 0.3s, border-color 0.3s;
 }
 
@@ -126,7 +153,7 @@ main.container {
     color: var(--text-main); 
 }
 .btn-outline:hover { 
-    background: rgba(255,255,255,0.1); 
+    background: var(--glass-hover);
     border-color: var(--text-muted);
 }
 
@@ -148,7 +175,7 @@ label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--te
 input, textarea {
     width: 100%;
     padding: 14px;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--input-bg);
     border: 1px solid var(--border);
     color: var(--text-main);
     border-radius: 10px;
@@ -163,7 +190,7 @@ select {
     width: 100%;
     padding: 14px;
     padding-right: 40px; /* Espacio para la flecha */
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: var(--input-bg);
     border: 1px solid var(--border);
     color: var(--text-main);
     border-radius: 10px;
@@ -181,7 +208,7 @@ select {
 }
 
 select option {
-    background-color: #0f172a;
+    background-color: var(--select-opt-bg);
     color: var(--text-main);
     padding: 10px;
 }
@@ -260,7 +287,14 @@ input[type="file"]::file-selector-button:hover {
 
 /* JSON Container */
 .json-container {
-    background: #020617 !important;
+    background: var(--bg-card) !important;
     border: 1px solid var(--border);
     border-radius: 10px;
 }
+
+/* ==========================================================================
+   CORRECCIÓN DE CONTRASTE PARA MODO CLARO (BADGES)
+   ========================================================================== */
+body.light-mode .badge-completado { color: #047857; border-color: rgba(16, 185, 129, 0.5); }
+body.light-mode .badge-error { color: #b91c1c; border-color: rgba(239, 68, 68, 0.5); }
+body.light-mode .badge-procesando { color: #b45309; border-color: rgba(245, 158, 11, 0.5); }

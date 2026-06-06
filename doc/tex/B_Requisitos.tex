@@ -233,25 +233,23 @@ El diagrama diferencia cuatro actores: usuario no autenticado, usuario registrad
 
 A partir de esta visión general, se detallan a continuación los casos de uso identificados. Para cada uno de ellos se resume el actor principal, los requisitos asociados, la finalidad del caso de uso, sus precondiciones, el flujo principal, el resultado esperado y las posibles excepciones.
 
-
 % Formato compacto para los casos de uso.
-% Se usa xtabular para permitir división entre páginas y evitar espacios en blanco innecesarios.
-\newenvironment{casouso}[2]{%
-	\begingroup
-	\small
-	\renewcommand{\arraystretch}{1.08}
-	\def\cuLabel{#2}
-	\begin{center}
-		\bottomcaption{#1.}
-		\begin{xtabular}{@{}p{0.22\linewidth}p{0.70\linewidth}@{}}
+% La tabla se genera completa para evitar que se parta entre páginas.
+\NewDocumentEnvironment{casouso}{m m +b}{%
+	\begin{table}[H]
+		\centering
+		\scriptsize
+		\setlength{\tabcolsep}{3pt}
+		\renewcommand{\arraystretch}{0.92}
+		\begin{tabular}{@{}p{0.20\textwidth}p{0.74\textwidth}@{}}
 			\toprule
-		}{%
+			#3
 			\bottomrule
-		\end{xtabular}
-		\label{tabla:\cuLabel}
-	\end{center}
-	\endgroup
-}
+		\end{tabular}
+		\caption{#1.}
+		\label{tabla:#2}
+	\end{table}
+}{}
 
 \begin{casouso}{CU-1 Registrarse}{cu1}
 	\textbf{Actor} & Usuario no autenticado. \\
