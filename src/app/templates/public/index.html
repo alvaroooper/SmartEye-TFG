@@ -4,7 +4,13 @@
 
 {% block header %}
 <header class="header-main" style="background: transparent; backdrop-filter: none; border: none; position: absolute; top: 0; left: 0; right: 0; box-shadow: none; box-sizing: border-box; z-index: 100;">
-    <h2 style="color: white; margin-left: 20px; font-size: 1.8rem; letter-spacing: 1px;">SmartEye</h2>
+    <div style="display: flex; align-items: center; gap: 15px; margin-left: 20px;">
+        <h2 style="color: var(--text-main); font-size: 1.8rem; letter-spacing: 1px;">SmartEye</h2>
+        <button id="theme-toggle-index" class="btn btn-outline" style="border-radius: 20px; font-size: 0.9rem; padding: 8px 16px; display: inline-flex; align-items: center;">
+            <span id="theme-icon-index">🌞</span>
+            <span id="theme-text-index" style="margin-left: 8px;">Modo Claro</span>
+        </button>
+    </div>
 </header>
 {% endblock %}
 
@@ -132,8 +138,9 @@
 
 {% block content %}
 <section class="hero">
-    <h1>Inteligencia Visual<br>Simplificada</h1>
-    <p>SmartEye te permite detectar objetos automáticamente, rastrear movimientos corporales y analizar imágenes a través de una plataforma intuitiva y fácil de usar.</p>
+    <h1>SmartEye</h1>
+    <h2>Analizador de imágenes</h2>
+    <p>SmartEye te permite analizar imágenes con flujos encadenados de inteligencia artificial.</p>
     <div class="cta-container">
         <a href="/login" class="btn btn-outline" style="padding: 12px 28px; font-size: 1.05rem;" id="btnLoginIndex">Iniciar Sesión</a>
         <a href="/registro" class="btn btn-primary" style="padding: 12px 28px; font-size: 1.05rem;">Comenzar Gratis</a>
@@ -147,7 +154,7 @@
     </div>
     <div class="feature-card">
         <h3>Análisis de Manos</h3>
-        <p>Detección precisa de manos y posición de los dedos para análisis de gestos.</p>
+        <p>Detección precisa de manos y posición de los dedos.</p>
     </div>
     <div class="feature-card">
         <h3>Detección de Objetos</h3>
@@ -172,23 +179,47 @@
 <style>
     footer a:hover { color: var(--primary) !important; }
 </style>
-
-<style>
-    footer a:hover { color: var(--primary) !important; }
-</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Validamos si ya hay una sesión activa para modificar el Call To Action
-    if (localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token')) {
-        const heroP = document.querySelector('.hero p');
-        heroP.innerHTML += `<br><br><strong style="color: var(--success);">Ya tienes una sesión activa.</strong>`;
-        const btnLogin = document.getElementById('btnLoginIndex');
-        if(btnLogin){
-            btnLogin.innerText = "Ir a mi Panel";
-            btnLogin.href = "/dashboard";
-        }
+    function actualizarBotonTemaIndex() {
+        const iconSpan = document.getElementById('theme-icon-index');
+        const textSpan = document.getElementById('theme-text-index');
+
+        if (!iconSpan || !textSpan) return;
+
+        const esClaro = document.body.classList.contains('light-mode');
+
+        iconSpan.innerText = esClaro ? '🌙' : '🌞';
+        textSpan.innerText = esClaro ? 'Modo Oscuro' : 'Modo Claro';
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeBtn = document.getElementById('theme-toggle-index');
+
+        actualizarBotonTemaIndex();
+
+        if (themeBtn) {
+            themeBtn.addEventListener('click', function() {
+                document.body.classList.toggle('light-mode');
+
+                const esClaro = document.body.classList.contains('light-mode');
+                localStorage.setItem('theme', esClaro ? 'light' : 'dark');
+
+                actualizarBotonTemaIndex();
+            });
+        }
+
+        if (localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token')) {
+            const heroP = document.querySelector('.hero p');
+            heroP.innerHTML += `<br><br><strong style="color: var(--success);">Ya tienes una sesión activa.</strong>`;
+            const btnLogin = document.getElementById('btnLoginIndex');
+            if (btnLogin) {
+                btnLogin.innerText = "Ir a mi Panel";
+                btnLogin.href = "/dashboard";
+            }
+        }
+    });
 </script>
 {% endblock %}
