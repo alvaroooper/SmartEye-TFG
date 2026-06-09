@@ -693,7 +693,7 @@ Los servicios considerados son los siguientes:
 
 Se ha descartado inicialmente el uso de una base de datos gestionada como Amazon RDS para mantener una estimación contenida y coherente con el despliegue actual mediante Docker. En una explotación más exigente, Amazon RDS para MariaDB sería una alternativa más robusta para gestionar copias de seguridad, disponibilidad y mantenimiento de la base de datos, aunque incrementaría el coste mensual~\cite{aws_rds_mariadb_pricing}.
 
-La Tabla~\ref{tabla:costes_alojamiento_fijo} recoge una estimación de costes fijos mensuales. Para homogeneizar el estudio económico, los importes se expresan en euros como valores aproximados de referencia, tomando como base precios públicos de AWS publicados en dólares y aplicando una equivalencia simplificada 1 USD $\approx$ 1 €. Estos costes pueden variar según región, impuestos, tipo de cambio, tráfico real y configuración final.
+La Tabla~\ref{tabla:costes_alojamiento_fijo} recoge una estimación de costes fijos mensuales. Para homogeneizar el estudio económico, los importes se expresan en euros como valores aproximados de referencia, tomando como base precios públicos de AWS publicados en dólares y aplicando una equivalencia simplificada 1~USD~$\approx$~1~€. Estos costes pueden variar según región, impuestos, tipo de cambio, tráfico real y configuración final.
 
 Esta estimación no corresponde a un despliegue real realizado durante el TFG. La aplicación se ha preparado para ejecutarse de forma reproducible mediante Docker en entorno local o de demostración, pero no se ha desplegado en una infraestructura cloud permanente debido al coste económico que supondría mantener activos los recursos necesarios. Por ello, los importes indicados deben entenderse como una aproximación del gasto que tendría una posible puesta en producción futura, no como un desembolso realizado durante el desarrollo del proyecto.
 
@@ -706,7 +706,7 @@ Esta estimación no corresponde a un despliegue real realizado durante el TFG. L
 	\textbf{Total fijo mensual} &  & \textbf{71,94 €} \\
 }
 
-Además del coste fijo, también existiría un coste variable asociado al uso de cada usuario. En esta estimación se ha considerado un uso medio de 20 ejecuciones mensuales por usuario. Para cada ejecución se supone un tamaño medio de 20 MB entre imagen de entrada, imágenes procesadas y resultados asociados. También se considera una descarga media de resultados de 0,60 GB mensuales por usuario.
+Además del coste fijo, también existiría un coste variable asociado al uso de cada usuario. En esta estimación se ha considerado un uso medio de 20 ejecuciones mensuales por usuario. Para cada ejecución se supone un tamaño medio de 20MB entre imagen de entrada, imágenes procesadas y resultados asociados. También se considera una descarga media de resultados de 0,60~GB mensuales por usuario.
 
 La Tabla~\ref{tabla:costes_usuario} muestra el coste variable estimado por usuario.
 
@@ -722,7 +722,7 @@ La Tabla~\ref{tabla:costes_usuario} muestra el coste variable estimado por usuar
 Por tanto, el coste mensual de explotación, expresado en euros, puede aproximarse mediante la siguiente expresión:
 
 \[
-C_{\text{mensual}} = 71,94 + 0,10 \times U
+C_{\text{mensual}} = 71,94\text{€} + 0,10\text{€} \times U
 \]
 
 donde \(U\) representa el número de usuarios activos mensuales.
@@ -773,7 +773,7 @@ Además del coste inicial de desarrollo, una explotación real de la aplicación
 De este modo, la inversión inicial corresponde al desarrollo de la aplicación, mientras que el alojamiento representa un gasto recurrente necesario para mantener el servicio disponible. Por ello, el coste acumulado de explotación puede expresarse como:
 
 \[
-C_{\text{total}}(m,U) = 5.483,28 + m \times (71,94 + 0,10 \times U)
+C_{\text{total}}(m,U) = 5.483,28\text{€} + m \times (C_{\text{mensual}})
 \]
 
 donde \(m\) representa el número de meses de explotación y \(U\) el número de usuarios activos mensuales.
@@ -796,22 +796,18 @@ La aplicación se plantea con un modelo de acceso por servicios: alquiler mensua
 	\label{tabla:modelo_ingresos}
 \end{table}
 
-Para que la estimación sea más realista, la recuperación de la inversión no se calcula únicamente dividiendo el coste de desarrollo entre el precio del servicio. También se tienen en cuenta los costes mensuales de explotación definidos anteriormente:
+Para que la estimación sea más realista, la recuperación de la inversión no se calcula únicamente dividiendo el coste de desarrollo entre el precio del servicio.
+
+A partir de ello, el margen mensual aproximado se calcula como:
 
 \[
-C_{\text{mensual}} = 71,94 + 0,10 \times U
-\]
-
-donde \(U\) representa el número de usuarios activos mensuales. A partir de ello, el margen mensual aproximado se calcula como:
-
-\[
-M = (P \times U) - (71,94 + 0,10 \times U)
+M = (P \times U) - (C_{\text{mensual}} )
 \]
 
 donde \(P\) representa el precio mensual del servicio contratado por cada usuario. Finalmente, los meses necesarios para recuperar la inversión inicial se obtienen mediante:
 
 \[
-R = \frac{5.483,28}{M}
+R = \frac{5.483,28\text{€}}{M}
 \]
 
 La Tabla~\ref{tabla:recuperacion_plan_pro} muestra la recuperación estimada si los usuarios contratasen el Plan Pro.
